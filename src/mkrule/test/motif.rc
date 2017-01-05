@@ -1,0 +1,7 @@
+LIB_FILES="libs/libXm.so libs/libXm.so.4 libs/libXm.so.4.0.0"
+LIB_NAME="Xm"
+LIB_A=""
+LIB_SO="libs/libXm.so"
+LIB_SO_C="libs/libXm.so.4"
+LIB_SO_CRA="libs/libXm.so.4.0.0"
+LIB_TYPE="shared"

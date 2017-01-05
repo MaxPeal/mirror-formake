@@ -1,0 +1,393 @@
+#!/bin/sh
+#
+# Author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
+#
+
+version_string="mkconfigure 1.0"
+
+script_name=`basename "$0"`
+script_options="$@"
+tmp_help=/tmp/mkconf_help_$$.txt
+rm -f $tmp_help
+op_pkgname=softmodule
+op_pkgver=
+out_file=configure
+rm_out_file=0
+
+print_help() {
+  cat <<EOF
+$script_name [options]
+ -v             print version
+ -o FILE        output script file [$out_file]
+ -params=".."   list of parameters for parsing
+ -pofig         probe a system with pofig test tool
+ -iftool ".."   probe a system with iftool test tool
+ -iflib ".."    probe a system with iflib test tool
+ -cstem         configure/probe C compiler with cstem tool
+ -cstem+        configure/probe C++ compiler with cstem+ tool
+ -sh CODE       insert shell string
+ -name NAME     package name (PACKAGE_NAME) [$op_pkgname]
+ -ver VERSION   package version (PACKAGE_VERSION)
+ -build-h       generate BUILDROOT/build.h config header
+ -no-install    disable installation parameters
+ -no-vpath      disable VPATH feature
+ -mkpackage     create package
+EOF
+}
+
+print_version() {
+  echo "$version_string"
+}
+
+clean_exit() {
+  ecode=$1
+  if test $rm_out_file = 1; then
+    rm -f $out_file
+  fi
+  exit $ecode
+}
+
+op_params=
+current_opt=
+iflib_index=0
+iftool_index=0
+while test $# -gt 0; do
+  case $1 in
+    -h|-help|--help)
+      print_help
+      clean_exit 0
+      ;;
+    -v)
+      print_version
+      clean_exit 0
+      ;;
+    -name)
+      shift
+      if test -z "$1"; then
+        echo "$script_name: error. Parameter -name requires argument" >&2
+        clean_exit 1
+      fi
+      op_pkgname=$1
+      current_opt=
+      ;;
+    -ver)
+      shift
+      if test -z "$1"; then
+        echo "$script_name: error. Parameter -ver requires argument" >&2
+        clean_exit 1
+      fi
+      op_pkgver=$1
+      current_opt=
+      ;;
+    -params=*)
+      op_params=`echo -n "$1" | sed 's/^[^=]*=//'`
+      rm -f $tmp_help
+      for param in $op_params; do
+        echo "  $param" >> $tmp_help
+      done
+      current_opt=
+      ;;
+    -pofig)
+      op_pofig=1
+      current_opt=
+      ;;
+    -cstem)
+      op_cstem=1
+      current_opt=
+      ;;
+    -cstem+)
+      op_cstemx=1
+      current_opt=
+      ;;
+    -iflib)
+      shift
+      if test -z "$1"; then
+        echo "$script_name: error. Parameter -iflib requires argument" >&2
+        clean_exit 1
+      fi
+      op_iflib=1
+      params=$1
+      eval iflib${iflib_index}_params=\$params
+      iflib_index=`expr $iflib_index + 1`
+      current_opt=
+      ;;
+    -iftool)
+      shift
+      if test -z "$1"; then
+        echo "$script_name: error. Parameter -iftool requires argument" >&2
+        clean_exit 1
+      fi
+      op_iftool=1
+      params=$1
+      eval iftool${iftool_index}_params=\$params
+      iftool_index=`expr $iftool_index + 1`
+      current_opt=
+      ;;
+    -sh)
+      shift
+      if test -z "$1"; then
+        echo "$script_name: error. Parameter -sh requires argument" >&2
+        clean_exit 1
+      fi
+      op_sh=$1
+      current_opt=
+      ;;
+    -build-h)
+      op_build_h=1
+      current_opt=
+      ;;
+    -no-install)
+      op_no_install=1
+      current_opt=
+      ;;
+    -no-vpath)
+      op_no_vpath=1
+      current_opt=
+      ;;
+    -o)
+      shift
+      if test -z "$1"; then
+        echo "$script_name: error. Parameter -o requires argument" >&2
+        clean_exit 1
+      fi
+      out_file=$1
+      if test -d "$out_file"; then
+        out_file="$out_file/configure"
+      fi
+      out_file_dir=`dirname "$out_file"`
+      if test ! -d "$out_file_dir"; then
+        echo "$script_name: error. Directory not found: $out_file_dir"
+        clean_exit 1
+      fi
+      current_opt=
+      ;;
+    -mkpackage)
+      op_mkpackage=1
+      current_opt=
+      ;;
+    *)
+      echo "$script_name: error. Invalid parameter: $1" >&2
+      clean_exit 1
+      ;;
+  esac
+  shift
+done
+
+if test $op_iflib:$op_cstemx:$op_cstem = 1::; then
+  op_cstem=1
+fi
+
+
+formake_scripts=
+if test x$op_no_install = x; then
+  formake_scripts="$formake_scripts install"
+fi
+if test x$op_pofig = x1; then
+  formake_scripts="$formake_scripts pofig"
+fi
+if test x$op_cstem = x1; then
+  formake_scripts="$formake_scripts cstem"
+fi
+if test x$op_cstemx = x1; then
+  formake_scripts="$formake_scripts cstem+"
+fi
+if test x$op_iflib = x1; then
+  formake_scripts="$formake_scripts iflib"
+fi
+formake_scripts="$formake_scripts mkrule"
+formake_scripts=`echo -n "$formake_scripts" | sed 's/^ *//'`
+
+
+cat <<TOP_EOF >$out_file
+#!/bin/sh
+################################################################################
+# This script was generated with the following command:
+#  $script_name $script_options
+#
+# Important variables to use:
+#   PACKAGE_NAME     - name of package
+#   PACKAGE_VERSION  - package version
+#   CUSTOM_OPTIONS   - custom configure options
+#   FORMAKE_TOOLS    - list of Formake tools used in this package
+#   SRCROOT          - package source root directory (package top dir)
+#   BUILDROOT        - VPATH build root (package build root dir)
+#   SUBSCRIPT        - path to a subscript - script with custom subroutines
+#   VPATH            - enable/disable vpath
+
+################################################################################
+# BASE CONFIGURATION
+PACKAGE_NAME="$op_pkgname"
+PACKAGE_VERSION="$op_pkgver"
+TOP_EOF
+if test x$op_no_install = x; then
+  cat <<"TOP_EOF" >>$out_file
+INSTALL_OPTIONS="-prefix -exec-prefix -bindir -sbindir -libexecdir -libdir \
+                 -incdir -etcdir -vardir -sharedir -mandir -docdir"
+TOP_EOF
+  validate_ops="$validate_ops \$INSTALL_OPTIONS"
+  config_help_ops="$config_help_ops -install"
+fi
+if test x$op_cstem$op_cstemx = x11; then
+  cat <<"TOP_EOF" >>$out_file
+C_OPTIONS="-cc -cflags -ldflags -c-ldflags"
+CXX_OPTIONS="-cxx -cxxflags -ldflags -cxx-ldflags"
+TOP_EOF
+  validate_ops="$validate_ops \$C_OPTIONS \$CXX_OPTIONS"
+  config_help_ops="$config_help_ops -cc -cxx"
+elif test x$op_cstem = x1; then
+  cat <<"TOP_EOF" >>$out_file
+C_OPTIONS="-cc -cflags -ldflags"
+TOP_EOF
+  validate_ops="$validate_ops \$C_OPTIONS"
+  config_help_ops="$config_help_ops -cc"
+elif test x$op_cstemx = x1; then
+  cat <<"TOP_EOF" >>$out_file
+CXX_OPTIONS="-cxx -cxxflags -ldflags"
+TOP_EOF
+  validate_ops="$validate_ops \$CXX_OPTIONS"
+  config_help_ops="$config_help_ops -cxx"
+fi
+
+cat <<TOP_EOF >>$out_file
+CUSTOM_OPTIONS="$op_params"
+FORMAKE_TOOLS="mkbuildroot $formake_scripts"
+TOP_EOF
+
+cat <<"TOP_EOF" >>$out_file
+SRCROOT=`dirname $0`
+BUILDROOT=`pwd`
+PATH=$BUILDROOT/formake:$SRCROOT/formake:$PATH
+
+TOP_EOF
+
+rm_out_file=1
+
+validate_ops=`echo -n "$validate_ops" | sed 's/^ *//'`
+config_help_ops=`echo -n "$config_help_ops" | sed 's/^ *//'`
+
+cat <<TOP_EOF >>$out_file
+################################################################################
+# OPTIONS
+optool validate "\$@" - -h -help --help $validate_ops \$CUSTOM_OPTIONS || exit 1
+if optool ifor "\$@" - -h -help --help; then
+  confighelp $config_help_ops
+TOP_EOF
+if test -f $tmp_help; then
+  echo "  cat <<EOF" >>$out_file
+  cat $tmp_help >>$out_file
+  echo "EOF" >>$out_file
+  rm -f $tmp_help
+fi
+cat <<TOP_EOF >>$out_file
+  exit 0
+fi
+optool rc "\$@" >build.conf
+. ./build.conf
+
+TOP_EOF
+
+cat <<TOP_EOF >>$out_file
+################################################################################
+# DEPENDENCY TOOLS
+iftool \$FORMAKE_TOOLS || exit 1
+TOP_EOF
+if test x$op_iftool = x1; then
+  idx=0
+  while test $idx -lt $iftool_index; do
+    eval iftool_params=\$iftool${idx}_params
+    echo "iftool $iftool_params || exit 1" >>$out_file
+    idx=`expr $idx + 1`
+  done
+fi
+
+cat <<"TOP_EOF" >>$out_file
+
+################################################################################
+# INIT BUILDROOT
+mkbuildroot $SRCROOT $BUILDROOT || exit 1
+rm -f build.h configure.log
+
+TOP_EOF
+
+if test -n "$op_cstem$op_cstemx"; then
+  cat <<TOP_EOF >>$out_file
+################################################################################
+# PROBE AND CONFIGURE COMPILERS
+TOP_EOF
+  if test x$op_cstem = x1; then
+    echo "cstem config -cc=\$CC -cflags=\"\$CFLAGS\"" >>$out_file
+  fi
+  if test x$op_cstemx = x1; then
+    echo "cstem+ config -cc=\$CXX -cflags=\"\$CXXFLAGS\"" >>$out_file
+  fi
+  echo "" >>$out_file
+fi
+
+if test x$op_iflib = x1; then
+  cat <<TOP_EOF >>$out_file
+################################################################################
+# DEPENDENCY LIBRARIES
+TOP_EOF
+  idx=0
+  while test $idx -lt $iflib_index; do
+    eval iflib_params=\$iflib${idx}_params
+    if test x$op_cstem$op_cstemx = x11; then
+      echo "iflib -cc $iflib_params -log=\"configure.log\" || exit 1" >>$out_file
+    elif test x$op_cstemx = x1; then
+      echo "iflib -cxx $iflib_params -log=\"configure.log\" || exit 1" >>$out_file
+    else
+      echo "iflib -cc $iflib_params -log=\"configure.log\" || exit 1" >>$out_file
+    fi
+    idx=`expr $idx + 1`
+  done
+  echo "" >>$out_file
+fi
+
+if test -n "$op_sh"; then
+  cat <<TOP_EOF >>$out_file
+################################################################################
+# CUSTOM SCRIPT
+$op_sh
+
+TOP_EOF
+fi
+
+cat <<TOP_EOF >>$out_file
+################################################################################
+# CONFIG FILES
+optool rc -package-name "\$PACKAGE_NAME" -package-ver \$PACKAGE_VERSION >>build.conf
+TOP_EOF
+if test x"$op_build_h" = x1; then
+  echo "optool def \"\$@\" -package-name \"\$PACKAGE_NAME\" -package-ver \$PACKAGE_VERSION >>build.h" >>$out_file
+fi
+
+cat <<"TOP_EOF" >>$out_file
+
+################################################################################
+# MKRULE
+mkrule config -prefix=$PREFIX -exec-prefix=$EXEC_PREFIX -bindir=$BINDIR -sbindir=$SBINDIR \
+          -libexecdir=$LIBEXECDIR -libdir=$LIBDIR -incdir=$INCDIR -etcdir=$ETCDIR \
+          -sharedir=$SHAREDIR -mandir=$MANDIR -docdir=$DOCDIR
+TOP_EOF
+
+cat <<"TOP_EOF" >>$out_file
+
+################################################################################
+# MKMF
+BUILDROOT=$BUILDROOT $SRCROOT/mkmf
+
+################################################################################
+# FINISH
+echo "configuring done."
+
+TOP_EOF
+
+chmod +x $out_file
+
+cat <<TOP_EOF
+created script "$out_file"
+formake scripts used: $formake_scripts
+package name: $op_pkgname
+package version: $op_pkgver
+TOP_EOF
+

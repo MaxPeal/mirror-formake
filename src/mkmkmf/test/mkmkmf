@@ -1,0 +1,914 @@
+#!/bin/sh
+#
+# Author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
+#
+
+version_string="mkmkmf 1.0"
+script_name=`basename "$0"`
+script_options="$@"
+
+op_out_file=mkmf
+op_out_mkfile=Makefile
+op_srcroot="."
+
+cd_param=
+orig_dir=`pwd`
+cd -P / >/dev/null 2>&1
+if test $? -eq 0; then
+  cd_param="-P"
+fi
+cd "$orig_dir"
+
+
+print_help() {
+  cat <<EOF
+$script_name [options]
+ -v                   print version
+ -o FILE              output script file [$op_out_file]
+ -srcroot PATH        specify source root dir relative path (SRCROOT) [.]
+ -subdirs ..          run mkmf scripts in subdirs in specified order
+ -omk FILE            output Make script [$op_out_mkfile]
+ -cflags=FLAGS        C compiler flags
+ -cxxflags=FLAGS      C++ compiler flags
+ -app*-name NAME      application name
+ -app*-src ..         application source files
+ -app*-ldflags=FLAGS  application linker flags
+ -app*-no-install     do not put aplication in install rule
+ -lib*-name NAME      library name
+ -lib*-src ..         library source files
+ -lib*-ver X[.Y[.Z]]  library version in specified format
+ -lib*-ldflags=FLAGS  library linker flags
+ -lib*-no-install     do not put library in install rule
+ -inst-bin ..         executables for install into bin directory
+ -inst-sbin ..        executables for install into sbin directory
+ -inst-lib ..         files and directories for install into lib directory
+ -inst-libexec ..     files and directories for install into libexec directory
+ -inst-inc ..         header files and directories for install into include dir
+ -inst-man[1-8] ..    man files and directories for install into man directory
+ -inst-doc ..         documentation files and directories for install into doc
+ -inst-share ..       files and directories for install into share directory
+ -inst-etc ..         files and directories for install into etc directory
+EOF
+}
+
+print_version() {
+  echo "$version_string"
+}
+
+abs_path() {
+  arg=$1
+  _orig_dir=`pwd`
+  if test -e "$arg"; then
+    if test -d $arg; then
+      file=
+    else
+      file=`basename -- $arg`
+      arg=`dirname -- $arg`
+    fi
+
+    cd $cd_param $arg
+    abs_path_ret=`pwd`
+    if test x"$file" != "x"; then
+      abs_path_ret="$abs_path_ret/$file"
+    fi
+
+    cd $cd_param $_orig_dir
+  else
+    if echo -n "$arg" | grep "^/" > /dev/null; then
+      abs_path_ret="$arg"
+    else
+      abs_path_ret="$_orig_dir/$arg"
+    fi
+  fi
+}
+
+n_prefix=0
+reg_prefix() {
+  type=$1
+  the_prefix=$2
+  case $type in
+    app)
+      eval pref_in_list=\$app_${the_prefix}_in_list
+      if test x$pref_in_list = x; then
+        app_prefix_list="$app_prefix_list $the_prefix"
+        eval app_${the_prefix}_in_list=1
+        n_prefix=`expr $n_prefix + 1`
+      fi
+      ;;
+    lib)
+      eval pref_in_list=\$lib_${the_prefix}_in_list
+      if test x$pref_in_list = x; then
+        lib_prefix_list="$lib_prefix_list $the_prefix"
+        eval lib_${the_prefix}_in_list=1
+        n_prefix=`expr $n_prefix + 1`
+      fi
+      ;;
+  esac
+}
+
+prefix=
+current_opt=
+src_db="/tmp/mkmkmf$$_src.txt"
+echo "" > $src_db
+while test $# -gt 0; do
+  case $1 in
+    -h|-help|--help)
+      print_help
+      exit 0
+      ;;
+    -v)
+      print_version
+      exit 0
+      ;;
+    -o)
+      shift
+      if test -z "$1"; then
+        echo "$script_name: error: parameter -o requires argument" >&2
+        exit 1
+      fi
+      op_out_file=`echo -n "$1" | sed 's/\/*$//'`
+      if test -d "$op_out_file"; then
+        op_out_file="$op_out_file/mkmf"
+      fi
+      current_opt=
+      ;;
+    -srcroot)
+      shift
+      if test -z "$1"; then
+        echo "$script_name: error: parameter -srcroot requires argument" >&2
+        exit 1
+      fi
+      op_srcroot=$1
+      current_opt=
+      ;;
+    -subdirs)
+      shift
+      if test -z "$1"; then
+        echo "$script_name: error: parameter -subdirs requires argument" >&2
+        exit 1
+      fi
+      if echo -n "$1" | grep "^/" > /dev/null; then
+        echo "$script_name: error: parameter -subdirs: absolute path not allowed" >&2
+        exit 1
+      fi
+      op_subdirs=`echo -n "$1" | sed 's/\/*$//'`
+      current_opt=subdirs
+      ;;
+    -omk)
+      shift
+      if test -z "$1"; then
+        echo "$script_name: error: parameter -omk requires argument" >&2
+        exit 1
+      fi
+      op_out_mkfile=$1
+      current_opt=
+      ;;
+    -cflags=*)
+      op_cflags=`echo -n "$1" | sed 's/^[^=]*=//'`
+      current_opt=
+      ;;
+    -cxxflags=*)
+      op_cxxflags=`echo -n "$1" | sed 's/^[^=]*=//'`
+      current_opt=
+      ;;
+    -app*-name)
+      prefix=`echo -n "$1" | sed "s/-name$//" | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g' | sed 's/^_*//'`
+      reg_prefix app $prefix
+      shift
+      if test -z "$1"; then
+        echo "$script_name: error: parameter -app*-name requires argument" >&2
+        exit 1
+      fi
+      eval app_${prefix}_name=\$1
+      current_opt=
+      ;;
+    -app*-src)
+      prefix=`echo -n "$1" | sed "s/-src$//" | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g' | sed 's/^_*//'`
+      reg_prefix app $prefix
+      shift
+      if test -z "$1"; then
+        echo "$script_name: error: parameter -app*-src requires argument" >&2
+        exit 1
+      fi
+      if cat $src_db | grep -F -x "$1:$prefix" > /dev/null; then
+        :
+      else
+        echo "$1:$prefix" >>$src_db
+        eval app_${prefix}_src=\$1
+        case "$1" in
+          *.C|*.[Cc][Cc]|*.[Cc][Pp][Pp]|*.[Cc][Xx][Xx])
+            eval app_${prefix}_have_cxx=1
+            have_cxx=1
+            ;;
+          *.c)
+            eval app_${prefix}_have_c=1
+            have_c=1
+            ;;
+          *)
+            echo "$script_name: error: bad source type $1"
+            exit 1
+            ;;
+        esac
+      fi
+      current_opt=app-src
+      ;;
+    -app*-ldflags=*)
+      prefix=`echo -n "$1" | sed "s/-ldflags=.*//" | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g' | sed 's/^_*//'`
+      reg_prefix app $prefix
+      _ldflags=`echo -n "$1" | sed 's/^[^=]*=//'`
+      eval app_${prefix}_ldflags=\$_ldflags
+      current_opt=
+      ;;
+    -app*-no-install)
+      prefix=`echo -n "$1" | sed "s/-no-install$//" | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g' | sed 's/^_*//'`
+      reg_prefix app $prefix
+      eval app_${prefix}_no_install=1
+      current_opt=
+      ;;
+    -lib*-name)
+      prefix=`echo -n "$1" | sed "s/-name$//" | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g' | sed 's/^_*//'`
+      reg_prefix lib $prefix
+      shift
+      if test -z "$1"; then
+        echo "$script_name: error: parameter -lib*-name requires argument" >&2
+        exit 1
+      fi
+      eval lib_${prefix}_name=\$1
+      use_libro=1
+      current_opt=
+      ;;
+    -lib*-src)
+      prefix=`echo -n "$1" | sed "s/-src$//" | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g' | sed 's/^_*//'`
+      reg_prefix lib $prefix
+      shift
+      if test -z "$1"; then
+        echo "$script_name: error: parameter -lib*-src requires argument" >&2
+        exit 1
+      fi
+      if cat $src_db | grep -F -x "$1:$prefix" > /dev/null; then
+        :
+      else
+        echo "$1:$prefix" >>$src_db
+        eval lib_${prefix}_src=\$1
+        case "$1" in
+          *.C|*.[Cc][Cc]|*.[Cc][Pp][Pp]|*.[Cc][Xx][Xx])
+            eval lib_${prefix}_have_cxx=1
+            have_cxx=1
+            ;;
+          *.c)
+            eval lib_${prefix}_have_c=1
+            have_c=1
+            ;;
+          *)
+            echo "$script_name: error: bad source type $1"
+            exit 1
+            ;;
+        esac
+      fi
+      use_libro=1
+      current_opt=lib-src
+      ;;
+    -lib*-ver)
+      prefix=`echo -n "$1" | sed "s/-ver$//" | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g' | sed 's/^_*//'`
+      reg_prefix lib $prefix
+      shift
+      if test -z "$1"; then
+        echo "$script_name: error: parameter -lib*-ver requires argument" >&2
+        exit 1
+      fi
+      _current=`echo -n $1 | sed 's/^\([0-9]*\).*/\1/'`
+      rest=`echo -n $1 | sed 's/^[0-9]*\.*//'`
+      _revision=`echo -n $rest | sed 's/^\([0-9]*\).*/\1/'`
+      rest=`echo -n $rest | sed 's/^[0-9]*\.*//'`
+      _age=`echo -n $rest | sed 's/^\([0-9]*\).*/\1/'`
+      eval lib_${prefix}_ver=\$1
+      eval lib_${prefix}_current=\$_current
+      eval lib_${prefix}_revision=\$_revision
+      eval lib_${prefix}_age=\$_age
+      use_libro=1
+      current_opt=
+      ;;
+    -lib*-ldflags=*)
+      prefix=`echo -n "$1" | sed "s/-ldflags=.*//" | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g' | sed 's/^_*//'`
+      reg_prefix lib $prefix
+      _ldflags=`echo -n "$1" | sed 's/^[^=]*=//'`
+      eval lib_${prefix}_ldflags=\$_ldflags
+      use_libro=1
+      current_opt=
+      ;;
+    -lib*-no-install)
+      prefix=`echo -n "$1" | sed "s/-no-install$//" | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g' | sed 's/^_*//'`
+      reg_prefix lib $prefix
+      eval lib_${prefix}_no_install=1
+      use_libro=1
+      current_opt=
+      ;;
+    -inst-bin)
+      shift
+      if test -z "$1"; then
+        echo "$script_name: error: parameter -inst-bin requires argument" >&2
+        exit 1
+      fi
+      op_inst_bin=$1
+      have_custom_inst_stuff=1
+      current_opt=inst-bin
+      ;;
+    -inst-sbin)
+      shift
+      if test -z "$1"; then
+        echo "$script_name: error: parameter -inst-sbin requires argument" >&2
+        exit 1
+      fi
+      op_inst_sbin=$1
+      have_custom_inst_stuff=1
+      current_opt=inst-sbin
+      ;;
+    -inst-lib)
+      shift
+      if test -z "$1"; then
+        echo "$script_name: error: parameter -inst-lib requires argument" >&2
+        exit 1
+      fi
+      op_inst_lib=$1
+      have_custom_inst_stuff=1
+      current_opt=inst-lib
+      ;;
+    -inst-libexec)
+      shift
+      if test -z "$1"; then
+        echo "$script_name: error: parameter -inst-libexec requires argument" >&2
+        exit 1
+      fi
+      op_inst_libexec=$1
+      have_custom_inst_stuff=1
+      current_opt=inst-libexec
+      ;;
+    -inst-inc)
+      shift
+      if test -z "$1"; then
+        echo "$script_name: error: parameter -inst-inc requires argument" >&2
+        exit 1
+      fi
+      op_inst_inc=$1
+      have_custom_inst_stuff=1
+      current_opt=inst-inc
+      ;;
+    -inst-man[1-8])
+      man_num=`echo -n "$1" | sed 's/^-inst-man//'`
+      shift
+      if test -z "$1"; then
+        echo "$script_name: error: parameter -inst-man[1-8] requires argument" >&2
+        exit 1
+      fi
+      eval op_inst_man$man_num=\$1
+      have_custom_inst_stuff=1
+      current_opt=inst-man
+      ;;
+    -inst-doc)
+      shift
+      if test -z "$1"; then
+        echo "$script_name: error: parameter -inst-doc requires argument" >&2
+        exit 1
+      fi
+      op_inst_doc=$1
+      have_custom_inst_stuff=1
+      current_opt=inst-doc
+      ;;
+    -inst-share)
+      shift
+      if test -z "$1"; then
+        echo "$script_name: error: parameter -inst-share requires argument" >&2
+        exit 1
+      fi
+      op_inst_share=$1
+      have_custom_inst_stuff=1
+      current_opt=inst-share
+      ;;
+    -inst-etc)
+      shift
+      if test -z "$1"; then
+        echo "$script_name: error: parameter -inst-etc requires argument" >&2
+        exit 1
+      fi
+      op_inst_etc=$1
+      have_custom_inst_stuff=1
+      current_opt=inst-etc
+      ;;
+    *)
+      case x$current_opt in
+        xsubdirs)
+          subdir=`echo -n "$1" | sed 's/\/*$//'`
+          op_subdirs="$op_subdirs $subdir"
+          ;;
+        xapp-src)
+          if cat $src_db | grep -F -x "$1:$prefix" > /dev/null; then
+            :
+          else
+            echo "$1:$prefix" >>$src_db
+            eval app_${prefix}_src=\"\$app_${prefix}_src \$1\"
+            case "$1" in
+              *.C|*.[Cc][Cc]|*.[Cc][Pp][Pp]|*.[Cc][Xx][Xx])
+                eval app_${prefix}_have_cxx=1
+                have_cxx=1
+                ;;
+              *.c)
+                eval app_${prefix}_have_c=1
+                have_c=1
+                ;;
+              *)
+                echo "$script_name: error: bad source type $1"
+                exit 1
+                ;;
+            esac
+          fi
+          ;;
+        xlib-src)
+          if cat $src_db | grep -F -x "$1:$prefix" > /dev/null; then
+            :
+          else
+            echo "$1:$prefix" >>$src_db
+            eval lib_${prefix}_src=\"\$lib_${prefix}_src \$1\"
+            case "$1" in
+              *.C|*.[Cc][Cc]|*.[Cc][Pp][Pp]|*.[Cc][Xx][Xx])
+                eval lib_${prefix}_have_cxx=1
+                have_cxx=1
+                ;;
+              *.c)
+                eval lib_${prefix}_have_c=1
+                have_c=1
+                ;;
+              *)
+                echo "$script_name: error: bad source type $1"
+                exit 1
+                ;;
+            esac
+          fi
+          ;;
+        xinst-bin)
+          op_inst_bin="$op_inst_bin $1"
+          ;;
+        xinst-sbin)
+          op_inst_sbin="$op_inst_sbin $1"
+          ;;
+        xinst-lib)
+          op_inst_lib="$op_inst_lib $1"
+          ;;
+        xinst-libexec)
+          op_inst_libexec="$op_inst_libexec $1"
+          ;;
+        xinst-inc)
+          op_inst_inc="$op_inst_inc $1"
+          ;;
+        xinst-man)
+          eval op_inst_man$man_num=\"\$op_inst_man$man_num $1\"
+          ;;
+        xinst-doc)
+          op_inst_doc="$op_inst_doc $1"
+          ;;
+        xinst-share)
+          op_inst_share="$op_inst_share $1"
+          ;;
+        xinst-etc)
+          op_inst_etc="$op_inst_etc $1"
+          ;;
+        x)
+          echo "$script_name: error: bad option $1" >&2
+          exit 1
+          ;;
+      esac
+      ;;
+  esac
+  shift
+done
+
+rm -f $src_db
+
+if test x$have_custom_inst_stuff = x1; then
+  have_inst_stuff=1
+fi
+
+for prefix in $app_prefix_list; do
+  eval op_name=\$app_${prefix}_name
+  if test -z "$op_name"; then
+    eval app_${prefix}_name=\$prefix
+  fi
+  eval no_install=\$app_${prefix}_no_install
+  if test -z "$no_install"; then
+    have_inst_stuff=1
+  fi
+done
+for prefix in $lib_prefix_list; do
+  eval op_name=\$lib_${prefix}_name
+  if test -z "$op_name"; then
+    eval lib_${prefix}_name=\$prefix
+  fi
+  eval op_ver=\$lib_${prefix}_ver
+  if test -z "$op_ver"; then
+    eval lib_${prefix}_ver=\"0.0.0\"
+    eval lib_${prefix}_current=0
+    eval lib_${prefix}_revision=0
+    eval lib_${prefix}_age=0
+  fi
+  eval no_install=\$lib_${prefix}_no_install
+  if test -z "$no_install"; then
+    have_inst_stuff=1
+  fi
+done
+
+formake_scripts="abspath relpath"
+if test -n "$have_cxx$have_c$use_libro$have_inst_stuff"; then
+  formake_scripts="$formake_scripts listed"
+fi
+
+if test x$have_c = x1; then
+  formake_scripts="$formake_scripts cstem"
+fi
+
+if test x$have_cxx = x1; then
+  formake_scripts="$formake_scripts cstem+"
+fi
+
+if test x$use_libro = x1; then
+  formake_scripts="$formake_scripts libro"
+fi
+
+if test -n "$have_cxx$have_c$use_libro"; then
+  formake_scripts="$formake_scripts mkrule"
+fi
+
+echo "using the following Formake scripts: $formake_scripts"
+
+
+cat <<TOP_EOF >$op_out_file
+#!/bin/sh
+################################################################################
+# This script was generated with the following command:
+#  $script_name $script_options
+#
+#
+# Important variables to use:
+#   SUBSCRIPT        - path to a subscript - script with custom subroutines
+#   SRCROOT          - package source root directory (package top dir)
+#   BUILDROOT        - VPATH build root (package build root dir)
+#   SRCDIR           - absolute path to a source directory where mkmf is located
+#   SRCDIR_REL       - relative path from SRCROOT to SRCDIR
+#   SRCROOT_REL      - relative path from SRCDIR to SRCROOT
+#   BUILDDIR         - VPATH build dir (output dir for placing all files generated by mkmf or \$MAKEFILE)
+#   BUILDCONF        - path to a package build config file
+#   PKGBIN           - path to a package script directory
+#   SUBDIRS          - subdirectories with mkmf scripts
+TOP_EOF
+
+cat <<TOP_EOF >>$op_out_file
+
+################################################################################
+# BASE CONFIGURATION
+SRCROOT=$op_srcroot
+BUILD_CONF="build.conf"
+MAKEFILE="$op_out_mkfile"
+TOP_EOF
+if test -n "$op_subdirs"; then
+  echo "SUBDIRS=\"$op_subdirs\"" >>$op_out_file
+fi
+echo "FORMAKE_TOOLS=\"$formake_scripts\"" >>$op_out_file
+
+cat <<"TOP_EOF" >>$op_out_file
+
+################################################################################
+# INIT
+SCRIPT_NAME=`basename $0`
+cd `dirname $0`
+ABS_SRCDIR=`pwd`
+PATH=$PATH:$ABS_SRCDIR/$SRCROOT/formake
+iftool -f $FORMAKE_TOOLS || exit 1
+ABS_SRCROOT=`abspath -b $ABS_SRCDIR $SRCROOT`
+ABS_BUILDROOT=$ABS_SRCROOT
+test -n "$BUILDROOT" && ABS_BUILDROOT=`abspath $BUILDROOT`
+PATH="$ABS_BUILDROOT/formake:$PATH"
+SRCSUBDIR=`relpath $ABS_SRCROOT $ABS_SRCDIR`
+ABS_BUILDDIR=$ABS_BUILDROOT/$SRCSUBDIR
+mkdir -p $ABS_BUILDDIR || exit 1
+cd $ABS_BUILDDIR
+BUILDDIR=.
+BUILDROOT=`relpath ./ $ABS_BUILDROOT`
+SRCROOT=`relpath ./ $ABS_SRCROOT`
+SRCDIR=`relpath ./ $ABS_SRCDIR`
+
+################################################################################
+# READ CONFIG
+#. $BUILDROOT/$BUILD_CONF
+
+################################################################################
+# INIT MAKEFILE
+mkrule all >$MAKEFILE
+
+TOP_EOF
+
+
+if test -n "$have_c$have_cxx"; then
+  cat <<TOP_EOF >>$op_out_file
+################################################################################
+# OBJECTS
+TOP_EOF
+  if test x$have_c = x1; then
+    echo "CFLAGS=\"$op_cflags\"" >>$op_out_file
+  fi
+  if test x$have_cxx = x1; then
+    echo "CXXFLAGS=\"$op_cxxflags\"" >>$op_out_file
+  fi
+  if test x"$have_c$have_cxx" = x11; then
+    echo "C_STATIC_DIR=\"c_static\"" >>$op_out_file
+    echo "CXX_STATIC_DIR=\"cxx_static\"" >>$op_out_file
+    if test x$use_libro = x1; then
+      echo "C_PIC_DIR=\"c_pic\"" >>$op_out_file
+      echo "CXX_PIC_DIR=\"cxx_pic\"" >>$op_out_file
+    fi
+    c_static_dir="\$C_STATIC_DIR"
+    cxx_static_dir="\$CXX_STATIC_DIR"
+    c_pic_dir="\$C_PIC_DIR"
+    cxx_pic_dir="\$CXX_PIC_DIR"
+    static_c_sources_var="static_c_sources"
+    static_cxx_sources_var="static_cxx_sources"
+    pic_c_sources_var="pic_c_sources"
+    pic_cxx_sources_var="pic_cxx_sources"
+  else
+    echo "STATIC_DIR=\"_static\"" >>$op_out_file
+    if test x$use_libro = x1; then
+      echo "PIC_DIR=\"_pic\"" >>$op_out_file
+    fi
+    c_static_dir="\$STATIC_DIR"
+    cxx_static_dir="\$STATIC_DIR"
+    c_pic_dir="\$PIC_DIR"
+    cxx_pic_dir="\$PIC_DIR"
+    static_c_sources_var="static_sources"
+    static_cxx_sources_var="static_sources"
+    pic_c_sources_var="pic_sources"
+    pic_cxx_sources_var="pic_sources"
+  fi
+
+
+  for prefix in $app_prefix_list; do
+    eval op_src=\$app_${prefix}_src
+    op_src=`echo -n "$op_src" | sed 's/^ *//' | sed 's/ *$//' | sed 's/  */ /g'`
+    eval op_have_cxx=\$app_${prefix}_have_cxx
+    echo "${prefix}_sources=\"$op_src\"" >>$op_out_file
+    if test x$op_have_cxx = x1; then
+      static_cxx_src="$static_cxx_src \$${prefix}_sources"
+    else
+      static_c_src="$static_c_src \$${prefix}_sources"
+    fi
+  done
+  for prefix in $lib_prefix_list; do
+    eval op_src=\$lib_${prefix}_src
+    op_src=`echo -n "$op_src" | sed 's/^ *//' | sed 's/ *$//' | sed 's/  */ /g'`
+    eval op_have_cxx=\$lib_${prefix}_have_cxx
+    echo "${prefix}_sources=\"$op_src\"" >>$op_out_file
+    if test x$op_have_cxx = x1; then
+      static_cxx_src="$static_cxx_src \$${prefix}_sources"
+      pic_cxx_src="$pic_cxx_src \$${prefix}_sources"
+    else
+      static_c_src="$static_c_src \$${prefix}_sources"
+      pic_c_src="$pic_c_src \$${prefix}_sources"
+    fi
+  done
+
+  static_c_src=`echo -n "$static_c_src" | sed 's/^ *//' | sed 's/ *$//' | sed 's/  */ /g'`
+  pic_c_src=`echo -n "$pic_c_src" | sed 's/^ *//' | sed 's/ *$//' | sed 's/  */ /g'`
+  static_cxx_src=`echo -n "$static_cxx_src" | sed 's/^ *//' | sed 's/ *$//' | sed 's/  */ /g'`
+  pic_cxx_src=`echo -n "$pic_cxx_src" | sed 's/^ *//' | sed 's/ *$//' | sed 's/  */ /g'`
+
+  echo "" >>$op_out_file
+
+  if test -n "$static_c_src"; then
+    echo "$static_c_sources_var=\`listed -pref=\$SRCDIR/ $static_c_src\`" >>$op_out_file
+  fi
+  if test -n "$pic_c_src"; then
+    echo "$pic_c_sources_var=\`listed -pref=\$SRCDIR/ $pic_c_src\`" >>$op_out_file
+  fi
+  if test -n "$static_cxx_src"; then
+    echo "$static_cxx_sources_var=\`listed -pref=\$SRCDIR/ $static_cxx_src\`" >>$op_out_file
+  fi
+  if test -n "$pic_cxx_src"; then
+    echo "$pic_cxx_sources_var=\`listed -pref=\$SRCDIR/ $pic_cxx_src\`" >>$op_out_file
+  fi
+
+# GENERATE COMPILATION RULES
+  if test -n "$static_c_src"; then
+    echo "mkrule obj -cflags=\"\$CFLAGS\" -src \$$static_c_sources_var -d $c_static_dir >>\$MAKEFILE" >>$op_out_file
+  fi
+  if test -n "$pic_c_src"; then
+    echo "mkrule obj -pic -cflags=\"\$CFLAGS\" -src \$$pic_c_sources_var -d $c_pic_dir >>\$MAKEFILE" >>$op_out_file
+  fi
+  if test -n "$static_cxx_src"; then
+    echo "mkrule obj -c++ -cflags=\"\$CXXFLAGS\" -src \$$static_cxx_sources_var -d $cxx_static_dir >>\$MAKEFILE" >>$op_out_file
+  fi
+  if test -n "$pic_cxx_src"; then
+    echo "mkrule obj -c++ -pic -cflags=\"\$CXXFLAGS\" -src \$$pic_cxx_sources_var -d $cxx_pic_dir >>\$MAKEFILE" >>$op_out_file
+  fi
+fi
+
+
+if test -n "$app_prefix_list"; then
+  cat <<TOP_EOF >>$op_out_file
+
+################################################################################
+# APPLICATIONS
+TOP_EOF
+
+  for prefix in $app_prefix_list; do
+    eval op_name=\$app_${prefix}_name
+    eval op_ldflags=\$app_${prefix}_ldflags
+    eval op_no_install=\$app_${prefix}_no_install
+    eval op_have_cxx=\$app_${prefix}_have_cxx
+
+    cat <<TOP_EOF >>$op_out_file
+${prefix}_name="$op_name"
+${prefix}_ldflags="$op_ldflags"
+TOP_EOF
+    if test x$op_have_cxx = x1; then
+      echo "${prefix}_obj=\`listed -pref=$cxx_static_dir/ -ext=o \$${prefix}_sources\`" >>$op_out_file
+    else
+      echo "${prefix}_obj=\`listed -pref=$c_static_dir/ -ext=o \$${prefix}_sources\`" >>$op_out_file
+    fi
+
+    add_params="-all"
+    if test x$op_no_install = x; then
+      add_params="$add_params -install"
+    fi
+    if test x$op_have_cxx = x1; then
+      add_params="$add_params -c++"
+    fi
+    echo "mkrule app $add_params -ldflags=\"\$${prefix}_ldflags\" -n \$${prefix}_name -obj \$${prefix}_obj >>\$MAKEFILE" >>$op_out_file
+    echo "" >>$op_out_file
+  done
+fi
+
+if test -n "$lib_prefix_list"; then
+  cat <<TOP_EOF >>$op_out_file
+################################################################################
+# LIBRARIES
+TOP_EOF
+
+  for prefix in $lib_prefix_list; do
+    eval op_name=\$lib_${prefix}_name
+    eval op_version=\$lib_${prefix}_ver
+    eval op_ldflags=\$lib_${prefix}_ldflags
+    eval op_no_install=\$lib_${prefix}_no_install
+    eval op_have_cxx=\$lib_${prefix}_have_cxx
+
+    cat <<TOP_EOF >>$op_out_file
+${prefix}_name="$op_name"
+${prefix}_version="$op_version"
+${prefix}_ldflags="$op_ldflags"
+TOP_EOF
+    if test x$op_have_cxx = x1; then
+      echo "${prefix}_static_obj=\`listed -pref=$cxx_static_dir/ -ext=o \$${prefix}_sources\`" >>$op_out_file
+      echo "${prefix}_pic_obj=\`listed -pref=$cxx_pic_dir/ -ext=o \$${prefix}_sources\`" >>$op_out_file
+    else
+      echo "${prefix}_static_obj=\`listed -pref=$c_static_dir/ -ext=o \$${prefix}_sources\`" >>$op_out_file
+      echo "${prefix}_pic_obj=\`listed -pref=$c_pic_dir/ -ext=o \$${prefix}_sources\`" >>$op_out_file
+    fi
+
+    add_params="-all"
+    if test x$op_no_install = x; then
+      add_params="$add_params -install"
+    fi
+    if test x$op_have_cxx = x1; then
+      add_params="$add_params -c++"
+    fi
+    echo "mkrule lib $add_params -static -ldflags=\"\$${prefix}_ldflags\" -n \$${prefix}_name -ver \$${prefix}_version -obj \$${prefix}_static_obj >>\$MAKEFILE" >>$op_out_file
+    echo "mkrule lib $add_params -shared -ldflags=\"\$${prefix}_ldflags\" -n \$${prefix}_name -ver \$${prefix}_version -obj \$${prefix}_pic_obj >>\$MAKEFILE" >>$op_out_file
+    echo "" >>$op_out_file
+  done
+fi
+
+
+if test x$have_custom_inst_stuff = x1; then
+  cat <<TOP_EOF >>$op_out_file
+################################################################################
+# INSTALLATION FILES
+TOP_EOF
+  if test -n "$op_inst_bin"; then
+    echo "install_bin=\`listed -pref=\$SRCDIR/ $op_inst_bin\`" >>$op_out_file
+  fi
+  if test -n "$op_inst_sbin"; then
+    echo "install_sbin=\`listed -pref=\$SRCDIR/ $op_inst_sbin\`" >>$op_out_file
+  fi
+  if test -n "$op_inst_lib"; then
+    echo "install_lib=\`listed -pref=\$SRCDIR/ $op_inst_lib\`" >>$op_out_file
+  fi
+  if test -n "$op_inst_libexec"; then
+    echo "install_libexec=\`listed -pref=\$SRCDIR/ $op_inst_libexec\`" >>$op_out_file
+  fi
+  if test -n "$op_inst_inc"; then
+    echo "install_inc=\`listed -pref=\$SRCDIR/ $op_inst_inc\`" >>$op_out_file
+  fi
+  if test -n "$op_inst_man1"; then
+    echo "install_man1=\`listed -pref=\$SRCDIR/ $op_inst_man1\`" >>$op_out_file
+  fi
+  if test -n "$op_inst_man2"; then
+    echo "install_man2=\`listed -pref=\$SRCDIR/ $op_inst_man2\`" >>$op_out_file
+  fi
+  if test -n "$op_inst_man3"; then
+    echo "install_man3=\`listed -pref=\$SRCDIR/ $op_inst_man3\`" >>$op_out_file
+  fi
+  if test -n "$op_inst_man4"; then
+    echo "install_man4=\`listed -pref=\$SRCDIR/ $op_inst_man4\`" >>$op_out_file
+  fi
+  if test -n "$op_inst_man5"; then
+    echo "install_man5=\`listed -pref=\$SRCDIR/ $op_inst_man5\`" >>$op_out_file
+  fi
+  if test -n "$op_inst_man6"; then
+    echo "install_man6=\`listed -pref=\$SRCDIR/ $op_inst_man6\`" >>$op_out_file
+  fi
+  if test -n "$op_inst_man7"; then
+    echo "install_man7=\`listed -pref=\$SRCDIR/ $op_inst_man7\`" >>$op_out_file
+  fi
+  if test -n "$op_inst_man8"; then
+    echo "install_man8=\`listed -pref=\$SRCDIR/ $op_inst_man8\`" >>$op_out_file
+  fi
+  if test -n "$op_inst_doc"; then
+    echo "install_doc=\`listed -pref=\$SRCDIR/ $op_inst_doc\`" >>$op_out_file
+  fi
+  if test -n "$op_inst_share"; then
+    echo "install_share=\`listed -pref=\$SRCDIR/ $op_inst_share\`" >>$op_out_file
+  fi
+  if test -n "$op_inst_etc"; then
+    echo "install_etc=\`listed -pref=\$SRCDIR/ $op_inst_etc\`" >>$op_out_file
+  fi
+
+  if test -n "$op_inst_bin"; then
+    echo "mkrule install bin \$install_bin >>\$MAKEFILE" >>$op_out_file
+  fi
+  if test -n "$op_inst_sbin"; then
+    echo "mkrule install sbin \$install_sbin >>\$MAKEFILE" >>$op_out_file
+  fi
+  if test -n "$op_inst_lib"; then
+    echo "mkrule install lib \$install_lib >>\$MAKEFILE" >>$op_out_file
+  fi
+  if test -n "$op_inst_libexec"; then
+    echo "mkrule install libexec \$install_libexec >>\$MAKEFILE" >>$op_out_file
+  fi
+  if test -n "$op_inst_inc"; then
+    echo "mkrule install inc \$install_inc >>\$MAKEFILE" >>$op_out_file
+  fi
+  if test -n "$op_inst_man1"; then
+    echo "mkrule install man1 \$install_man1 >>\$MAKEFILE" >>$op_out_file
+  fi
+  if test -n "$op_inst_man2"; then
+    echo "mkrule install man2 \$install_man2 >>\$MAKEFILE" >>$op_out_file
+  fi
+  if test -n "$op_inst_man3"; then
+    echo "mkrule install man3 \$install_man3 >>\$MAKEFILE" >>$op_out_file
+  fi
+  if test -n "$op_inst_man4"; then
+    echo "mkrule install man4 \$install_man4 >>\$MAKEFILE" >>$op_out_file
+  fi
+  if test -n "$op_inst_man5"; then
+    echo "mkrule install man5 \$install_man5 >>\$MAKEFILE" >>$op_out_file
+  fi
+  if test -n "$op_inst_man6"; then
+    echo "mkrule install man6 \$install_man6 >>\$MAKEFILE" >>$op_out_file
+  fi
+  if test -n "$op_inst_man7"; then
+    echo "mkrule install man7 \$install_man7 >>\$MAKEFILE" >>$op_out_file
+  fi
+  if test -n "$op_inst_man8"; then
+    echo "mkrule install man8 \$install_man8 >>\$MAKEFILE" >>$op_out_file
+  fi
+  if test -n "$op_inst_doc"; then
+    echo "mkrule install doc \$install_doc >>\$MAKEFILE" >>$op_out_file
+  fi
+  if test -n "$op_inst_share"; then
+    echo "mkrule install share \$install_share >>\$MAKEFILE" >>$op_out_file
+  fi
+  if test -n "$op_inst_etc"; then
+    echo "mkrule install etc \$install_etc >>\$MAKEFILE" >>$op_out_file
+  fi
+  echo "" >>$op_out_file
+fi
+
+if test -n "$op_subdirs"; then
+  cat <<"TOP_EOF" >>$op_out_file
+################################################################################
+# SUBDIRS
+mkrule subdir -all -install -clean -distclean -d $SUBDIRS >>$MAKEFILE
+for dir in $SUBDIRS; do
+  BUILDROOT=$ABS_BUILDROOT $ABS_SRCDIR/$dir/mkmf
+done
+
+TOP_EOF
+fi
+
+cat <<"TOP_EOF" >>$op_out_file
+################################################################################
+# DONE
+printf "%s\n" "$SRCSUBDIR/$SCRIPT_NAME: DONE"
+
+TOP_EOF
+
+
+# ---final output---------------------------
+chmod +x $op_out_file
+echo "created script $op_out_file"
+

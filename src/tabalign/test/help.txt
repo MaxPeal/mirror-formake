@@ -1,0 +1,20 @@
+
+ Description  descriptions j jj  jjj kll jj ggggg iiiii jjjjj gggg ssssdsd sddfdfdfd fsdkfsdf ssssss eeeee ttttt iiiii ooooo kkkkkkk sssss gggggggg jjjj llll ooooo pppppp hhhhh ddddd
+
+Usage: program [options]
+
+ -my-option     My option very very very very very very very very very long descriptionddd ggg hhh jjj klk lll jjj uuu hhh ggg fff ddd yyy ttt jjj kkkk ggg fff ddd rrr sss
+-my-option      My option very very very very very very very very very long descriptionddd ggg hhh jjj klk lll jjj uuu hhh ggg fff ddd yyy ttt jjj kkkk ggg fff ddd rrr sss
+                   * ++one dddd hhhh jjj kkk lll yy yyff    llllllllllllll sss uuu jjj kkkk ddddddd uuuuuuuuuu iiiiiiiiiii oooooo ppppppp kkkkkk
+                     1 +++paragraph one ddd fff ggg jjj kkk lll ppp uuu kkk fff hhh uuuuu lllll kkkk ddd yyyyy sssss nnnnnn mmmmm kkkkkk yyyyy
+                     2 +++paragraph two ddd fff ggg jjj kkk lll ppp uuu kkk fff hhh uuuuu lllll kkkk ddd yyyyy sssss nnnnnn mmmmm kkkkkk yyyyy
+                     3 +++paragraph three ddd fff ggg jjj kkk lll ppp uuu kkk fff hhh uuuuu lllll kkkk ddd yyyyy sssss nnnnnn mmmmm kkkkkk yyyyy
+                     4 +++paragraph four ddd fff ggg jjj kkk lll ppp uuu kkk fff hhh uuuuu lllll kkkk ddd yyyyy sssss nnnnnn mmmmm kkkkkk yyyyy
+                   * ++two dddd hhhh jjj kkk lll yy yyff    llllllllllllll sss uuu jjj kkkk ddddddd uuuuuuuuuu iiiiiiiiiii oooooo ppppppp kkkkkk
+                   * ++three dddd hhhh jjj kkk lll yy yyff    llllllllllllll sss uuu jjj kkkk ddddddd uuuuuuuuuu iiiiiiiiiii oooooo ppppppp kkkkkk
+                   * ++four dddd hhhh jjj kkk lll yy yyff    llllllllllllll sss uuu jjj kkkk ddddddd uuuuuuuuuu iiiiiiiiiii oooooo ppppppp kkkkkk
+ -my-option     My option very very very very very very very very very long descriptionddd ggg hhh jjj klk lll jjj uuu hhh ggg fff ddd yyy ttt jjj kkkk ggg fff ddd rrr sss
+ -my-option     My option very very very very very very very very very long descriptionddd ggg hhh jjj klk lll jjj uuu hhh ggg fff ddd yyy ttt jjj kkkk ggg fff ddd rrr sss
+ -my-option     My option very very very very very very very very very long descriptionddd ggg hhh jjj klk lll jjj uuu hhh ggg fff ddd yyy ttt jjj kkkk ggg fff ddd rrr sss
+ -my-option     My option very very very very very very very very very long descriptionddd ggg hhh jjj klk lll jjj uuu hhh ggg fff ddd yyy ttt jjj kkkk ggg fff ddd rrr sss
+ -my-option     My option very very very very very very very very very long descriptionddd ggg hhh jjj klk lll jjj uuu hhh ggg fff ddd yyy ttt jjj kkkk ggg fff ddd rrr ssssssssssssssssssssssssssssssssssssss

@@ -1,0 +1,330 @@
+#!/bin/sh
+#
+# Author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
+#
+
+script_name=`basename $0`
+script_dir=`dirname $0`
+
+config_mode=false
+config_loaded=false
+
+if test x"$1" = "xc"; then
+  lang=c
+  shift
+elif test x"$1" = "xc++"; then
+  lang="c++"
+  shift
+else
+  lang=c
+fi
+
+if test x"$lang" = "xc++"; then
+  iam_cxx=true
+  iam_cc=false
+  conf_name="cxx.conf"
+  config_tool="$script_dir/ccconfig cx"
+elif test x"$lang" = "xc"; then
+  iam_cxx=false
+  iam_cc=true
+  conf_name="cc.conf"
+  config_tool="$script_dir/ccconfig cc"
+fi
+
+
+print_help() {
+cat <<EOF
+Usage: ${script_name} -h|--help | [c|c++] [OPTIONS] <src>
+
+OPTIONS
+  --direct=<params>   Pass vendor specific parameters directly
+  -I<dir>             Add the directory dir to the list of directories to be
+                      searched for header files
+                      for -l
+  -D<macro>[=<defn>]  Predefine name as a macro
+  -U<macro>           Cancel any previous definition of name, either built in
+                      or provided with a -D option
+  --cfg <file>        Define custom configuration file
+  -stdout             Print Make dependency data to stdout
+  -list <file>        Add a generated dependency file to a <file> file. 
+                      This file contains a list of all
+                      Make dependency files (their pathes). This file is
+                      included in a Makefile.
+  -o <file>           Output object file
+EOF
+}
+
+makedepend() {
+
+# Description: generate sources dependencies for using inside make
+# TODO: add parameter to generate absolute path dependencies (targets and prerequisites)
+
+  obj_dir=
+  rm_obj_dir=
+
+  src_name=`basename $mkdep_src`
+  ext=`echo $src_name | sed "s/.*\.//g" | sed "s/ //g"`
+  dep_name_base=`echo $src_name | sed "s/\.${ext}$//"`
+  
+  comp=$CONFIG_CC
+
+  if test x"$mkdep_obj" != "x"; then
+   obj_dir=`dirname $mkdep_obj`
+  fi
+  
+  if test x"$obj_dir" = "x"; then
+    obj_dir="."
+  fi
+  
+  if test ! -d $obj_dir; then
+    mkdir -p $obj_dir
+    rm_obj_dir=1
+  fi
+  
+  dep_name_d="$obj_dir/${dep_name_base}.d"
+  dep_name_p="$obj_dir/${dep_name_base}.p"
+  dep_name_t="$obj_dir/${dep_name_base}.t"
+  
+  eval $comp $mkdep_flags -M $mkdep_src > $dep_name_d
+  
+  if test x"$obj_dir" != "x."; then
+    cat $dep_name_d | sed "s/$dep_name_base\.o/$obj_dir\/&/" > $dep_name_t
+    cat $dep_name_t > $dep_name_d
+    rm $dep_name_t
+  fi
+  
+  cat $dep_name_d > $dep_name_p
+  sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$//' -e '/^$/ d' -e 's/$/ :/' -e 's/^ *//' < $dep_name_d >> $dep_name_p
+  rm $dep_name_d
+  mv $dep_name_p $dep_name_d
+  if test x"$param_stdout" = "x1"; then
+    cat $dep_name_d
+    rm $dep_name_d
+    if test x"$rm_obj_dir" = "x1"; then
+      rmdir $obj_dir 2>/dev/null
+    fi
+  else
+    if test x"$mkdep_list" != "x"; then
+      if test -f $mkdep_list; then
+        if cat $mkdep_list | grep -- "$dep_name_d" > /dev/null; then
+          true
+        else
+          printf -- "include ${dep_name_d}\n" >> $mkdep_list
+        fi
+      else
+        printf -- "include ${dep_name_d}\n" >> $mkdep_list
+      fi
+    fi
+  fi
+}
+
+abs_path() {
+  arg=$1
+  _orig_dir=`pwd`
+  if test -e "$arg"; then
+    if test -d $arg; then
+      file=
+    else
+      file=`basename -- $arg`
+      arg=`dirname -- $arg`
+    fi
+
+    cd $arg
+    abs_path_ret=`pwd`
+    if test x"$file" != "x"; then
+      abs_path_ret="$abs_path_ret/$file"
+    fi
+
+    cd $_orig_dir
+  else
+    if echo -n "$arg" | grep "^/" > /dev/null; then
+      abs_path_ret="$arg"
+    else
+      abs_path_ret="$_orig_dir/$arg"
+    fi
+  fi
+}
+
+
+
+parse_params() {
+  current_opt=
+  while test $# -gt 0; do
+    case $1 in
+      -h|--help)
+        print_help
+        exit 0
+        ;;
+      -stdout)
+        param_stdout=1
+        current_opt=
+        ;;
+      -list)
+        current_opt="list"
+        ;;
+      --cfg)
+        current_opt=cfg
+        ;;
+      --direct=*)
+        param_direct=1
+        arg=`echo $1 | sed 's/^--direct=//'`
+        param_direct_vals="$param_direct_vals $arg"
+        current_opt=
+        ;;
+      -I*)
+        param_inc=1
+        arg=`echo $1 | sed 's/^-I//'`
+        param_inc_vals="$param_inc_vals $arg"
+        current_opt=
+        ;;
+      -D*)
+        param_def=1
+        arg=`echo $1 | sed 's/^-D//'`
+        param_def_vals="$param_def_vals $arg"
+        current_opt=
+        ;;
+      -U*)
+        param_undef=1
+        arg=`echo $1 | sed 's/^-U//'`
+        param_undef_vals="$param_undef_vals $arg"
+        current_opt=
+        ;;
+      -o)
+        current_opt=o
+        ;;
+      -*)
+        _ignore=1
+        current_opt=
+        ;;
+      *)
+        if test x"$current_opt" != "x"; then
+          case $current_opt in
+            cfg)
+              config_file="$arg"
+              abs_path "$config_file"
+              config_file=$abs_path_ret
+              current_opt=
+              ;;
+            list)
+              mkdep_list=$1
+              current_opt=
+              ;;
+            o)
+              param_out=1
+              out_file=$1
+              current_opt=
+              ;;
+          esac
+        else
+          case $1 in
+            *.[Cc]|*.[Cc][Xx][Xx]|*.[Cc]++)
+              src_file=$1
+              ;;
+            *)
+              _ignore=1
+              ;;
+          esac
+        fi
+        ;;
+    esac
+    shift
+  done
+}
+
+
+abs_path `dirname $0`
+config_file=$abs_path_ret/$conf_name
+
+if test $# -eq 0; then
+  printf "${script_name}: error: no input\n"
+  exit 1
+fi
+
+for arg in "$@"; do
+  case $arg in
+    -h|--help)
+      print_help
+      exit 0
+      ;;
+    --cfg)
+      current_opt=cfg
+      ;;
+    -)
+      current_opt=
+      ;;
+    *)
+      case $current_opt in
+        cfg)
+          config_file="$arg"
+          abs_path "$config_file"
+          config_file=$abs_path_ret
+          current_opt=
+          ;;
+     esac
+     ;;
+  esac
+done
+
+if test ! -f $config_file; then
+  if test x"$config_file" != "x"; then
+    $config_tool --cfg $config_file 2>/dev/null 1>&2
+  else
+    $config_tool 2>/dev/null 1>&2
+  fi
+  if test $? -ne 0; then
+    printf "%s\n" "$script_name: error: $config_tool error"
+    exit 1
+  fi
+
+  if test ! -f $config_file; then
+    printf "%s\n" "$script_name: error: config file not found: $config_file"
+    exit 1
+  fi
+fi
+
+. $config_file
+
+param_direct=$PARAM_DIRECT
+param_direct_vals=$CONFIG_DIRECT
+param_inc=$PARAM_INC
+param_inc_vals=$CONFIG_INC
+param_def=$PARAM_DEF
+param_def_vals=$CONFIG_DEF
+param_undef=$PARAM_UNDEF
+param_undef_vals=$CONFIG_UNDEF
+
+parse_params "$@"
+
+
+if test x"$CONFIG_CC" = "x"; then
+  printf "${script_name}: error: no compiler found\n"
+  exit 1
+fi
+
+if test x"$param_direct" = "x1"; then
+  mkdep_flags="$mkdep_flags $param_direct_vals"
+fi
+
+for arg in $param_inc_vals; do
+  mkdep_flags="$mkdep_flags -I${arg}"
+done
+
+for arg in $param_def_vals; do
+  mkdep_flags="$mkdep_flags -D${arg}"
+done
+
+for arg in $param_undef_vals; do
+  mkdep_flags="$mkdep_flags -U${arg}"
+done
+
+if test x"$out_file" != "x"; then 
+  mkdep_obj=$out_file
+fi
+
+
+if test x"$CONFIG_CC_NAME" = "xgcc"; then
+  mkdep_src=$src_file
+  makedepend
+fi
+
+

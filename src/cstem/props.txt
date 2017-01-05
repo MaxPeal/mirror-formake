@@ -1,0 +1,141 @@
+########## CC_BLOCK_START
+COMPILERS
+--------------------------------------------------------------------------------
+ack               Amsterdam Compiler Kit
+altium_chc        Altium C-to-Hardware (CHC) compiler
+altium_cmb        Altium MicroBlaze C
+c166              Keil C166
+c51               Keil C51
+compcert          CompCert C
+hpansic           HP ANSI C
+imagecraft        ImageCraft C
+lcc               LCC (A Retargetable Compiler for ANSI C)
+pelles            Pelles C
+sdcc              SDCC (Small Device C Compiler)
+tinyc             Tiny C Compiler (TCC, TinyCC)
+vbcc              VBCC
+vosc              Stratus VOS C
+########## CX_BLOCK_START
+COMPILERS
+--------------------------------------------------------------------------------
+hpacc             HP aC++
+########## BLOCK_END
+armc              ARM Compiler (by ARM)
+borlandc          Borland C++ (by Borland, CodeGear, Embarcadero)
+clang             Clang
+codewrr           CodeWarrior
+comeau            Comeau C/C++
+diabc             Wind River Diab Compiler
+dignus            Dignus Systems/C and Systems/C++
+dmc               Digital Mars C/C++
+edg               Edison Design Group
+ekopath           PathScale EKOPath
+gcc               GCC
+ghs               Green Hill C/C++
+iar               IAR C/C++
+intel             Intel C/C++
+metaware          MetaWare C/C++
+mingw             MinGW
+mingw64           Mingw-w64
+mipspro           SGI MIPSPro
+mri               Microtec C/C++
+msc               Microsoft Visual C/C++
+open64            Open64
+pgi               Portland Group C/C++
+renesas           Renesas C/C++
+snc               SN C/C++ Compiler (ProDG)
+sunpro            Solaris Studio (Sun Studio, SunPro)
+tendra            TenDRA C/C++
+ticc              Texas Instruments C/C++ Compiler
+watcom            Watcom C/C++ (Open Watcom C/C++)
+xlc               IBM XL C/C++
+
+########## CC_BLOCK_START
+LANGUAGE STANDARDS
+--------------------------------------------------------------------------------
+c89               C89 (ANSI C, ANSI X3.159-1989, C90, ISO C, ISO/IEC 9899:1990)
+c95               C95 (ISO/IEC 9899-1:1994)
+c99               C99 (ISO/IEC 9899:1999)
+c11               C11 (ISO/IEC 9899:2011)
+
+########## CX_BLOCK_START
+LANGUAGE STANDARDS
+--------------------------------------------------------------------------------
+cxx98             C++98 (ISO/IEC 14882:1998)
+cxx11             C++11 (ISO/IEC 14882:2011)
+cxx14             C++14 (ISO/IEC 14882:2014)
+cxx_cli           C++/CLI (ECMA-372)
+embedded_cxx      Embedded C++ (EC++)
+########## BLOCK_END
+
+TARGET OPERATING SYSTEMS
+--------------------------------------------------------------------------------
+aix               AIX (Advanced Interactive eXecutive)
+amigaos           AmigaOS
+android           Android
+cygwin            Cygwin
+dragonfly         DragonFly BSD
+ecos              eCos (Embedded Configurable Operating System)
+freebsd           FreeBSD
+gnuhurd           GNU/Hurd
+gnulinux          GNU/Linux
+hpux              HP-UX (Hewlett-Packard UniX)
+integrity         Integrity
+interix           Interix (POSIX-conformant Unix subsystem for Windows)
+irix              IRIX
+lynxos            LynxOS RTOS
+minix             MINIX
+morphos           MorphOS
+netbsd            NetBSD
+nonstop           NonStop
+nucleus           Nucleus RTOS
+openbsd           OpenBSD
+os9               Microware OS-9
+osx               OS X (Mac OS X)
+qnx               QNX
+solaris           Solaris
+syllable          Syllable Desktop
+vos               Stratus VOS (Virtual Operating System)
+vxworks           VxWorks
+windows           Windows
+zos               IBM z/OS
+
+TARGET KERNELS
+--------------------------------------------------------------------------------
+freebsd           FreeBSD
+linux             Linux
+
+TARGET ARCHITECTURES
+--------------------------------------------------------------------------------
+alpha             Alpha
+arm               ARM (Advanced RISC Machine)
+arm64             ARM 64-bit (ARMv8, AArch64 or ARM64)
+blackfin          Blackfin
+epiphany          Epiphany
+hppa              PA-RISC
+ia64              IA-64
+mips              MIPS
+powerpc           PowerPC
+sparc             SPARC
+superh            SuperH
+x86               x86
+x86_64            x86-64 (AMD64)
+zarch             IBM z/Architecture
+
+TARGET BITNESS
+--------------------------------------------------------------------------------
+32                32-bit CPU
+64                64-bit CPU
+
+TARGET ENDIANESS
+--------------------------------------------------------------------------------
+big               Big-endian
+little            Little-endian
+
+TARGET DATA MODELS        char|short|int32|int|long|pointer|long long (int64)
+------------------------------+-----+-----+---+----+-------+--------------------
+lp32              LP32    8   |16   |     |16 |32  |32     |
+ilp32             ILP32   8   |16   |     |32 |32  |32     |
+ilp64             ILP64   8   |16   |32   |64 |64  |64     |64
+llp64             LLP64   8   |16   |     |32 |32  |64     |64
+lp64              LP64    8   |16   |     |32 |64  |64     |64

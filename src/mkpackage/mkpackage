@@ -1,0 +1,29 @@
+#!/bin/sh
+#
+# Author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
+#
+
+version_string="mkpackage 1.0"
+
+origdir=`pwd`
+script_name=`basename "$0"`
+
+print_help() {
+  cat <<EOF
+$script_name -v
+$script_name [options]
+
+ -v      print version
+
+options:
+ -d DIR  package script dir
+ -cc     install C related scripts
+ -cxx    install C++ related scripts
+
+EOF
+}
+
+print_version() {
+  echo "$version_string"
+}
+

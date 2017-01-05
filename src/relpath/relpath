@@ -1,0 +1,150 @@
+#!/bin/sh
+#
+# Author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
+#
+
+abs_path() {
+  _sub_orig_dir=`pwd`
+  if test $# = 2; then
+    _arg_orig_dir=$1
+    _arg=$2
+    if echo -n "$_arg" | grep "^/" > /dev/null; then
+      :
+    else
+      _arg=`echo -n "$_arg_orig_dir/$_arg" | sed 's!//*!/!g'`
+    fi
+  else
+    _arg=$1
+  fi
+  if test -e "$_arg"; then
+    if test -d $_arg; then
+      _file=
+    else
+      _file=`basename -- $_arg`
+      _arg=`dirname -- $_arg`
+    fi
+
+    cd $cd_param $_arg
+    abs_path_ret=`pwd`
+    if test x"$_file" != "x"; then
+      abs_path_ret="$abs_path_ret/$_file"
+    fi
+
+    cd $cd_param $_sub_orig_dir
+  else
+    if echo -n "$_arg" | grep "^/" > /dev/null; then
+      abs_path_ret="$_arg"
+    else
+      abs_path_ret="$_sub_orig_dir/$_arg"
+    fi
+  fi
+}
+
+
+rel_path() {
+  file1=$1
+  file2=$2
+  if test -z "$file2"; then
+    file2=`pwd`
+  fi
+  abs_path "$file1"
+  file1=$abs_path_ret
+  abs_path "$file2"
+  file2=$abs_path_ret
+  
+  break1=0
+  dir_down=
+  found_base=0
+  while test $break1 = 0; do
+    if test "$file1" = "/"; then
+      break1=1
+    fi
+
+    break2=0
+    dir_up=
+    file2_tmp=$file2
+    while test $break2 = 0; do
+      if test "$file2_tmp" = "/"; then
+        break2=1
+      fi
+      if test "$file1" = "$file2_tmp"; then
+        break2=1
+        found_base=1
+      else
+        if test -z "$dir_up"; then
+          dir_up=".."
+        else
+          dir_up="$dir_up/.."
+        fi
+        file2_tmp=`dirname "$file2_tmp"`
+      fi
+    done
+
+    if test $found_base = 0; then
+      base_name=`basename "$file1"`
+      if test -z "$dir_down"; then
+        dir_down=$base_name
+      else
+        dir_down="$base_name/$dir_down"
+      fi
+      file1=`dirname "$file1"`
+    else
+      break1=1
+    fi
+  done
+
+  if test -z "$dir_up"; then
+    if test -z "$dir_down"; then
+      rel_path_ret="."
+    else
+      rel_path_ret="$dir_down"
+    fi
+  else
+    if test -z "$dir_down"; then
+      rel_path_ret=$dir_up
+    else
+      rel_path_ret="$dir_up/$dir_down"
+    fi
+  fi
+}
+
+# shorter and faster version
+# Function [rel_path2 dir [file]] returns path of 'file' (or current dir) relative to a 'dir'
+rel_path2() {
+  abs_path "$1"
+  file_from=$abs_path_ret
+  if test -n "$2"; then
+    abs_path "$2"
+    file_to=$abs_path_ret
+  else
+    file_to=`pwd`
+  fi
+
+  file_from_tmp=$file_from
+  while test `expr "$file_to" : "^$file_from_tmp"` -eq 0; do
+    file_from_tmp=`dirname "$file_from_tmp"`
+  done
+  dir_up=`echo -n "$file_from" | sed "s:^$file_from_tmp::" | sed 's:^/::' | sed 's:[^/][^/]*:..:g'`
+  dir_down=`echo -n "$file_to" | sed "s:^$file_from_tmp::" | sed 's:^/::'`
+  rel_path_ret=`echo -n "$dir_up/$dir_down" | sed 's:^/*$:.:' | sed 's:^/*::' | sed 's:/*$::'`
+}
+
+cd_param=
+orig_dir=`pwd`
+cd -P / >/dev/null 2>&1
+if test $? -eq 0; then
+  cd_param="-P"
+fi
+cd "$orig_dir"
+
+if test $# -eq 1; then
+  rel_path2 $1 ""
+elif test $# -eq 2; then
+  rel_path2 $1 $2
+else
+  echo "Usage: $0 FROM [TO]"
+  exit 1
+fi
+
+echo $rel_path_ret
+

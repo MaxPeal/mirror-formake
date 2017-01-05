@@ -1,0 +1,110 @@
+$ gcc -c -o test.o test.c
+$ gcc -O0 -g3 -Wall -c -o test.o test.c
+$ gcc -O0 -g3 -Wall -c -o test.o test.c
+$ gcc -o app test.o
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -o app test.o
+$ gcc -lX11 -lXt -lXm -ljpeg -lQtGui -lz -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lXaw -lcrypto -o app test.o
+$ gcc -O0 -g3 -Wall -c -o test.o test_cc.c
+$ gcc -O0 -g3 -Wall -c -o test.o test_cc.c
+$ gcc -O0 -g3 -Wall -c -o test.o test_cc.c
+$ gcc -O0 -g3 -Wall -c -o test.o test_cc.c
+$ gcc -O0 -g3 -Wall -c -o test.o test_cc.c
+$ gcc -O0 -g3 -Wall -c -o test.o test_cc2.c
+$ gcc -lX11 -lXt -lXm -ljpeg -lQtGui -lz -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lXaw -lcrypto -o app test.o
+/usr/lib/gcc/x86_64-pc-linux-gnu/4.8.5/../../../../lib64/crt1.o: In function `_start':
+(.text+0x20): undefined reference to `main'
+collect2: error: ld returned 1 exit status
+test again ...
+$ gcc -O0 -g3 -Wall -c -o test.o test_cc2.c
+$ gcc -O0 -g3 -Wall -c -o test.o test_cc.c
+$ gcc -O0 -g3 -Wall -c -o test.o test_cc.c
+$ gcc -O0 -g3 -Wall -c -o test.o test_cc.c
+$ gcc -O0 -g3 -Wall -c -o test.o test_cc.c
+$ gcc -O0 -g3 -Wall -c -o test.o test_cc.c
+test_cc.c:24:18: warning: extra tokens at end of #ifdef directive [enabled by default]
+ #ifdef __linux__ && defined __unix__
+                  ^
+$ gcc -O0 -g3 -Wall -c -o test.o test_cc.c
+test_cc.c:24:18: warning: extra tokens at end of #ifdef directive [enabled by default]
+ #ifdef __linux__ && defined __unix__
+                  ^
+$ gcc -O0 -g3 -Wall -c -o test.o test_cc.c
+test_cc.c:24:18: warning: extra tokens at end of #ifdef directive [enabled by default]
+ #ifdef __linux__ && defined __unix__
+                  ^
+$ gcc -O0 -g3 -Wall -c -o test.o test_cc.c
+test_cc.c:24:18: warning: extra tokens at end of #ifdef directive [enabled by default]
+ #ifdef __linux__ && defined __unix__
+                  ^
+$ gcc -O0 -g3 -Wall -c -o test.o test_cc.c
+test_cc.c:24:18: warning: extra tokens at end of #ifdef directive [enabled by default]
+ #ifdef __linux__ && defined __unix__
+                  ^
+$ gcc -O0 -g3 -Wall -c -o test.o test_cc2.c
+test_cc2.c:24:18: warning: extra tokens at end of #ifdef directive [enabled by default]
+ #ifdef __linux__ && defined __unix__
+                  ^
+test_cc2.c: In function ‘main’:
+test_cc2.c:33:71: warning: cast from pointer to integer of different size [-Wpointer-to-int-cast]
+ int main(int argc, char *argv[]) {int iflib_xmPushButtonWidgetClass = (int) xmPushButtonWidgetClass; return 0;}
+                                                                       ^
+test_cc2.c:33:39: warning: unused variable ‘iflib_xmPushButtonWidgetClass’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int iflib_xmPushButtonWidgetClass = (int) xmPushButtonWidgetClass; return 0;}
+                                       ^
+$ gcc -lX11 -lXt -lXm -ljpeg -lQtGui -lz -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lXaw -lcrypto -o app test.o
+$ gcc -O0 -g3 -Wall -c -o test.o test_cc2.c
+test_cc2.c: In function ‘main’:
+test_cc2.c:2:41: warning: unused variable ‘iflib_xmTextFieldWidgetClass’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {void *iflib_xmTextFieldWidgetClass = xmTextFieldWidgetClass; return 0;}
+                                         ^
+$ gcc -lX11 -lXt -lXm -ljpeg -lQtGui -lz -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lXaw -lcrypto -o app test.o
+$ gcc -O0 -g3 -Wall -c -o test.o test_cc2.c
+test_cc2.c:24:18: warning: extra tokens at end of #ifdef directive [enabled by default]
+ #ifdef __linux__ && defined __unix__
+                  ^
+test_cc2.c: In function ‘main’:
+test_cc2.c:33:39: warning: unused variable ‘iflib_XmSET’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int iflib_XmSET = (int) XmSET; return 0;}
+                                       ^
+$ gcc -lX11 -lXt -lXm -ljpeg -lQtGui -lz -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lXaw -lcrypto -o app test.o
+$ gcc -O0 -g3 -Wall -c -o test.o test_cc2.c
+test_cc2.c:24:18: warning: extra tokens at end of #ifdef directive [enabled by default]
+ #ifdef __linux__ && defined __unix__
+                  ^
+test_cc2.c: In function ‘main’:
+test_cc2.c:33:39: warning: unused variable ‘iflib___GNUC__’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int iflib___GNUC__ = (int) __GNUC__; return 0;}
+                                       ^
+$ gcc -lX11 -lXt -lXm -ljpeg -lQtGui -lz -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lXaw -lcrypto -o app test.o
+$ gcc -O0 -g3 -Wall -c -o test.o test_cc2.c
+test_cc2.c:24:18: warning: extra tokens at end of #ifdef directive [enabled by default]
+ #ifdef __linux__ && defined __unix__
+                  ^
+test_cc2.c: In function ‘main’:
+test_cc2.c:33:39: warning: unused variable ‘iflib___linux__’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int iflib___linux__ = (int) __linux__; return 0;}
+                                       ^
+$ gcc -lX11 -lXt -lXm -ljpeg -lQtGui -lz -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lXaw -lcrypto -o app test.o
+$ gcc -O0 -g3 -Wall -c -o test.o test_cc2.c
+$ gcc -lX11 -lXt -lXm -ljpeg -lQtGui -lz -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lXaw -lcrypto -o app test.o
+$ gcc -O0 -g3 -Wall -c -o test.o test_cc2.c
+$ gcc -lX11 -lXt -lXm -ljpeg -lQtGui -lz -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lXaw -lcrypto -o app test.o
+$ gcc -O0 -g3 -Wall -c -o test.o test_cc2.c
+test_cc2.c:1:5: warning: conflicting types for built-in function ‘fprintf’ [enabled by default]
+ int fprintf(int);
+     ^
+$ gcc -lX11 -lXt -lXm -ljpeg -lQtGui -lz -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lXaw -lcrypto -o app test.o
+$ gcc -O0 -g3 -Wall -c -o test.o test_cc2.c
+$ gcc -lX11 -lXt -lXm -ljpeg -lQtGui -lz -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lXaw -lcrypto -o app test.o
+$ gcc -O0 -g3 -Wall -c -o test.o test.c
+test.c: In function ‘main’:
+test.c:16:9: warning: unused variable ‘b’ [-Wunused-variable]
+   void *b = xmPushButtonWidgetClass;
+         ^
+test.c:15:9: warning: variable ‘a’ set but not used [-Wunused-but-set-variable]
+   void *a;
+         ^
+test.c:20:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+$ gcc -lX11 -lXt -lXm -ljpeg -lQtGui -lz -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lXaw -lcrypto -o app test.o
