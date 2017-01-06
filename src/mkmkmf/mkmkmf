@@ -138,7 +138,10 @@ while test $# -gt 0; do
         echo "$script_name: error: parameter -srcroot requires argument" >&2
         exit 1
       fi
-      op_srcroot=$1
+      op_srcroot=`echo -n "$1" | sed 's!//*!/!g'`
+      if test "$op_srcroot" != "/"; then
+        op_srcroot=`echo -n "$op_srcroot" | sed 's!/*$!!'`
+      fi
       current_opt=
       ;;
     -subdirs)
@@ -515,7 +518,7 @@ for prefix in $lib_prefix_list; do
   fi
 done
 
-formake_scripts="abspath relpath"
+formake_scripts="abspath relpath mkrule"
 if test -n "$have_cxx$have_c$use_libro$have_inst_stuff"; then
   formake_scripts="$formake_scripts listed"
 fi
@@ -530,10 +533,6 @@ fi
 
 if test x$use_libro = x1; then
   formake_scripts="$formake_scripts libro"
-fi
-
-if test -n "$have_cxx$have_c$use_libro"; then
-  formake_scripts="$formake_scripts mkrule"
 fi
 
 echo "using the following Formake scripts: $formake_scripts"
@@ -601,6 +600,7 @@ SRCDIR=`relpath ./ $ABS_SRCDIR`
 ################################################################################
 # INIT MAKEFILE
 mkrule all >$MAKEFILE
+mkrule distclean $MAKEFILE >>$MAKEFILE
 
 TOP_EOF
 

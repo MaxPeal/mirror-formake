@@ -1,0 +1,65 @@
+#!/bin/sh
+################################################################################
+# This script was generated with the following command:
+#  mkconfigure -name formake -ver 1.0.0
+#
+# Important variables to use:
+#   PACKAGE_NAME     - name of package
+#   PACKAGE_VERSION  - package version
+#   CUSTOM_OPTIONS   - custom configure options
+#   FORMAKE_TOOLS    - list of Formake tools used in this package
+#   SRCROOT          - package source root directory (package top dir)
+#   BUILDROOT        - VPATH build root (package build root dir)
+#   SUBSCRIPT        - path to a subscript - script with custom subroutines
+#   VPATH            - enable/disable vpath
+
+################################################################################
+# BASE CONFIGURATION
+PACKAGE_NAME="formake"
+PACKAGE_VERSION="1.0.0"
+INSTALL_OPTIONS="-prefix -exec-prefix -bindir -sbindir -libexecdir -libdir \
+                 -incdir -etcdir -vardir -sharedir -mandir -docdir"
+CUSTOM_OPTIONS=""
+FORMAKE_TOOLS="mkbuildroot abspath relpath install mkrule"
+SRCROOT=`dirname $0`
+BUILDROOT=`pwd`
+PATH=$BUILDROOT/formake:$SRCROOT/formake:$PATH
+
+################################################################################
+# OPTIONS
+confighelp -h >/dev/null || exit 1
+optool validate "$@" - -h -help --help $INSTALL_OPTIONS $CUSTOM_OPTIONS || exit 1
+if optool ifor "$@" - -h -help --help; then
+  confighelp -install
+  exit 0
+fi
+optool rc "$@" >build.conf
+. ./build.conf
+
+################################################################################
+# DEPENDENCY TOOLS
+iftool $FORMAKE_TOOLS || exit 1
+
+################################################################################
+# INIT BUILDROOT
+mkbuildroot $SRCROOT $BUILDROOT || exit 1
+rm -f build.h configure.log
+
+################################################################################
+# CONFIG FILES
+optool rc -package-name "$PACKAGE_NAME" -package-ver $PACKAGE_VERSION >>build.conf
+
+################################################################################
+# MKRULE
+mkrule config -prefix=$PREFIX -exec-prefix=$EXEC_PREFIX -bindir=$BINDIR -sbindir=$SBINDIR \
+          -libexecdir=$LIBEXECDIR -libdir=$LIBDIR -incdir=$INCDIR -etcdir=$ETCDIR \
+          -sharedir=$SHAREDIR -mandir=$MANDIR -docdir=$DOCDIR
+
+################################################################################
+# MKMF
+test -f $SRCROOT/mkmf && BUILDROOT=$BUILDROOT $SRCROOT/mkmf
+
+################################################################################
+# FINISH
+echo "configuring done."
+

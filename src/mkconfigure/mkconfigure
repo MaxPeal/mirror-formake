@@ -250,7 +250,7 @@ fi
 
 cat <<TOP_EOF >>$out_file
 CUSTOM_OPTIONS="$op_params"
-FORMAKE_TOOLS="mkbuildroot $formake_scripts"
+FORMAKE_TOOLS="mkbuildroot abspath relpath $formake_scripts"
 TOP_EOF
 
 cat <<"TOP_EOF" >>$out_file
@@ -268,6 +268,7 @@ config_help_ops=`echo -n "$config_help_ops" | sed 's/^ *//'`
 cat <<TOP_EOF >>$out_file
 ################################################################################
 # OPTIONS
+confighelp -h >/dev/null || exit 1
 optool validate "\$@" - -h -help --help $validate_ops \$CUSTOM_OPTIONS || exit 1
 if optool ifor "\$@" - -h -help --help; then
   confighelp $config_help_ops
