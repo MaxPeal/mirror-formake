@@ -134,6 +134,8 @@ while test $# -ne 0; do
 
     -C) copy_on_change=true;;
 
+    -D) true;;
+
     -d) dir_arg=true;;
 
     -g) chgrpcmd="$chgrpprog $2"

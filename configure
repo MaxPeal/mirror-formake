@@ -20,7 +20,7 @@ PACKAGE_VERSION="1.0.0"
 INSTALL_OPTIONS="-prefix -exec-prefix -bindir -sbindir -libexecdir -libdir \
                  -incdir -etcdir -vardir -sharedir -mandir -docdir"
 CUSTOM_OPTIONS=""
-FORMAKE_TOOLS="mkbuildroot abspath relpath install mkrule"
+FORMAKE_TOOLS="mkbuildroot abspath relpath install listed pofig mkrule"
 SRCROOT=`dirname $0`
 BUILDROOT=`pwd`
 PATH=$BUILDROOT/formake:$SRCROOT/formake:$PATH
@@ -37,27 +37,49 @@ optool rc "$@" >build.conf
 . ./build.conf
 
 ################################################################################
+# VERIFY OPTIONS
+test -n "$PREFIX"      || PREFIX=/usr/local
+test -n "$EXEC_PREFIX" || EXEC_PREFIX=$PREFIX
+test -n "$BINDIR"      || BINDIR=$EXEC_PREFIX/bin
+test -n "$SBINDIR"     || SBINDIR=$EXEC_PREFIX/sbin
+test -n "$LIBEXECDIR"  || LIBEXECDIR=$EXEC_PREFIX/libexec
+test -n "$VARDIR"      || VARDIR=/var
+test -n "$ETCDIR"      || ETCDIR=$PREFIX/etc
+test -n "$LIBDIR"      || LIBDIR=$EXEC_PREFIX/lib
+test -n "$INCDIR"      || INCDIR=$PREFIX/include
+test -n "$SHAREDIR"    || SHAREDIR=$PREFIX/share
+test -n "$MANDIR"      || MANDIR=$SHAREDIR/man
+test -n "$DOCDIR"      || DOCDIR=$SHAREDIR/doc
+
+PACKAGE_SHAREDIR=$SHAREDIR/$PACKAGE_NAME
+PACKAGE_DOCDIR=$SHAREDIR/doc/$PACKAGE_NAME
+
+################################################################################
 # DEPENDENCY TOOLS
 iftool $FORMAKE_TOOLS || exit 1
 
 ################################################################################
 # INIT BUILDROOT
 mkbuildroot $SRCROOT $BUILDROOT || exit 1
-rm -f build.h configure.log
+rm -f configure.log
 
 ################################################################################
 # CONFIG FILES
-optool rc -package-name "$PACKAGE_NAME" -package-ver $PACKAGE_VERSION >>build.conf
+optool rc -package-name $PACKAGE_NAME -package-ver $PACKAGE_VERSION \
+          -prefix $PREFIX -exec-prefix $EXEC_PREFIX -bindir $BINDIR -sbindir $SBINDIR \
+          -libexecdir $LIBEXECDIR -vardir $VARDIR -etcdir $ETCDIR -libdir $LIBDIR \
+          -incdir $INCDIR -sharedir $SHAREDIR -mandir $MANDIR -docdir $DOCDIR \
+          -package-sharedir $PACKAGE_SHAREDIR -package-docdir $PACKAGE_DOCDIR >build.conf
 
 ################################################################################
 # MKRULE
 mkrule config -prefix=$PREFIX -exec-prefix=$EXEC_PREFIX -bindir=$BINDIR -sbindir=$SBINDIR \
           -libexecdir=$LIBEXECDIR -libdir=$LIBDIR -incdir=$INCDIR -etcdir=$ETCDIR \
-          -sharedir=$SHAREDIR -mandir=$MANDIR -docdir=$DOCDIR
+          -sharedir=$PACKAGE_SHAREDIR -mandir=$MANDIR -docdir=$PACKAGE_DOCDIR
 
 ################################################################################
 # MKMF
-test -f $SRCROOT/mkmf && BUILDROOT=$BUILDROOT $SRCROOT/mkmf
+BUILDROOT=$BUILDROOT $SRCROOT/mkmf || exit 1
 
 ################################################################################
 # FINISH

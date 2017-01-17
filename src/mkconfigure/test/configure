@@ -19,16 +19,17 @@ PACKAGE_NAME="my_app"
 PACKAGE_VERSION="1.0.0"
 INSTALL_OPTIONS="-prefix -exec-prefix -bindir -sbindir -libexecdir -libdir \
                  -incdir -etcdir -vardir -sharedir -mandir -docdir"
-C_OPTIONS="-cc -cflags -ldflags -c-ldflags"
-CXX_OPTIONS="-cxx -cxxflags -ldflags -cxx-ldflags"
+C_OPTIONS="-cc -cflags -ldflags -c-ldflags CC CFLAGS LDFLAGS C_LDFLAGS"
+CXX_OPTIONS="-cxx -cxxflags -ldflags -cxx-ldflags CXX CXXFLAGS LDFLAGS CXX_LDFLAGS"
 CUSTOM_OPTIONS="-ldflags -modules -debug -enable-ui -ui-type -xflags -xparam -xxparam"
-FORMAKE_TOOLS="mkbuildroot install pofig cstem cstem+ iflib mkrule"
+FORMAKE_TOOLS="mkbuildroot abspath relpath listed mkrule install pofig cstem cstem+ iflib"
 SRCROOT=`dirname $0`
 BUILDROOT=`pwd`
 PATH=$BUILDROOT/formake:$SRCROOT/formake:$PATH
 
 ################################################################################
 # OPTIONS
+confighelp -h >/dev/null || exit 1
 optool validate "$@" - -h -help --help $INSTALL_OPTIONS $C_OPTIONS $CXX_OPTIONS $CUSTOM_OPTIONS || exit 1
 if optool ifor "$@" - -h -help --help; then
   confighelp -install -cc -cxx
@@ -48,6 +49,24 @@ optool rc "$@" >build.conf
 . ./build.conf
 
 ################################################################################
+# VERIFY OPTIONS
+test -n "$PREFIX"      || PREFIX=/usr/local
+test -n "$EXEC_PREFIX" || EXEC_PREFIX=$PREFIX
+test -n "$BINDIR"      || BINDIR=$EXEC_PREFIX/bin
+test -n "$SBINDIR"     || SBINDIR=$EXEC_PREFIX/sbin
+test -n "$LIBEXECDIR"  || LIBEXECDIR=$EXEC_PREFIX/libexec
+test -n "$VARDIR"      || VARDIR=/var
+test -n "$ETCDIR"      || ETCDIR=$PREFIX/etc
+test -n "$LIBDIR"      || LIBDIR=$EXEC_PREFIX/lib
+test -n "$INCDIR"      || INCDIR=$PREFIX/include
+test -n "$SHAREDIR"    || SHAREDIR=$PREFIX/share
+test -n "$MANDIR"      || MANDIR=$SHAREDIR/man
+test -n "$DOCDIR"      || DOCDIR=$SHAREDIR/doc
+
+PACKAGE_SHAREDIR=$SHAREDIR/$PACKAGE_NAME
+PACKAGE_DOCDIR=$SHAREDIR/doc/$PACKAGE_NAME
+
+################################################################################
 # DEPENDENCY TOOLS
 iftool $FORMAKE_TOOLS || exit 1
 iftool grep ar tclsh || exit 1
@@ -55,7 +74,7 @@ iftool grep ar tclsh || exit 1
 ################################################################################
 # INIT BUILDROOT
 mkbuildroot $SRCROOT $BUILDROOT || exit 1
-rm -f build.h configure.log
+rm -f configure.log
 
 ################################################################################
 # PROBE AND CONFIGURE COMPILERS
@@ -70,23 +89,28 @@ iflib -cc -lgif gif_lib.h -log="configure.log" || exit 1
 iflib -cc -cxx -lQtGui -inc QtGui/QtGui -log="configure.log" || exit 1
 
 ################################################################################
-# CUSTOM SCRIPT
+# CUSTOM CODE
+# put your custom code here
 test -f /etc/debian_version && echo "CONFIG_DEBIAN=1" >> build.conf
 
 ################################################################################
 # CONFIG FILES
-optool rc -package-name "$PACKAGE_NAME" -package-ver $PACKAGE_VERSION >>build.conf
-optool def "$@" -package-name "$PACKAGE_NAME" -package-ver $PACKAGE_VERSION >>build.h
+optool rc -package-name $PACKAGE_NAME -package-ver $PACKAGE_VERSION \
+          -prefix $PREFIX -exec-prefix $EXEC_PREFIX -bindir $BINDIR -sbindir $SBINDIR \
+          -libexecdir $LIBEXECDIR -vardir $VARDIR -etcdir $ETCDIR -libdir $LIBDIR \
+          -incdir $INCDIR -sharedir $SHAREDIR -mandir $MANDIR -docdir $DOCDIR \
+          -package-sharedir $PACKAGE_SHAREDIR -package-docdir $PACKAGE_DOCDIR >build.conf
+optool def "$@" -package-name "$PACKAGE_NAME" -package-ver $PACKAGE_VERSION >build.h
 
 ################################################################################
 # MKRULE
 mkrule config -prefix=$PREFIX -exec-prefix=$EXEC_PREFIX -bindir=$BINDIR -sbindir=$SBINDIR \
           -libexecdir=$LIBEXECDIR -libdir=$LIBDIR -incdir=$INCDIR -etcdir=$ETCDIR \
-          -sharedir=$SHAREDIR -mandir=$MANDIR -docdir=$DOCDIR
+          -sharedir=$PACKAGE_SHAREDIR -mandir=$MANDIR -docdir=$PACKAGE_DOCDIR
 
 ################################################################################
 # MKMF
-BUILDROOT=$BUILDROOT $SRCROOT/mkmf
+BUILDROOT=$BUILDROOT $SRCROOT/mkmf || exit 1
 
 ################################################################################
 # FINISH

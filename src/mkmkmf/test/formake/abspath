@@ -23,6 +23,10 @@ print_help() {
 
 abs_path() {
   _sub_orig_dir=`pwd`
+  if test $# = 0; then
+    abs_path_ret=
+    return
+  fi
   if test $# = 2; then
     _arg_orig_dir=$1
     _arg=$2
@@ -55,6 +59,16 @@ abs_path() {
     else
       abs_path_ret="$_sub_orig_dir/$_arg"
     fi
+    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#//*#/#g'`
+    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/*$#/#'`
+    string_prev=
+    while test "x$abs_path_ret" != "x$string_prev" ; do
+      string_prev=$abs_path_ret
+      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/[^/][^/][^/][^/]*/\.\./#/#g' | sed 's#/[^/][^/.]/\.\./#/#g' | sed 's#/[^/.][^/]/\.\./#/#g' | sed 's#/[^/.]/\.\./#/#g'`
+      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#^/\.\./#/#' | sed 's#^/\.\.$#/#'`
+      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/\./#/#g' | sed 's#/\.$#/#'`
+    done
+    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/$##' | sed 's#^$#/#'`
   fi
 }
 

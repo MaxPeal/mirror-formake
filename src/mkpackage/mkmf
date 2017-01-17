@@ -1,7 +1,7 @@
 #!/bin/sh
 ################################################################################
 # This script was generated with the following command:
-#  mkmkmf -srcroot ../../
+#  mkmkmf -srcroot ../../ -inst-bin mkpackage
 #
 #
 # Important variables to use:
@@ -21,7 +21,7 @@
 SRCROOT=../..
 BUILD_CONF="build.conf"
 MAKEFILE="Makefile"
-FORMAKE_TOOLS="abspath relpath"
+FORMAKE_TOOLS="abspath relpath mkrule listed"
 
 ################################################################################
 # INIT
@@ -45,12 +45,28 @@ SRCDIR=`relpath ./ $ABS_SRCDIR`
 
 ################################################################################
 # READ CONFIG
-#. $BUILDROOT/$BUILD_CONF
+. $BUILDROOT/$BUILD_CONF
 
 ################################################################################
 # INIT MAKEFILE
 mkrule all >$MAKEFILE
 mkrule distclean $MAKEFILE >>$MAKEFILE
+
+################################################################################
+# CUSTOM
+cat <<EOF >>$MAKEFILE
+all: mkpackage
+mkpackage: _mkpackage
+	cat _mkpackage | sed 's#^share_dir=#share_dir=$PACKAGE_SHAREDIR#' > mkpackage
+	chmod +x mkpackage
+
+EOF
+
+################################################################################
+# INSTALLATION FILES
+install_bin=`listed -pref=$SRCDIR/ mkpackage`
+mkrule install bin -d $BINDIR $install_bin >>$MAKEFILE
+mkrule clean mkpackage >>$MAKEFILE
 
 ################################################################################
 # DONE

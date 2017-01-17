@@ -35,6 +35,7 @@ orig_dir=`pwd`
 abs_path $0
 script_abs=$abs_path_ret
 script_dir=`dirname $script_abs`
+out_format=1
 config_file="$script_dir/cstem+.conf"
 PATH="$script_dir:$PATH"
 
@@ -63,9 +64,10 @@ cat <<EOF
 Configure and probe C++ compiler
 
 $script_name [options]
-$script_name config [CMD [FLAGS]] [-cflags FLAGS]
+$script_name config [-cc=CMD] [-cflags=FLAGS]
+$script_name probe [-cc=CMD] [-cflags=FLAGS]
 
-Options:
+By default $script_name prints information about configured compiler
  -id            get compiler id
  -ver           get compiler version
  -cmd           get compiler command
@@ -79,9 +81,17 @@ Options:
  -endian        get target endianess
  -dm            get target data model
 
-Optional config parameters:
- CMD [FLAGS]    specify compiler command with optional flags
- -cflags FLAGS  specify compiler flags
+
+Config mode. Probe compiler and generate config file
+ -cc=CMD        specify compiler command with optional flags
+ -cflags=FLAGS  specify compiler flags
+
+Probe mode. Probe compiler and print information to a standard output
+ -cc=CMD        specify compiler command with optional flags
+ -cflags=FLAGS  specify compiler flags
+ -f1            print in format 1 (default): VAR="VALUE"
+ -f2            print in format 2: FIELD: VALUE
+ -f3            print in format 3: VALUE
 EOF
 }
 
@@ -824,7 +834,9 @@ read_cc_props() {
 }
 
 perform_probe() {
-  rm -f $config_file
+  if test x$mode_config = x1; then
+    rm -f $config_file
+  fi
 
   if test -z "$probe_cc_cmd"; then
     if test x$have_pofig = x1; then
@@ -858,17 +870,36 @@ perform_probe() {
   fi
 
   if test x$cc_is_ok = x1; then
-    printf "%s\n" "${script_name}: found C++ compiler $cc_cmd" >&2
+    if test x$mode_config = x1; then
+      printf "%s\n" "found C++ compiler $cc_cmd" >&2
+    fi
     read_cc_props
     config_cmd=$cc_cmd
     for config in $config_list; do
       config_var=`echo "CC_${config}" | tr [a-z] [A-Z]`
       eval config_val=\$config_$config
-      printf "%s\n" "$config_var=\"$config_val\"" >>$config_file
+      if test x$mode_config = x1; then
+        printf "%s\n" "$config_var=\"$config_val\"" >>$config_file
+      else
+        case $out_format in
+          1)
+            printf "%s\n" "$config_var=\"$config_val\""
+            ;;
+          2) 
+            printf "%s\n" "$config_var: $config_val"
+            ;;
+          3) 
+            printf "%s\n" "${config_val:--}"
+            ;;
+        esac
+      fi
       eval $config_var=\$config_val
     done
   else
-    printf "%s\n" "${script_name}: C++ compiler not found" >&2
+    if test x$mode_config = x1; then
+      printf "%s\n" "${script_name}: C++ compiler not found" >&2
+    fi
+    exit 1
   fi
 }
 
@@ -882,35 +913,34 @@ case x"$1" in
     mode_config=1
     shift
     ;;
+  xprobe)
+    mode_probe=1
+    shift
+    ;;
   *)
     mode_info=1
     ;;
 esac
 
-if test x$mode_config = x1; then
-  current_opt=cmd_start
+if test x$mode_config$mode_probe = x1; then
   while test $# -gt 0; do
     case "$1" in
-      -cflags)
-        current_opt=cflags_start
+      -cc=*)
+        probe_cc_cmd=`echo -n "$1" | sed 's/^[^=]*=//'`
+        ;;
+      -cflags=*)
+        probe_cc_flags=`echo -n "$1" | sed 's/^[^=]*=//'`
+        ;;
+      -f1|-f2|-f3)
+        if test x$mode_probe = x; then
+          printf "%s\n" "$script_name: invalid parameter $1" >&2
+          exit 1
+        fi
+        out_format=`echo -n "$1" | sed 's/^-f//'`
         ;;
       *)
-        case $current_opt in
-          cmd_start)
-            probe_cc_cmd=$1
-            current_opt=cmd
-            ;;
-          cmd)
-            probe_cc_cmd="$probe_cc_cmd $1"
-            ;;
-          cflags_start)
-            probe_cc_flags=$1
-            current_opt=cflags
-            ;;
-          cflags)
-            probe_cc_flags="$probe_cc_flags $1"
-            ;;
-        esac
+        printf "%s\n" "$script_name: invalid parameter $1" >&2
+        exit 1
         ;;
     esac
     shift
@@ -964,11 +994,11 @@ elif test x$mode_info = x1; then
   done
 fi
 
-if test ! -f $config_file; then
+if test x$mode_info = x1 && test ! -f $config_file; then
   mode_config=1
 fi
 
-if test x$mode_config = x1; then
+if test x$mode_config$mode_probe = x1; then
   perform_probe
 else
   . $config_file

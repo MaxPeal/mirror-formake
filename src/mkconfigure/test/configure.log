@@ -1,78 +1,78 @@
-$ gcc -O0 -g3 -c -o test.o test.c
-$ gcc -O0 -g3  -c -o test.o test.c
-$ gcc -O0 -g3 -o app test.o
-$ gcc -O0 -g3 -lX11 -lXt -o app test.o
-$ gcc -O0 -g3  -c -o test.o test_cc.c
-$ gcc -O0 -g3  -c -o test.o test_cc.c
-$ gcc -O0 -g3  -c -o test.o test_cc.c
-$ gcc -O0 -g3  -c -o test.o test_cc2.c
-$ gcc -O0 -g3 -lX11 -lXt -o app test.o
+$ cc -O0 -g3 -c -o test.o test.c
+$ cc -O0 -g3  -c -o test.o test.c
+$ cc -O0 -g3 -o app test.o
+$ cc -O0 -g3 -lX11 -lXt -o app test.o
+$ cc -O0 -g3  -c -o test.o test_cc.c
+$ cc -O0 -g3  -c -o test.o test_cc.c
+$ cc -O0 -g3  -c -o test.o test_cc.c
+$ cc -O0 -g3  -c -o test.o test_cc2.c
+$ cc -O0 -g3 -lX11 -lXt -o app test.o
 /usr/lib/gcc/x86_64-linux-gnu/4.9/../../../x86_64-linux-gnu/crt1.o: In function `_start':
 /build/glibc-daoqzt/glibc-2.19/csu/../sysdeps/x86_64/start.S:118: undefined reference to `main'
 collect2: error: ld returned 1 exit status
 test again ...
-$ gcc -O0 -g3  -c -o test.o test_cc2.c
-$ gcc -O0 -g3  -c -o test.o test_cc.c
-$ gcc -O0 -g3  -c -o test.o test_cc.c
-$ gcc -O0 -g3  -c -o test.o test_cc.c
-$ gcc -O0 -g3  -c -o test.o test_cc.c
+$ cc -O0 -g3  -c -o test.o test_cc2.c
+$ cc -O0 -g3  -c -o test.o test_cc.c
+$ cc -O0 -g3  -c -o test.o test_cc.c
+$ cc -O0 -g3  -c -o test.o test_cc.c
+$ cc -O0 -g3  -c -o test.o test_cc.c
 test_cc.c:18:18: warning: extra tokens at end of #ifdef directive
  #ifdef __linux__ && defined __unix__
                   ^
-$ gcc -O0 -g3  -c -o test.o test_cc.c
+$ cc -O0 -g3  -c -o test.o test_cc.c
 test_cc.c:18:18: warning: extra tokens at end of #ifdef directive
  #ifdef __linux__ && defined __unix__
                   ^
-$ gcc -O0 -g3  -c -o test.o test_cc.c
+$ cc -O0 -g3  -c -o test.o test_cc.c
 test_cc.c:18:18: warning: extra tokens at end of #ifdef directive
  #ifdef __linux__ && defined __unix__
                   ^
-$ gcc -O0 -g3  -c -o test.o test_cc.c
+$ cc -O0 -g3  -c -o test.o test_cc.c
 test_cc.c:18:18: warning: extra tokens at end of #ifdef directive
  #ifdef __linux__ && defined __unix__
                   ^
-$ gcc -O0 -g3  -c -o test.o test_cc2.c
+$ cc -O0 -g3  -c -o test.o test_cc2.c
 test_cc2.c:18:18: warning: extra tokens at end of #ifdef directive
  #ifdef __linux__ && defined __unix__
                   ^
-$ gcc -O0 -g3 -lX11 -lXt -o app test.o
-$ gcc -O0 -g3  -c -o test.o test_cc2.c
+$ cc -O0 -g3 -lX11 -lXt -o app test.o
+$ cc -O0 -g3  -c -o test.o test_cc2.c
 test_cc2.c:18:18: warning: extra tokens at end of #ifdef directive
  #ifdef __linux__ && defined __unix__
                   ^
-$ gcc -O0 -g3 -lX11 -lXt -o app test.o
-$ gcc -O0 -g3  -c -o test.o test_cc2.c
-$ gcc -O0 -g3 -lX11 -lXt -o app test.o
-$ gcc -O0 -g3  -c -o test.o test_cc2.c
+$ cc -O0 -g3 -lX11 -lXt -o app test.o
+$ cc -O0 -g3  -c -o test.o test_cc2.c
+$ cc -O0 -g3 -lX11 -lXt -o app test.o
+$ cc -O0 -g3  -c -o test.o test_cc2.c
 test_cc2.c:1:5: warning: conflicting types for built-in function ‘fprintf’
  int fprintf(int);
      ^
-$ gcc -O0 -g3 -lX11 -lXt -o app test.o
-$ gcc -O0 -g3  -c -o test.o test_cc2.c
-$ gcc -O0 -g3 -lX11 -lXt -o app test.o
-$ gcc -O0 -g3  -c -o test.o test.c
-$ gcc -O0 -g3 -lX11 -lXt -o app test.o
-$ gcc -O0 -g3  -c -o test.o test_cc.c
-$ gcc -O0 -g3  -c -o test.o test_cc.c
-$ gcc -O0 -g3  -c -o test.o test_cc2.c
+$ cc -O0 -g3 -lX11 -lXt -o app test.o
+$ cc -O0 -g3  -c -o test.o test_cc2.c
+$ cc -O0 -g3 -lX11 -lXt -o app test.o
+$ cc -O0 -g3  -c -o test.o test.c
+$ cc -O0 -g3 -lX11 -lXt -o app test.o
+$ cc -O0 -g3  -c -o test.o test_cc.c
+$ cc -O0 -g3  -c -o test.o test_cc.c
+$ cc -O0 -g3  -c -o test.o test_cc2.c
 test_cc2.c: In function ‘main’:
 test_cc2.c:6:71: warning: cast from pointer to integer of different size [-Wpointer-to-int-cast]
  int main(int argc, char *argv[]) {int iflib_xmPushButtonWidgetClass = (int) xmPushButtonWidgetClass; return 0;}
                                                                        ^
-$ gcc -O0 -g3 -lXm -o app test.o
-$ gcc -O0 -g3  -c -o test.o test_cc2.c
-$ gcc -O0 -g3 -lXm -o app test.o
-$ gcc -O0 -g3  -c -o test.o test_cc2.c
-$ gcc -O0 -g3 -lXm -o app test.o
-$ gcc -O0 -g3  -c -o test.o test_cc2.c
-$ gcc -O0 -g3 -lXm -o app test.o
-$ gcc -O0 -g3 -c -o test.o test.c
-$ gcc -O0 -g3  -c -o test.o test.c
-$ gcc -O0 -g3 -o app test.o
-$ gcc -O0 -g3 -lgif -o app test.o
-$ gcc -O0 -g3  -c -o test.o test_cc.c
-$ g++ -O3 -g0 -I/usr/include/qt4 -c -o test.o test.C
-$ g++ -O3 -g0 -I/usr/include/qt4  -c -o test.o test.C
-$ g++ -O3 -g0 -I/usr/include/qt4 -o app test.o
-$ g++ -O3 -g0 -I/usr/include/qt4 -lQtGui -o app test.o
-$ g++ -O3 -g0 -I/usr/include/qt4  -c -o test.o test_cc.C
+$ cc -O0 -g3 -lXm -o app test.o
+$ cc -O0 -g3  -c -o test.o test_cc2.c
+$ cc -O0 -g3 -lXm -o app test.o
+$ cc -O0 -g3  -c -o test.o test_cc2.c
+$ cc -O0 -g3 -lXm -o app test.o
+$ cc -O0 -g3  -c -o test.o test_cc2.c
+$ cc -O0 -g3 -lXm -o app test.o
+$ cc -O0 -g3 -c -o test.o test.c
+$ cc -O0 -g3  -c -o test.o test.c
+$ cc -O0 -g3 -o app test.o
+$ cc -O0 -g3 -lgif -o app test.o
+$ cc -O0 -g3  -c -o test.o test_cc.c
+$ c++ -O3 -g0 -I/usr/include/qt4 -c -o test.o test.C
+$ c++ -O3 -g0 -I/usr/include/qt4  -c -o test.o test.C
+$ c++ -O3 -g0 -I/usr/include/qt4 -o app test.o
+$ c++ -O3 -g0 -I/usr/include/qt4 -lQtGui -o app test.o
+$ c++ -O3 -g0 -I/usr/include/qt4  -c -o test.o test_cc.C

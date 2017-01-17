@@ -4,31 +4,50 @@
 #
 
 script_name=`basename $0`
+tmp_file="/tmp/iftool_$$.txt"
+tmp_buf="/tmp/iftool_$$_buf.txt"
+rm -f $tmp_buf
 
 print_help() {
 cat <<EOF
 command test tool
 $script_name options
  -n              no echo
+ -f              echo only on fail
 EOF
 }
 
 echo_status() {
   if test x$op_no_echo = x; then
     printf "$1" "$2"
+  elif test x$op_echo_fail = x1; then
+    printf "$1" "$2" >> $tmp_buf
   fi
 }
 
+clean_exit() {
+  exit_status=$1
+  if test $exit_status != 0 && test x$op_echo_fail = x1 && test -f $tmp_buf; then
+    cat $tmp_buf
+  fi
+  rm -f $tmp_buf
+  rm -f $tmp_file
+  exit $exit_status
+}
 
 for param in "$@"; do
   case "$param" in
     -h|-help|--help)
       print_help
-      exit 0
+      clean_exit 0
       ;;
     -n)
       op_no_echo=1
-      current_opt=
+      op_echo_fail=
+      ;;
+    -f)
+      op_echo_fail=1
+      op_no_echo=1
       ;;
   esac
 done
@@ -50,12 +69,13 @@ if test $? -eq 0; then
   have_whence_p=1
 fi
 
-
-tmp_file=/tmp/iftool_$$.txt
 echo "" >$tmp_file
 while test $# -gt 0; do
   case "$1" in
     -n)
+      :
+      ;;
+    -f)
       :
       ;;
     *)
@@ -67,25 +87,25 @@ while test $# -gt 0; do
           command -v $1 >/dev/null 2>&1
           if test $? != 0; then
             echo_status "%s\n" "Failed"
-            exit 1
+            clean_exit 1
           fi
         elif test x$have_hash = x1; then
           hash $1 >/dev/null 2>&1
           if test $? != 0; then
             echo_status "%s\n" "Failed"
-            exit 1
+            clean_exit 1
           fi
         elif test x$have_type_p = x1; then
           type -P $1 >/dev/null 2>&1
           if test $? != 0; then
             echo_status "%s\n" "Failed"
-            exit 1
+            clean_exit 1
           fi
         elif test x$have_whence_p = x1; then
           whence -p $1 >/dev/null 2>&1
           if test $? != 0; then
             echo_status "%s\n" "Failed"
-            exit 1
+            clean_exit 1
           fi
         else
           found=
@@ -98,7 +118,7 @@ while test $# -gt 0; do
           done
           if test x$found = x; then
             echo_status "%s\n" "Failed"
-            exit 1
+            clean_exit 1
           fi
         fi
         echo_status "%s\n" "OK"
@@ -111,5 +131,5 @@ done
 
 rm -f $tmp_file
 
-exit 0
+clean_exit 0
 

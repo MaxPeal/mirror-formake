@@ -3,460 +3,235 @@
 # Author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
 #
 
-VERSION=1.2
+version=1.0
 script_name=`basename $0`
+nl='
+'
+op_ifs=
+list=
 
 print_help() {
-  printf "list [-h|-help] [-version] [-grep <args ...> [-]] [-sed <args ...> [-]] [-rm-headers] [-rm-cfiles]\n"
-  printf "     [-rm-cxxfiles] [-rm-objects] [-grep-headers] [-grep-cfiles]\n"
-  printf "     [-grep-cxxfiles] [-grep-objects] [-pref=<prefix>] [-rm-suffix]\n"
-  printf "     [-suffix-ed <suffix>] [-add-suffix <suffix>] [-ext=<extension> [-ifs <ifs>]\n"
-  printf "     [-merge-lines] [-list] <list>\n"
+  cat <<EOF
+$script_name OPTIONS list..
+$script_name -v
+
+Fileter/edit options may be specified multiple times and are applied in the same
+order.
+
+Filter/edit options:
+  -grep=ARGS          pass list thourgh a grep tool
+  -sed=ARGS           pass list through a sed tool
+  -pref=PREFIX        add prefix to each list item
+  -rm-ext             for every item remove suffix that goes after last dot
+  -suff=SUFIX         add suffix to each list item
+  -edit-ext=EXT       for every item change suffix that goes after last dot
+  -cmd=CMD            pass every item through the specified pipe command
+
+Global options:
+  -ifs=IFS            specify list items delimiter [space]
+EOF
 }
 
 if test $# -eq 0; then
-  print_help
+  echo "$script_name: error. No options specified" >&2
   exit 1
 fi
 
-
-param_sed=false
-param_grep=false
-param_rm_headers=false
-param_rm_cfiles=false
-param_rm_cxxfiles=false
-param_rm_objects=false
-param_grep_headers=false
-param_grep_cfiles=false
-param_grep_cxxfiles=false
-param_grep_objects=false
-param_add_prefix=false
-param_add_suffix=false
-param_suffix_ed=false
-param_rm_suffix=false
-param_ifs=false
-param_merge_lines=false
-
-noption=1
-current_opt=""
-list=
+idx=0
 while test $# -gt 0; do
-  opt_arg=false
-  if test x"$current_opt" = "xlist"; then
-    list="$list$1 "
-  else
-    case $1 in
-    -help|-h)
-      print_help
-      exit 0
-      ;;
-    -version)
-      printf "${VERSION}\n"
-      exit 0
-      ;;
-    -sed)
-      current_opt="sed"
-      sed_args=
-      ;;
-    -grep)
-      current_opt="grep"
-      grep_args=
-      ;;
-    -rm-headers)
-      param_rm_headers=true
-      ;;
-    -rm-cfiles)
-      param_rm_cfiles=true
-      ;;
-    -rm-cxxfiles)
-      param_rm_cxxfiles=true
-      ;;
-    -rm-objects)
-      param_rm_objects=true
-      ;;
-    -grep-headers)
-      param_grep_headers=true
-      ;;
-    -grep-cfiles)
-      param_grep_cfiles=true
-      ;;
-    -grep-cxxfiles)
-      param_grep_cxxfiles=true
-      ;;
-    -grep-objects)
-      param_grep_objects=true
-      ;;
-    -pref=*)
-      prefix=`echo -n "$1" | sed 's/^[^=]*=//'`
-      param_add_prefix=true
-      current_opt=
-      ;;
-    -rm-suffix)
-      param_rm_suffix=true
-      ;;
-    -ext=*)
-      suffix_ed=`echo -n "$1" | sed 's/^[^=]*=//'`
-      param_suffix_ed=true
-      current_opt=
-      ;;
-    -suffix-ed)
-      current_opt="suffix-ed"
-      ;;
-    -add-suffix)
-      current_opt="add-suffix"
-      ;;
-    -ifs)
-      current_opt="ifs"
-      ;;
-    -merge-lines)
-      param_merge_lines=true
-      ;;
-    -list)
-      current_opt="list"
-      ;;
-    -)
-      current_opt=
-      ;;
-    *)
-      opt_arg=true
-      case $current_opt in
-      sed)
-        param_sed=true
-        if test x"$sed_args" = "x"; then
-          sed_args=\'$1\'
-        else
-          sed_args="$sed_args '$1'"
-        fi
-        ;;
-      grep)
-        param_grep=true
-        if test x"$grep_args" = "x"; then
-          grep_args=\'$1\'
-        else
-          grep_args="$grep_args '$1'"
-        fi
-        ;;
-      suffix-ed)
-        param_suffix_ed=true
-        suffix_ed=$1
-        current_opt=
-        ;;
-      add-suffix)
-        param_add_suffix=true
-        add_suffix=$1
-        current_opt=
-        ;;
-      ifs)
-        param_ifs=true
-        ifs=$1
-        current_opt=
-        ;;
-      *)
-        list="$list$1 "
-        ;;
-      esac
-      ;;
-    esac
-  fi
+  case $1 in
+  -h|-help|--help)
+    print_help
+    exit 0
+    ;;
+  -v)
+    printf "$script_name ${version}\n"
+    exit 0
+    ;;
+  -sed=*)
+    op_val=`echo -n "$1" | sed 's/^[^=]*=//'`
+    eval op${idx}_type=sed
+    eval op${idx}_val=\$op_val
+    ;;
+  -grep=*)
+    op_val=`echo -n "$1" | sed 's/^[^=]*=//'`
+    eval op${idx}_type=grep
+    eval op${idx}_val=\$op_val
+    ;;
+  -pref=*)
+    op_val=`echo -n "$1" | sed 's/^[^=]*=//'`
+    eval op${idx}_type=prefix
+    eval op${idx}_val=\$op_val
+    ;;
+  -rm-ext)
+    eval op${idx}_type="rm-ext"
+    ;;
+  -edit-ext=*)
+    op_val=`echo -n "$1" | sed 's/^[^=]*=//'`
+    eval op${idx}_type="edit-ext"
+    eval op${idx}_val=\$op_val
+    ;;
+  -suff=*)
+    op_val=`echo -n "$1" | sed 's/^[^=]*=//'`
+    eval op${idx}_type=suffix
+    eval op${idx}_val=\$op_val
+    ;;
+  -cmd=*)
+    op_val=`echo -n "$1" | sed 's/^[^=]*=//'`
+    eval op${idx}_type=cmd
+    eval op${idx}_val=\$op_val
+    ;;
+  -ifs=*)
+    op_ifs=`echo -n "$1" | sed 's/^[^=]*=//'`
+    ;;
+  *)
+    list="$list $1"
+    ;;
+  esac
   shift
-  if $opt_arg; then
-    false
-  else
-    noption=`expr $noption \+ 1`
-  fi
+  idx=`expr $idx + 1`
 done
 
-  nl='
-'
+opnum=$idx
 
-if test x"$list" = "x"; then
+list=`echo -n "$list" | sed 's/^ *//'`
+
+if test -z "$list"; then
   IFS_save=$IFS
   IFS=$nl
   while read input; do
-    if test x"$list" = "x"; then
+    if test -z "$list"; then
       list=$input
     else
       list="${list}${nl}$input"
     fi
   done
-  if $param_ifs; then
-    false
-  else
-    ifs=$nl
-    param_ifs=true
+  if test -z "$op_ifs"; then
+    op_ifs=$nl
   fi
   IFS=$IFS_save
-else
-  if $param_ifs; then
-    false
-  else
-    ifs=' '
-    param_ifs=true
-  fi
+elif test -z "$op_ifs"; then
+    op_ifs=' '
 fi
 
-if $param_ifs && test x"$ifs" = "x\n"; then
-  ifs=$nl
+if test x"$op_ifs" = "x\n"; then
+  op_ifs=$nl
 fi
 
 IFS_save=$IFS
 IFS=$nl
 
-new_data=""
 data=$list
 for list in $data; do
-  if $param_ifs; then
-    IFS=$ifs
-  else
-    IFS=$IFS_save
-  fi
-  
-  if $param_grep; then
-    new_list=""
-    for item in $list; do
-      if test x"$item" != "x"; then
-        item=`echo $item | eval grep $grep_args`
-        if test x"$item" != "x"; then
-          if test x"$new_list" = "x"; then
-            new_list="$item"
+  IFS=$op_ifs
+
+  idx=0
+  while test $idx -lt $opnum; do
+    eval op_type=\$op${idx}_type
+    eval op_val=\$op${idx}_val
+
+    case $op_type in
+      sed)
+        new_list=
+        for item in $list; do
+          item=`echo -n "$item" | eval sed $op_val`
+          if test -n "$item"; then
+            if test -z "$new_list"; then
+              new_list=$item
+            else
+              new_list="${new_list}${IFS}${item}"
+            fi
+          fi
+        done
+        list=$new_list
+        ;;
+      grep)
+        new_list=
+        for item in $list; do
+          item=`echo -n "$item" | eval grep $op_val`
+          if test -n "$item"; then
+            if test -z "$new_list"; then
+              new_list="$item"
+            else
+              new_list="${new_list}${IFS}${item}"
+            fi
+          fi
+        done
+        list=$new_list
+        ;;
+      prefix)
+        new_list=
+        for item in $list; do
+          item="${op_val}${item}"
+          if test -z "$new_list"; then
+            new_list=$item
           else
             new_list="${new_list}${IFS}${item}"
           fi
-        fi
-      fi
-    done
-    list=$new_list
-  fi
+        done
+        list=$new_list
+        ;;
+      rm-ext)
+        new_list=
+        for item in $list; do
+          item=`echo -n "$item" | sed 's/\.[^.]*$//'`
+          if test -n "$item"; then
+            if test -z "$new_list"; then
+              new_list=$item
+            else
+              new_list="${new_list}${IFS}${item}"
+            fi
+          fi
+        done
+        list=$new_list
+        ;;
+      edit-ext)
+        new_list=
+        for item in $list; do
+          item=`echo -n "$item" | sed 's/\.[^.]*$//'`
+          item="${item}.${op_val}"
+          if test -z "$new_list"; then
+            new_list=$item
+          else
+            new_list="${new_list}${IFS}${item}"
+          fi
+        done
+        list=$new_list
+        ;;
+      suffix)
+        new_list=
+        for item in $list; do
+          item="${item}${op_val}"
+          if test -z "$new_list"; then
+            new_list=$item
+          else
+            new_list="${new_list}${IFS}${item}"
+          fi
+        done
+        list=$new_list
+        ;;
+      cmd)
+        new_list=
+        for item in $list; do
+          item=`echo -n "$item" | eval $op_val`
+          if test -n "$item"; then
+            if test -z "$new_list"; then
+              new_list=$item
+            else
+              new_list="${new_list}${IFS}${item}"
+            fi
+          fi
+        done
+        list=$new_list
+        ;;
+    esac
+    idx=`expr $idx + 1`
+  done
   
-  if $param_rm_headers; then
-    new_list=""
-    for item in $list; do
-      item=`echo $item | grep -v '\.h$'`
-      if test x"$item" != "x"; then
-        if test x"$new_list" = "x"; then
-          new_list=$item
-        else
-          new_list="${new_list}${IFS}${item}"
-        fi
-      fi
-    done
-    list=$new_list
-  fi
-
-  if $param_rm_cfiles; then
-    new_list=""
-    for item in $list; do
-      item=`echo $item | grep -v '\.c$'`
-      if test x"$item" != "x"; then
-        if test x"$new_list" = "x"; then
-          new_list=$item
-        else
-          new_list="${new_list}${IFS}${item}"
-        fi
-      fi
-    done
-    list=$new_list
-  fi
-
-  if $param_rm_cxxfiles; then
-    new_list=""
-    for item in $list; do
-      if expr "$item" : '.*\.cxx$' > /dev/null || \
-         expr "$item" : '.*\.cpp$' > /dev/null || \
-         expr "$item" : '.*\.CPP$' > /dev/null || \
-         expr "$item" : '.*\.c++$' > /dev/null || \
-         expr "$item" : '.*\.C++$' > /dev/null || \
-         expr "$item" : '.*\.C$' > /dev/null; then
-        _nop=1
-      else
-        if test x"$new_list" = "x"; then
-          new_list=$item
-        else
-          new_list="${new_list}${IFS}${item}"
-        fi
-      fi
-    done
-    list=$new_list
-  fi
-
-  if $param_rm_objects; then
-    new_list=""
-    for item in $list; do
-      item=`echo $item | grep -v '\.o$'`
-      if test x"$item" != "x"; then
-        if test x"$new_list" = "x"; then
-          new_list=$item
-        else
-          new_list="${new_list}${IFS}${item}"
-        fi
-      fi
-    done
-    list=$new_list
-  fi
-
-  if $param_grep_cfiles; then
-    new_list=""
-    for item in $list; do
-      item=`echo $item | grep '\.c$'`
-      if test x"$item" != "x"; then
-        if test x"$new_list" = "x"; then
-          new_list=$item
-        else
-          new_list="${new_list}${IFS}${item}"
-        fi
-      fi
-    done
-    list=$new_list
-  fi
-  
-  if $param_grep_headers; then
-    new_list=""
-    for item in $list; do
-      item=`echo $item | grep '\.h$'`
-      if test x"$item" != "x"; then
-        if test x"$new_list" = "x"; then
-          new_list=$item
-        else
-          new_list="${new_list}${IFS}${item}"
-        fi
-      fi
-    done
-    list=$new_list
-  fi
-  
-  if $param_grep_cxxfiles; then
-    new_list=""
-    for item in $list; do
-      if expr "$item" : '.*\.cxx$' > /dev/null || \
-         expr "$item" : '.*\.cpp$' > /dev/null || \
-         expr "$item" : '.*\.CPP$' > /dev/null || \
-         expr "$item" : '.*\.c++$' > /dev/null || \
-         expr "$item" : '.*\.C++$' > /dev/null || \
-         expr "$item" : '.*\.C$' > /dev/null; then
-        if test x"$new_list" = "x"; then
-          new_list=$item
-        else
-          new_list="${new_list}${IFS}${item}"
-        fi
-      fi
-    done
-    list=$new_list
-  fi
-
-  if $param_grep_objects; then
-    new_list=""
-    for item in $list; do
-      item=`echo $item | grep '\.o$'`
-      if test x"$item" != "x"; then
-        if test x"$new_list" = "x"; then
-          new_list=$item
-        else
-          new_list="${new_list}${IFS}${item}"
-        fi
-      fi
-    done
-    list=$new_list
-  fi
-  
-  if $param_sed; then
-    new_list=""
-    for item in $list; do
-      item=`echo $item | eval sed $sed_args`
-      if test x"$item" != "x"; then
-        if test x"$new_list" = "x"; then
-          new_list=$item
-        else
-          new_list="${new_list}${IFS}${item}"
-        fi
-      fi
-    done
-    list=$new_list
-  fi
-
-  if $param_add_prefix; then
-    new_list=""
-    for item in $list; do
-      item="${prefix}${item}"
-      if test x"$new_list" = "x"; then
-        new_list=$item
-      else
-        new_list="${new_list}${IFS}${item}"
-      fi
-    done
-    list=$new_list
-  fi
-  
-  if $param_rm_suffix; then
-    new_list=""
-    for item in $list; do
-      item=`echo $item | sed 's/\.[^.]*$//'`
-      if test x"$item" != "x"; then
-        if test x"$new_list" = "x"; then
-          new_list=$item
-        else
-          new_list="${new_list}${IFS}${item}"
-        fi
-      fi
-    done
-    list=$new_list
-  fi
-  
-  if $param_suffix_ed; then
-    new_list=""
-    for item in $list; do
-      item=`echo $item | sed 's/\.[^.]*$//'`
-      item="${item}.${suffix_ed}"
-      if test x"$new_list" = "x"; then
-        new_list=$item
-      else
-        new_list="${new_list}${IFS}${item}"
-      fi
-    done
-    list=$new_list
-  fi
-  
-  if $param_add_suffix; then
-    new_list=""
-    for item in $list; do
-      item="${item}${add_suffix}"
-      if test x"$new_list" = "x"; then
-        new_list=$item
-      else
-        new_list="${new_list}${IFS}${item}"
-      fi
-    done
-    list=$new_list
-  fi
-  
-  if test x"$list" != "x"; then
-    new_data="${new_data}$list${nl}"
-  fi
+  printf "%s\n" "${list}"
 
   IFS=$nl
 done
-
-IFS=$nl
-iter_one=true
-for line in $new_data; do
-  if $param_merge_lines; then
-    if $iter_one; then
-      printf "%s" "${line}"
-      iter_one=false
-    else
-      if $param_ifs && ! test x"$ifs" = "x$nl"; then
-        printf "%s" "${ifs}$line"
-      else
-        printf "%s" " $line"
-      fi
-    fi
-  else
-    printf "%s\n" "${line}"
-  fi
-done
-
-if $param_merge_lines; then
-  printf "\n"
-fi
 
 IFS=$IFS_save
  

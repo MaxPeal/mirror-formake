@@ -18,7 +18,7 @@ script_name=`basename $0`
 
 print_help() {
 cat <<EOF >&2
-portable tool to figure out system base properties
+portable tool to figure out base system properties
 $script_name [options]
  -os        print OS
  -osver     print OS version

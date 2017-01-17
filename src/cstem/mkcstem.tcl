@@ -68,37 +68,62 @@ exit 0
 #
 
 abs_path() {
-  arg=$1
-  if test -e "$arg"; then
-    if test -d $arg; then
-      file=
+  _sub_orig_dir=`pwd`
+  if test $# = 0; then
+    abs_path_ret=
+    return
+  fi
+  if test $# = 2; then
+    _arg_orig_dir=$1
+    _arg=$2
+    if echo -n "$_arg" | grep "^/" > /dev/null; then
+      :
     else
-      file=`basename -- $arg`
-      arg=`dirname -- $arg`
+      _arg=`echo -n "$_arg_orig_dir/$_arg" | sed 's!//*!/!g'`
     fi
-
-    cd $arg
-    abs_path_ret=`pwd`
-    if test x"$file" != "x"; then
-      abs_path_ret="$abs_path_ret/$file"
-    fi
-
-    cd $orig_dir
   else
-    if echo -n "$arg" | grep "^/" > /dev/null; then
-      abs_path_ret="$arg"
+    _arg=$1
+  fi
+  if test -e "$_arg"; then
+    if test -d $_arg; then
+      _file=
     else
-      abs_path_ret="$orig_dir/$arg"
+      _file=`basename -- $_arg`
+      _arg=`dirname -- $_arg`
     fi
+
+    cd $_cd_param $_arg
+    abs_path_ret=`pwd`
+    if test x"$_file" != "x"; then
+      abs_path_ret="$abs_path_ret/$_file"
+    fi
+
+    cd $_cd_param $_sub_orig_dir
+  else
+    if echo -n "$_arg" | grep "^/" > /dev/null; then
+      abs_path_ret="$_arg"
+    else
+      abs_path_ret="$_sub_orig_dir/$_arg"
+    fi
+    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#//*#/#g'`
+    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/*$#/#'`
+    string_prev=
+    while test "x$abs_path_ret" != "x$string_prev" ; do
+      string_prev=$abs_path_ret
+      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/[^/][^/][^/][^/]*/\.\./#/#g' | sed 's#/[^/][^/.]/\.\./#/#g' | sed 's#/[^/.][^/]/\.\./#/#g' | sed 's#/[^/.]/\.\./#/#g'`
+      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#^/\.\./#/#' | sed 's#^/\.\.$#/#'`
+      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/\./#/#g' | sed 's#/\.$#/#'`
+    done
+    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/$##' | sed 's#^$#/#'`
   fi
 }
-
 
 script_name=`basename $0`
 orig_dir=`pwd`
 abs_path $0
 script_abs=$abs_path_ret
 script_dir=`dirname $script_abs`
+out_format=1
 ########## CC_BLOCK_START
 config_file="$script_dir/cstem.conf"
 ########## CX_BLOCK_START
@@ -131,9 +156,10 @@ cat <<EOF
 Configure and probe %C% compiler
 
 $script_name [options]
-$script_name config [CMD [FLAGS]] [-cflags FLAGS]
+$script_name config [-cc=CMD] [-cflags=FLAGS]
+$script_name probe [-cc=CMD] [-cflags=FLAGS] [-f1|-f2|-f3]
 
-Options:
+By default $script_name prints information about configured compiler
  -id            get compiler id
  -ver           get compiler version
  -cmd           get compiler command
@@ -147,9 +173,17 @@ Options:
  -endian        get target endianess
  -dm            get target data model
 
-Optional config parameters:
- CMD [FLAGS]    specify compiler command with optional flags
- -cflags FLAGS  specify compiler flags
+
+Config mode. Probe compiler and generate config file
+ -cc=CMD        specify compiler command with optional flags
+ -cflags=FLAGS  specify compiler flags
+
+Probe mode. Probe compiler and print information to a standard output
+ -cc=CMD        specify compiler command with optional flags
+ -cflags=FLAGS  specify compiler flags
+ -f1            print in format 1> VAR="VALUE"
+ -f2            print in format 2> FIELD: VALUE
+ -f3            print in format 3> VALUE
 EOF
 }
 
@@ -1032,17 +1066,19 @@ read_cc_props() {
 }
 
 perform_probe() {
-  rm -f $config_file
+  if test x$mode_config = x1; then
+    rm -f $config_file
+  fi
 
   if test -z "$probe_cc_cmd"; then
     if test x$have_pofig = x1; then
       case `pofig -os` in
         aix)
-          cc_list="cc xlc gcc"   ###CC_LINE
+          cc_list="cc xlc gcc c99"   ###CC_LINE
           cc_list="xlc++ xlC c++ CC g++"    ###CX_LINE
           ;;
         sunos)
-          cc_list="cc gcc"   ###CC_LINE
+          cc_list="cc gcc c99"   ###CC_LINE
           cc_list="CC g++ c++"    ###CX_LINE
           ;;
         irix)
@@ -1050,12 +1086,12 @@ perform_probe() {
           cc_list="CC g++"    ###CX_LINE
           ;;
         gnulinux)
-          cc_list="gcc cc"   ###CC_LINE
+          cc_list="gcc cc c99"   ###CC_LINE
           cc_list="g++ c++ CC"    ###CX_LINE
           ;;
       esac
     else
-      cc_list="gcc cc"    ###CC_LINE
+      cc_list="gcc cc c99"    ###CC_LINE
       cc_list="g++ CC c++"    ###CX_LINE
     fi
 
@@ -1071,7 +1107,7 @@ perform_probe() {
   fi
 
   if test x$cc_is_ok = x1; then
-    if test -z "$mode_info"; then
+    if test x$mode_config = x1; then
       printf "%s\n" "found %C% compiler $cc_cmd" >&2
     fi
     read_cc_props
@@ -1079,11 +1115,25 @@ perform_probe() {
     for config in $config_list; do
       config_var=`echo "CC_${config}" | tr [a-z] [A-Z]`
       eval config_val=\$config_$config
-      printf "%s\n" "$config_var=\"$config_val\"" >>$config_file
+      if test x$mode_config = x1; then
+        printf "%s\n" "$config_var=\"$config_val\"" >>$config_file
+      else
+        case $out_format in
+          1)
+            printf "%s\n" "$config_var=\"$config_val\""
+            ;;
+          2) 
+            printf "%s\n" "$config_var: $config_val"
+            ;;
+          3) 
+            printf "%s\n" "${config_val:--}"
+            ;;
+        esac
+      fi
       eval $config_var=\$config_val
     done
   else
-    if test -z "$mode_info"; then
+    if test x$mode_config = x1; then
       printf "%s\n" "${script_name}: %C% compiler not found" >&2
     fi
     exit 1
@@ -1100,12 +1150,16 @@ case x"$1" in
     mode_config=1
     shift
     ;;
+  xprobe)
+    mode_probe=1
+    shift
+    ;;
   *)
     mode_info=1
     ;;
 esac
 
-if test x$mode_config = x1; then
+if test x$mode_config$mode_probe = x1; then
   while test $# -gt 0; do
     case "$1" in
       -cc=*)
@@ -1113,6 +1167,17 @@ if test x$mode_config = x1; then
         ;;
       -cflags=*)
         probe_cc_flags=`echo -n "$1" | sed 's/^[^=]*=//'`
+        ;;
+      -f1|-f2|-f3)
+        if test x$mode_probe = x; then
+          printf "%s\n" "$script_name: invalid parameter $1" >&2
+          exit 1
+        fi
+        out_format=`echo -n "$1" | sed 's/^-f//'`
+        ;;
+      *)
+        printf "%s\n" "$script_name: invalid parameter $1" >&2
+        exit 1
         ;;
     esac
     shift
@@ -1166,11 +1231,11 @@ elif test x$mode_info = x1; then
   done
 fi
 
-if test ! -f $config_file; then
+if test x$mode_info = x1 && test ! -f $config_file; then
   mode_config=1
 fi
 
-if test x$mode_config = x1; then
+if test x$mode_config$mode_probe = x1; then
   perform_probe
 else
   . $config_file

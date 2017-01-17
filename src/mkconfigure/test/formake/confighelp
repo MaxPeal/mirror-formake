@@ -2,11 +2,24 @@
 
 SCRIPT_NAME=`basename $0`
 
+print_help() {
+  cat <<EOF
+Usage: $SCRIPT_NAME [-install] [-cc] [-cxx]
+  -install   print installation related options
+  -cc        print C compilation options
+  -cxx       print C++ compilation options
+EOF
+}
+
 op_cc=
 op_cxx=
 op_install=
 for param in "$@"; do
   case $param in
+    -h|-help|--help)
+      print_help
+      exit 0
+      ;;
     -cc)
       op_cc=1
       ;;

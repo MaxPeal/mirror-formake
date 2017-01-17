@@ -1,7 +1,7 @@
 #!/bin/sh
 ################################################################################
 # This script was generated with the following command:
-#  mkmkmf -srcroot ./ -subdirs src
+#  mkmkmf -srcroot ./ -subdirs src/
 #
 #
 # Important variables to use:
@@ -22,7 +22,7 @@ SRCROOT=.
 BUILD_CONF="build.conf"
 MAKEFILE="Makefile"
 SUBDIRS="src"
-FORMAKE_TOOLS="abspath relpath"
+FORMAKE_TOOLS="abspath relpath mkrule"
 
 ################################################################################
 # INIT
@@ -51,13 +51,13 @@ SRCDIR=`relpath ./ $ABS_SRCDIR`
 ################################################################################
 # INIT MAKEFILE
 mkrule all >$MAKEFILE
-mkrule distclean $BUILDROOT/build.conf $BUILDROOT/formake/'*.conf' $MAKEFILE >>$MAKEFILE
+mkrule distclean $MAKEFILE formake/'*.conf' >>$MAKEFILE
 
 ################################################################################
 # SUBDIRS
 mkrule subdir -all -install -clean -distclean -d $SUBDIRS >>$MAKEFILE
 for dir in $SUBDIRS; do
-  BUILDROOT=$ABS_BUILDROOT $ABS_SRCDIR/$dir/mkmf
+  BUILDROOT=$ABS_BUILDROOT $ABS_SRCDIR/$dir/mkmf || exit 1
 done
 
 ################################################################################

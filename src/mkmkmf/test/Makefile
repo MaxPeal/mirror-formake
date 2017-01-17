@@ -1,54 +1,167 @@
 ################################################################################
-# ALL
-# mkrule all
+# INIT
+# mkrule init
 all:
-install: all
+install:
+clean:
+distclean:
+
+################################################################################
+# DISTCLEAN
+# mkrule distclean Makefile
+distclean: distclean-835999
+distclean-835999:
+	rm -Rf Makefile
 
 ################################################################################
 # OBJECTS
 # mkrule obj -cflags= -src ./file1.c ./file2.c ./app1.c ./common.c ./net.c ./db.c ./common.c ./net.c ./www.c ./tty.c ./ghf.c ./rx.c -d _static
-_static/file1.o: ./file1.c 
+_static/file1.o: ./file1.c  .deps/_static/file1.d
+	@test -d .deps/_static/ || mkdir -p .deps/_static/
+	@formake/mkdep -o _static/file1.o -stdout ./file1.c >.deps/_static/file1.d
+	@test -d _static/ || mkdir -p _static/
 	gcc -c ./file1.c -o _static/file1.o
-_static/file2.o: ./file2.c 
+-include .deps/_static/file1.d
+.deps/_static/file1.d:
+
+_static/file2.o: ./file2.c  .deps/_static/file2.d
+	@test -d .deps/_static/ || mkdir -p .deps/_static/
+	@formake/mkdep -o _static/file2.o -stdout ./file2.c >.deps/_static/file2.d
+	@test -d _static/ || mkdir -p _static/
 	gcc -c ./file2.c -o _static/file2.o
-_static/app1.o: ./app1.c 
+-include .deps/_static/file2.d
+.deps/_static/file2.d:
+
+_static/app1.o: ./app1.c  .deps/_static/app1.d
+	@test -d .deps/_static/ || mkdir -p .deps/_static/
+	@formake/mkdep -o _static/app1.o -stdout ./app1.c >.deps/_static/app1.d
+	@test -d _static/ || mkdir -p _static/
 	gcc -c ./app1.c -o _static/app1.o
-_static/common.o: ./common.c 
+-include .deps/_static/app1.d
+.deps/_static/app1.d:
+
+_static/common.o: ./common.c  .deps/_static/common.d
+	@test -d .deps/_static/ || mkdir -p .deps/_static/
+	@formake/mkdep -o _static/common.o -stdout ./common.c >.deps/_static/common.d
+	@test -d _static/ || mkdir -p _static/
 	gcc -c ./common.c -o _static/common.o
-_static/net.o: ./net.c 
+-include .deps/_static/common.d
+.deps/_static/common.d:
+
+_static/net.o: ./net.c  .deps/_static/net.d
+	@test -d .deps/_static/ || mkdir -p .deps/_static/
+	@formake/mkdep -o _static/net.o -stdout ./net.c >.deps/_static/net.d
+	@test -d _static/ || mkdir -p _static/
 	gcc -c ./net.c -o _static/net.o
-_static/db.o: ./db.c 
+-include .deps/_static/net.d
+.deps/_static/net.d:
+
+_static/db.o: ./db.c  .deps/_static/db.d
+	@test -d .deps/_static/ || mkdir -p .deps/_static/
+	@formake/mkdep -o _static/db.o -stdout ./db.c >.deps/_static/db.d
+	@test -d _static/ || mkdir -p _static/
 	gcc -c ./db.c -o _static/db.o
-_static/www.o: ./www.c 
+-include .deps/_static/db.d
+.deps/_static/db.d:
+
+_static/www.o: ./www.c  .deps/_static/www.d
+	@test -d .deps/_static/ || mkdir -p .deps/_static/
+	@formake/mkdep -o _static/www.o -stdout ./www.c >.deps/_static/www.d
+	@test -d _static/ || mkdir -p _static/
 	gcc -c ./www.c -o _static/www.o
-_static/tty.o: ./tty.c 
+-include .deps/_static/www.d
+.deps/_static/www.d:
+
+_static/tty.o: ./tty.c  .deps/_static/tty.d
+	@test -d .deps/_static/ || mkdir -p .deps/_static/
+	@formake/mkdep -o _static/tty.o -stdout ./tty.c >.deps/_static/tty.d
+	@test -d _static/ || mkdir -p _static/
 	gcc -c ./tty.c -o _static/tty.o
-_static/ghf.o: ./ghf.c 
+-include .deps/_static/tty.d
+.deps/_static/tty.d:
+
+_static/ghf.o: ./ghf.c  .deps/_static/ghf.d
+	@test -d .deps/_static/ || mkdir -p .deps/_static/
+	@formake/mkdep -o _static/ghf.o -stdout ./ghf.c >.deps/_static/ghf.d
+	@test -d _static/ || mkdir -p _static/
 	gcc -c ./ghf.c -o _static/ghf.o
-_static/rx.o: ./rx.c 
+-include .deps/_static/ghf.d
+.deps/_static/ghf.d:
+
+_static/rx.o: ./rx.c  .deps/_static/rx.d
+	@test -d .deps/_static/ || mkdir -p .deps/_static/
+	@formake/mkdep -o _static/rx.o -stdout ./rx.c >.deps/_static/rx.d
+	@test -d _static/ || mkdir -p _static/
 	gcc -c ./rx.c -o _static/rx.o
-clean: clean-obj8672
-clean-obj8672:
+-include .deps/_static/rx.d
+.deps/_static/rx.d:
+
+clean: clean-obj-919024
+clean-obj-919024:
 	rm -f  _static/file1.o _static/file2.o _static/app1.o _static/common.o _static/net.o _static/db.o _static/www.o _static/tty.o _static/ghf.o _static/rx.o
+
+distclean: distclean-obj-919024
+distclean-obj-919024: clean-obj-919024
+	rm -Rf .deps
 
 ################################################################################
 # OBJECTS
 # mkrule obj -pic -cflags= -src ./common.c ./net.c ./www.c ./tty.c ./ghf.c ./rx.c -d _pic
-_pic/common.o: ./common.c 
+_pic/common.o: ./common.c  .deps/_pic/common.d
+	@test -d .deps/_pic/ || mkdir -p .deps/_pic/
+	@formake/mkdep -o _pic/common.o -stdout ./common.c >.deps/_pic/common.d
+	@test -d _pic/ || mkdir -p _pic/
 	gcc -fPIC -DPIC -c ./common.c -o _pic/common.o
-_pic/net.o: ./net.c 
+-include .deps/_pic/common.d
+.deps/_pic/common.d:
+
+_pic/net.o: ./net.c  .deps/_pic/net.d
+	@test -d .deps/_pic/ || mkdir -p .deps/_pic/
+	@formake/mkdep -o _pic/net.o -stdout ./net.c >.deps/_pic/net.d
+	@test -d _pic/ || mkdir -p _pic/
 	gcc -fPIC -DPIC -c ./net.c -o _pic/net.o
-_pic/www.o: ./www.c 
+-include .deps/_pic/net.d
+.deps/_pic/net.d:
+
+_pic/www.o: ./www.c  .deps/_pic/www.d
+	@test -d .deps/_pic/ || mkdir -p .deps/_pic/
+	@formake/mkdep -o _pic/www.o -stdout ./www.c >.deps/_pic/www.d
+	@test -d _pic/ || mkdir -p _pic/
 	gcc -fPIC -DPIC -c ./www.c -o _pic/www.o
-_pic/tty.o: ./tty.c 
+-include .deps/_pic/www.d
+.deps/_pic/www.d:
+
+_pic/tty.o: ./tty.c  .deps/_pic/tty.d
+	@test -d .deps/_pic/ || mkdir -p .deps/_pic/
+	@formake/mkdep -o _pic/tty.o -stdout ./tty.c >.deps/_pic/tty.d
+	@test -d _pic/ || mkdir -p _pic/
 	gcc -fPIC -DPIC -c ./tty.c -o _pic/tty.o
-_pic/ghf.o: ./ghf.c 
+-include .deps/_pic/tty.d
+.deps/_pic/tty.d:
+
+_pic/ghf.o: ./ghf.c  .deps/_pic/ghf.d
+	@test -d .deps/_pic/ || mkdir -p .deps/_pic/
+	@formake/mkdep -o _pic/ghf.o -stdout ./ghf.c >.deps/_pic/ghf.d
+	@test -d _pic/ || mkdir -p _pic/
 	gcc -fPIC -DPIC -c ./ghf.c -o _pic/ghf.o
-_pic/rx.o: ./rx.c 
+-include .deps/_pic/ghf.d
+.deps/_pic/ghf.d:
+
+_pic/rx.o: ./rx.c  .deps/_pic/rx.d
+	@test -d .deps/_pic/ || mkdir -p .deps/_pic/
+	@formake/mkdep -o _pic/rx.o -stdout ./rx.c >.deps/_pic/rx.d
+	@test -d _pic/ || mkdir -p _pic/
 	gcc -fPIC -DPIC -c ./rx.c -o _pic/rx.o
-clean: clean-obj6221
-clean-obj6221:
+-include .deps/_pic/rx.d
+.deps/_pic/rx.d:
+
+clean: clean-obj-951633
+clean-obj-951633:
 	rm -f  _pic/common.o _pic/net.o _pic/www.o _pic/tty.o _pic/ghf.o _pic/rx.o
+
+distclean: distclean-obj-951633
+distclean-obj-951633: clean-obj-951633
+	rm -Rf .deps
 
 ################################################################################
 # APPLICATIONS
@@ -58,10 +171,11 @@ app1: _static/file1.o _static/file2.o _static/app1.o _static/common.o _static/ne
 	gcc -o app1 _static/file1.o _static/file2.o _static/app1.o _static/common.o _static/net.o _static/db.o 
 install: install-app1
 install-app1: app1
-	install -m 0755 app1 /usr/local/bin
+	install -m 0755 -D app1 /usr/local/bin/app1
 clean: clean-app1
 clean-app1:
 	rm -f app1
+distclean: clean-app1
 
 ################################################################################
 # LIBRARIES
@@ -72,10 +186,11 @@ libfxx.a: _static/common.o _static/net.o _static/www.o _static/tty.o _static/ghf
 	ar clq libfxx.a _static/common.o _static/net.o _static/www.o _static/tty.o _static/ghf.o _static/rx.o
 install: install-fxx
 install-fxx: libfxx.a
-	install -m 0644 libfxx.a /usr/local/lib
+	install -m 0644 -D libfxx.a /usr/local/lib/libfxx.a
 clean: clean-fxx
 clean-fxx:
 	rm -f libfxx.a
+distclean: clean-fxx
 
 ################################################################################
 # LIBRARIES
@@ -88,105 +203,37 @@ libfxx.so libfxx.so.1 libfxx.so.1.0.1: _pic/common.o _pic/net.o _pic/www.o _pic/
 	ln -s libfxx.so.1.0.1 libfxx.so
 install: install-fxx
 install-fxx: libfxx.so libfxx.so.1 libfxx.so.1.0.1
-	install -m 0755 libfxx.so.1.0.1 /usr/local/lib
+	install -m 0755 -D libfxx.so.1.0.1 /usr/local/lib/libfxx.so.1.0.1
 	/bin/cp --no-dereference libfxx.so /usr/local/lib
 	/bin/cp --no-dereference libfxx.so.1 /usr/local/lib
 clean: clean-fxx
 clean-fxx:
 	rm -f libfxx.so libfxx.so.1 libfxx.so.1.0.1
+distclean: clean-fxx
 
 ################################################################################
 # INSTALLATION FILES
 # mkrule install bin ./script1
-install: install-bin-8941
-install-bin: install-bin-8941
-install-bin-8941: ./script1
-	install -m 0755 ./script1 /usr/local/bin
+install: install-bin-875157
+install-bin-875157: ./script1
+	install -m 0755 -D ./script1 /usr/local/bin/script1
 
 ################################################################################
 # INSTALLATION FILES
 # mkrule install lib ./libvga.a
-install: install-lib-6493
-install-lib: install-lib-6493
-install-lib-6493: ./libvga.a
-	install -m 0644 ./libvga.a /usr/local/lib
+install: install-lib-48138
+install-lib-48138: ./libvga.a
+	install -m 0644 -D ./libvga.a /usr/local/lib/libvga.a
 
 ################################################################################
 # INSTALLATION FILES
 # mkrule install inc ./common.h ./vga.h ./fxx.h ./ui.h ./tty.h ./con.h
-install: install-inc-4685
-install-inc: install-inc-4685
-install-inc-4685: ./common.h ./vga.h ./fxx.h ./ui.h ./tty.h ./con.h
-	install -m 0444 ./common.h /usr/local/include
-	install -m 0444 ./vga.h /usr/local/include
-	install -m 0444 ./fxx.h /usr/local/include
-	install -m 0444 ./ui.h /usr/local/include
-	install -m 0444 ./tty.h /usr/local/include
-	install -m 0444 ./con.h /usr/local/include
-
-################################################################################
-# SUBDIRS
-# mkrule subdir -all -install -clean -distclean -d mod1 mod2 tests libeee libeee2
-all: mod1 mod2 tests libeee libeee2
-
-mod1: 
-	$(MAKE) -C mod1
-install: install-mod1
-install-mod1:
-	$(MAKE) -C mod1 install
-clean: clean-mod1
-clean-mod1:
-	$(MAKE) -C mod1 clean
-distclean: distclean-mod1
-distclean-mod1:
-	$(MAKE) -C mod1 distclean
-
-mod2: 
-	$(MAKE) -C mod2
-install: install-mod2
-install-mod2:
-	$(MAKE) -C mod2 install
-clean: clean-mod2
-clean-mod2:
-	$(MAKE) -C mod2 clean
-distclean: distclean-mod2
-distclean-mod2:
-	$(MAKE) -C mod2 distclean
-
-tests: 
-	$(MAKE) -C tests
-install: install-tests
-install-tests:
-	$(MAKE) -C tests install
-clean: clean-tests
-clean-tests:
-	$(MAKE) -C tests clean
-distclean: distclean-tests
-distclean-tests:
-	$(MAKE) -C tests distclean
-
-libeee: 
-	$(MAKE) -C libeee
-install: install-libeee
-install-libeee:
-	$(MAKE) -C libeee install
-clean: clean-libeee
-clean-libeee:
-	$(MAKE) -C libeee clean
-distclean: distclean-libeee
-distclean-libeee:
-	$(MAKE) -C libeee distclean
-
-libeee2: 
-	$(MAKE) -C libeee2
-install: install-libeee2
-install-libeee2:
-	$(MAKE) -C libeee2 install
-clean: clean-libeee2
-clean-libeee2:
-	$(MAKE) -C libeee2 clean
-distclean: distclean-libeee2
-distclean-libeee2:
-	$(MAKE) -C libeee2 distclean
-
+install: install-inc-516746
+install-inc-516746: ./common.h ./vga.h ./fxx.h ./ui.h ./tty.h ./con.h
+	install -m 0444 -D ./common.h /usr/local/include/common.h
+	install -m 0444 -D ./vga.h /usr/local/include/vga.h
+	install -m 0444 -D ./fxx.h /usr/local/include/fxx.h
+	install -m 0444 -D ./ui.h /usr/local/include/ui.h
+	install -m 0444 -D ./tty.h /usr/local/include/tty.h
+	install -m 0444 -D ./con.h /usr/local/include/con.h
 

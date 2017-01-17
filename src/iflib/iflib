@@ -4,28 +4,53 @@
 #
 
 abs_path() {
-  arg=$1
-  if test -e "$arg"; then
-    if test -d $arg; then
-      file=
+  _sub_orig_dir=`pwd`
+  if test $# = 0; then
+    abs_path_ret=
+    return
+  fi
+  if test $# = 2; then
+    _arg_orig_dir=$1
+    _arg=$2
+    if echo -n "$_arg" | grep "^/" > /dev/null; then
+      :
     else
-      file=`basename -- $arg`
-      arg=`dirname -- $arg`
+      _arg=`echo -n "$_arg_orig_dir/$_arg" | sed 's!//*!/!g'`
     fi
-
-    cd $arg
-    abs_path_ret=`pwd`
-    if test x"$file" != "x"; then
-      abs_path_ret="$abs_path_ret/$file"
-    fi
-
-    cd $orig_dir
   else
-    if echo -n "$arg" | grep "^/" > /dev/null; then
-      abs_path_ret="$arg"
+    _arg=$1
+  fi
+  if test -e "$_arg"; then
+    if test -d $_arg; then
+      _file=
     else
-      abs_path_ret="$orig_dir/$arg"
+      _file=`basename -- $_arg`
+      _arg=`dirname -- $_arg`
     fi
+
+    cd $_cd_param $_arg
+    abs_path_ret=`pwd`
+    if test x"$_file" != "x"; then
+      abs_path_ret="$abs_path_ret/$_file"
+    fi
+
+    cd $_cd_param $_sub_orig_dir
+  else
+    if echo -n "$_arg" | grep "^/" > /dev/null; then
+      abs_path_ret="$_arg"
+    else
+      abs_path_ret="$_sub_orig_dir/$_arg"
+    fi
+    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#//*#/#g'`
+    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/*$#/#'`
+    string_prev=
+    while test "x$abs_path_ret" != "x$string_prev" ; do
+      string_prev=$abs_path_ret
+      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/[^/][^/][^/][^/]*/\.\./#/#g' | sed 's#/[^/][^/.]/\.\./#/#g' | sed 's#/[^/.][^/]/\.\./#/#g' | sed 's#/[^/.]/\.\./#/#g'`
+      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#^/\.\./#/#' | sed 's#^/\.\.$#/#'`
+      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/\./#/#g' | sed 's#/\.$#/#'`
+    done
+    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/$##' | sed 's#^$#/#'`
   fi
 }
 
@@ -575,7 +600,7 @@ EOF
       def_name=`echo -n "$def_string" | sed 's/[^a-zA-Z0-9_].*//'`
       inv_chars=`echo -n "$def_name" | sed 's/[_a-zA-Z0-9]//g'`
       if test -n "$inv_chars" || echo -n "$def_name" | grep "^[0-9]" > /dev/null; then
-        echo "$script_name: error invalid macro $def_name"
+        echo "$script_name: error invalid macro $def_name" >&2
         exit 1
       fi
       rpart=`echo -n "$def_string" | sed 's/[a-zA-Z0-9_]*//'`
@@ -597,7 +622,7 @@ EOF
             opstr="=="
             ;;
           *)
-            echo "$script_name: error invalid argument $def_string"
+            echo "$script_name: error invalid argument $def_string" >&2
             exit 1
             ;;
         esac
@@ -793,19 +818,21 @@ fi
 # CHECKING SOURCE FILES
 if test -n "$op_src"; then
   for src in $op_src; do
-    if echo -n "$src" | grep "^/" > /dev/null; then : ; else
-      src="$orig_dir/$src"
+    if echo -n "$src" | grep "^/" > /dev/null; then 
+      src_full=$src
+    else
+      src_full="$orig_dir/$src"
     fi
 
     echo_status "%s" "checking source file $src ... "
 
-    if test ! -f $src; then
+    if test ! -f $src_full; then
       echo_status "%s\n" "Failed"
       echo_status "%s\n" "  file $src not found"
       script_exit 1
     fi
-    cp $src .
-    src_base=`basename $src`
+    cp $src_full .
+    src_base=`basename $src_full`
 
     echo "\$ $CC_CMD -c -o test.o $src_base" >> iflib.log
     $CC_CMD -c -o test.o $src_base >> iflib.log 2>&1

@@ -8,5 +8,7 @@
 #define XFLAGS "1"
 #define XPARAM "zzz"
 #define XXPARAM "qqq www eee rrr"
+#define CC "cc"
+#define CXX "c++"
 #define PACKAGE_NAME "my_app"
 #define PACKAGE_VER "1.0.0"

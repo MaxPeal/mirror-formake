@@ -130,7 +130,8 @@ print_install_help() {
 $script_name install TYPE [OPTIONS] FILE..
   TYPE             files type: bin, sbin, libexec, lib, inc, share, man[1-8], doc, etc
   -t TARGET        specify phony target that start generated rules
-  -path PATH       installation path
+  -rename NAME     set destination file name
+  -d DIR           installation directory
   FILE..           files to install. RC files are accepted
 EOF
 }
@@ -477,10 +478,11 @@ EOF
     if test -z "$op_install_path"; then
       op_install_path=$BINDIR
     fi
+    file_base=`basename $app_local`
     cat <<EOF
 install: install-$op_name
 install-$op_name: $app_local
-	$INSTALL -m 0755 $app_local $op_install_path
+	$INSTALL -m 0755 -D $app_local $op_install_path/$file_base
 EOF
   fi
 
@@ -648,10 +650,11 @@ install: install-$op_name
 install-$op_name: $lib_targets
 EOF
     for file in $lib_regular; do
+      file_base=`basename $file`
       if test x$op_shared = x1; then
-	    echo "	$INSTALL -m 0755 $file $op_install_path"
+	    echo "	$INSTALL -m 0755 -D $file $op_install_path/$file_base"
       else
-	    echo "	$INSTALL -m 0644 $file $op_install_path"
+	    echo "	$INSTALL -m 0644 -D $file $op_install_path/$file_base"
       fi
     done
     for file in $lib_symbolic; do
@@ -790,18 +793,16 @@ mkinstall() {
     exit 1
   fi
 
+  num_files=`echo "$op_files" | wc -w`
+  if test -n "$op_rename" && test $num_files -gt 1; then
+    echo "$script_name: option '-rename' can't be used for multiple installation files" >&2
+    exit 1
+  fi
+
   if test -z "$op_target"; then
     get_random
     op_target="install-$op_type-$RANDOM"
   fi
-  case $op_type in
-    man*)
-      target_base="install-man"
-      ;;
-    *)
-      target_base="install-$op_type"
-      ;;
-  esac
 
   case $op_type in
     bin)
@@ -843,7 +844,7 @@ mkinstall() {
       ;;
   esac
 
-  test -z "$op_install_path" || dir=$op_install_path
+  test -z "$op_dir" || dir=$op_dir
 
   cat <<EOF
 ################################################################################
@@ -853,12 +854,16 @@ EOF
 
   cat <<EOF
 install: $op_target
-$target_base: $op_target
 $op_target: $op_files
 EOF
-  for file in $op_files; do
-    printf "\t%s\n" "install -m $perm $file $dir"
-  done
+  if test -n "$op_rename"; then
+    printf "\t%s\n" "$INSTALL -m $perm -D $op_files $dir/$op_rename"
+  else
+    for file in $op_files; do
+      file_base=`basename $file`
+      printf "\t%s\n" "$INSTALL -m $perm -D $file $dir/$file_base"
+    done
+  fi
   echo ""
 }
 
@@ -1014,7 +1019,7 @@ while test $# -gt 0; do
       ;;
     -d)
       case $op_mode in
-        obj|app|lib|subdir)
+        obj|app|lib|subdir|install)
           : ;;
         *)
           echo "$script_name: error: invalid parameter $1 for current mode" >&2
@@ -1254,17 +1259,17 @@ while test $# -gt 0; do
       op_distclean=1
       current_opt=
       ;;
-    -path)
+    -rename)
       if test $op_mode != install; then
         echo "$script_name: error: invalid parameter $1 for current mode" >&2
         exit 1
       fi
       shift
       if test -z "$1"; then
-        echo "$script_name: error: parameter -path requires argument" >&2
+        echo "$script_name: error: parameter -rename requires argument" >&2
         exit 1
       fi
-      op_install_path=$1
+      op_rename=$1
       current_opt=
       ;;
     -prefix=*)
@@ -1479,8 +1484,9 @@ case $op_mode in
 # ALL
 # $script_name $script_options
 all:
-install: all
+install:
 clean:
+distclean:
 
 EOF
     ;;

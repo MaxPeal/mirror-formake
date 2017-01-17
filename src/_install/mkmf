@@ -1,7 +1,7 @@
 #!/bin/sh
 ################################################################################
 # This script was generated with the following command:
-#  mkmkmf -srcroot ../..
+#  mkmkmf -srcroot ../../ -inst-bin _install
 #
 #
 # Important variables to use:
@@ -21,7 +21,7 @@
 SRCROOT=../..
 BUILD_CONF="build.conf"
 MAKEFILE="Makefile"
-FORMAKE_TOOLS="abspath relpath"
+FORMAKE_TOOLS="abspath relpath mkrule listed"
 
 ################################################################################
 # INIT
@@ -45,12 +45,17 @@ SRCDIR=`relpath ./ $ABS_SRCDIR`
 
 ################################################################################
 # READ CONFIG
-#. $BUILDROOT/$BUILD_CONF
+. $BUILDROOT/$BUILD_CONF
 
 ################################################################################
 # INIT MAKEFILE
 mkrule all >$MAKEFILE
 mkrule distclean $MAKEFILE >>$MAKEFILE
+
+################################################################################
+# INSTALLATION FILES
+install_bin=`listed -pref=$SRCDIR/ _install`
+mkrule install bin -d $PACKAGE_SHAREDIR -rename install $install_bin >>$MAKEFILE
 
 ################################################################################
 # DONE
