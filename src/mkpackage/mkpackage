@@ -10,7 +10,7 @@ script_name=`basename "$0"`
 script_dir=`dirname $0`
 
 op_dir=formake
-formake_scripts="abspath confighelp cstem cstem+ iflib iftool install libro listed mkbuildroot mkdep mkrule optool pofig relpath"
+formake_scripts="abspath confighelp cstem cstem+ cfront iflib iftool install libro listed mkbuildroot mkdep mkrule optool pofig relpath"
 share_dir=/tmp/opt/share/formake
 
 print_help() {
@@ -30,6 +30,7 @@ Scripts:
   confighelp   configure automation     print configure help
   cstem        configure automation     configure and probe C compiler
   cstem+       configure automation     configure and probe C++ compiler
+  cfront       mkmf automation          C/C++ compiler frontend based on cstem/cstem+
   iflib        configure automation     library test tool
   iftool       configure automation     command test tool
   install      generic automation       portable version of BSD install
@@ -106,6 +107,10 @@ while test $# -gt 0; do
       s_cstemx=1
       have_list=1
       ;;
+    cfront)
+      s_cfront=1
+      have_list=1
+      ;;
     iflib)
       s_iflib=1
       have_list=1
@@ -161,7 +166,7 @@ if test -n "$s_mkrule"; then
   s_libro=1
   s_mkdep=1
 fi
-test -n "$s_iflib$s_libro$s_mkdep" && test -z "$s_cstem$s_cstemx" && s_cstem=1
+test -n "$s_iflib$s_libro$s_mkdep$s_cfront" && test -z "$s_cstem$s_cstemx" && s_cstem=1
 if test -n "$s_cstem$s_ctemx"; then
   s_pofig=1
 fi

@@ -10,10 +10,12 @@ rm -f $tmp_buf
 
 print_help() {
 cat <<EOF
-command test tool
-$script_name options
+Command test tool
+
+$script_name [OPTIONS] program ...
  -n              no echo
  -f              echo only on fail
+ program         name of program to check
 EOF
 }
 

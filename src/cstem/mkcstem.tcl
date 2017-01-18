@@ -1077,7 +1077,7 @@ perform_probe() {
           cc_list="cc xlc gcc c99"   ###CC_LINE
           cc_list="xlc++ xlC c++ CC g++"    ###CX_LINE
           ;;
-        sunos)
+        solaris)
           cc_list="cc gcc c99"   ###CC_LINE
           cc_list="CC g++ c++"    ###CX_LINE
           ;;

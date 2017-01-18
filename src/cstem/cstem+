@@ -4,31 +4,55 @@
 #
 
 abs_path() {
-  arg=$1
-  if test -e "$arg"; then
-    if test -d $arg; then
-      file=
+  _sub_orig_dir=`pwd`
+  if test $# = 0; then
+    abs_path_ret=
+    return
+  fi
+  if test $# = 2; then
+    _arg_orig_dir=$1
+    _arg=$2
+    if echo -n "$_arg" | grep "^/" > /dev/null; then
+      :
     else
-      file=`basename -- $arg`
-      arg=`dirname -- $arg`
+      _arg=`echo -n "$_arg_orig_dir/$_arg" | sed 's!//*!/!g'`
     fi
-
-    cd $arg
-    abs_path_ret=`pwd`
-    if test x"$file" != "x"; then
-      abs_path_ret="$abs_path_ret/$file"
-    fi
-
-    cd $orig_dir
   else
-    if echo -n "$arg" | grep "^/" > /dev/null; then
-      abs_path_ret="$arg"
+    _arg=$1
+  fi
+  if test -e "$_arg"; then
+    if test -d $_arg; then
+      _file=
     else
-      abs_path_ret="$orig_dir/$arg"
+      _file=`basename -- $_arg`
+      _arg=`dirname -- $_arg`
     fi
+
+    cd $_cd_param $_arg
+    abs_path_ret=`pwd`
+    if test x"$_file" != "x"; then
+      abs_path_ret="$abs_path_ret/$_file"
+    fi
+
+    cd $_cd_param $_sub_orig_dir
+  else
+    if echo -n "$_arg" | grep "^/" > /dev/null; then
+      abs_path_ret="$_arg"
+    else
+      abs_path_ret="$_sub_orig_dir/$_arg"
+    fi
+    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#//*#/#g'`
+    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/*$#/#'`
+    string_prev=
+    while test "x$abs_path_ret" != "x$string_prev" ; do
+      string_prev=$abs_path_ret
+      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/[^/][^/][^/][^/]*/\.\./#/#g' | sed 's#/[^/][^/.]/\.\./#/#g' | sed 's#/[^/.][^/]/\.\./#/#g' | sed 's#/[^/.]/\.\./#/#g'`
+      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#^/\.\./#/#' | sed 's#^/\.\.$#/#'`
+      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/\./#/#g' | sed 's#/\.$#/#'`
+    done
+    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/$##' | sed 's#^$#/#'`
   fi
 }
-
 
 script_name=`basename $0`
 orig_dir=`pwd`
@@ -844,7 +868,7 @@ perform_probe() {
         aix)
           cc_list="xlc++ xlC c++ CC g++"
           ;;
-        sunos)
+        solaris)
           cc_list="CC g++ c++"
           ;;
         irix)
