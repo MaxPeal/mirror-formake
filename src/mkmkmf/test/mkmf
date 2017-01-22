@@ -57,15 +57,15 @@ mkrule obj -pic -cflags="$CFLAGS" -src $lib1_sources -d $PIC_DIR >>$MAKEFILE
 # APPLICATIONS
 prog1_name="app1"
 prog1_ldflags=""
-mkrule prog -all -install -ldflags="$prog1_ldflags" -n $prog1_name -objdir $STATIC_DIR -src $prog1_sources >>$MAKEFILE
+mkrule prog -all -install -ldflags="$prog1_ldflags" -n $prog1_name -objdir $STATIC_DIR -sobj $prog1_sources >>$MAKEFILE
 
 ################################################################################
 # LIBRARIES
 lib1_name="fxx"
 lib1_version="1.0.1"
 lib1_ldflags="-lX11 -lXt -lXm"
-mkrule lib -all -install -static -ldflags="$lib1_ldflags" -n $lib1_name -ver $lib1_version -objdir $STATIC_DIR -src $lib1_sources >>$MAKEFILE
-mkrule lib -all -install -shared -ldflags="$lib1_ldflags" -n $lib1_name -ver $lib1_version -objdir $PIC_DIR -src $lib1_sources >>$MAKEFILE
+mkrule lib -all -install -static -ldflags="$lib1_ldflags" -n $lib1_name -ver $lib1_version -objdir $STATIC_DIR -sobj $lib1_sources >>$MAKEFILE
+mkrule lib -all -install -shared -ldflags="$lib1_ldflags" -n $lib1_name -ver $lib1_version -objdir $PIC_DIR -sobj $lib1_sources >>$MAKEFILE
 
 ################################################################################
 # CUSTOM CODE

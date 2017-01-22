@@ -3,6 +3,7 @@
 # mkrule init
 all:
 install:
+uninstall:
 clean:
 distclean:
 dist:
@@ -11,8 +12,8 @@ dist-tree:
 ################################################################################
 # DISTCLEAN
 # mkrule distclean Makefile
-distclean: distclean-818756
-distclean-818756:
+distclean: distclean-579002
+distclean-579002:
 	rm -Rf Makefile
 
 ################################################################################
@@ -98,12 +99,12 @@ _static/rx.o: rx.c  .deps/_static/rx.d
 -include .deps/_static/rx.d
 .deps/_static/rx.d:
 
-clean: clean-obj-36551
-clean-obj-36551:
+clean: clean-obj-730595
+clean-obj-730595:
 	rm -f  _static/file1.o _static/file2.o _static/app1.o _static/common.o _static/net.o _static/db.o _static/www.o _static/tty.o _static/ghf.o _static/rx.o
 
-distclean: distclean-obj-36551
-distclean-obj-36551: clean-obj-36551
+distclean: distclean-obj-730595
+distclean-obj-730595: clean-obj-730595
 	rm -Rf .deps
 
 ################################################################################
@@ -157,23 +158,26 @@ _pic/rx.o: rx.c  .deps/_pic/rx.d
 -include .deps/_pic/rx.d
 .deps/_pic/rx.d:
 
-clean: clean-obj-133880
-clean-obj-133880:
+clean: clean-obj-261372
+clean-obj-261372:
 	rm -f  _pic/common.o _pic/net.o _pic/www.o _pic/tty.o _pic/ghf.o _pic/rx.o
 
-distclean: distclean-obj-133880
-distclean-obj-133880: clean-obj-133880
+distclean: distclean-obj-261372
+distclean-obj-261372: clean-obj-261372
 	rm -Rf .deps
 
 ################################################################################
 # PROGRAMS
-# mkrule prog -all -install -ldflags= -n app1 -objdir _static -src file1.c file2.c app1.c common.c net.c db.c
+# mkrule prog -all -install -ldflags= -n app1 -objdir _static -sobj file1.c file2.c app1.c common.c net.c db.c
 all: app1
 app1: _static/file1.o _static/file2.o _static/app1.o _static/common.o _static/net.o _static/db.o 
 	gcc -o app1 _static/file1.o _static/file2.o _static/app1.o _static/common.o _static/net.o _static/db.o 
 install: install-app1
 install-app1: app1
-	install -m 0755 -D app1 /usr/local/bin/app1
+	install -m 0755 -D app1 $(DESTDIR)/usr/local/bin/app1
+uninstall: uninstall-app1
+uninstall-app1:
+	rm -f $(DESTDIR)/usr/local/bin/app1
 clean: clean-app1
 clean-app1:
 	rm -f app1
@@ -181,14 +185,17 @@ distclean: clean-app1
 
 ################################################################################
 # LIBRARIES
-# mkrule lib -all -install -static -ldflags=-lX11 -lXt -lXm -n fxx -ver 1.0.1 -objdir _static -src common.c net.c www.c tty.c ghf.c rx.c
+# mkrule lib -all -install -static -ldflags=-lX11 -lXt -lXm -n fxx -ver 1.0.1 -objdir _static -sobj common.c net.c www.c tty.c ghf.c rx.c
 all: libfxx.a
 libfxx.a: _static/common.o _static/net.o _static/www.o _static/tty.o _static/ghf.o _static/rx.o 
 	rm -f libfxx.a
 	ar clq libfxx.a _static/common.o _static/net.o _static/www.o _static/tty.o _static/ghf.o _static/rx.o
 install: install-fxx
 install-fxx: libfxx.a
-	install -m 0644 -D libfxx.a /usr/local/lib/libfxx.a
+	install -m 0644 -D libfxx.a $(DESTDIR)/usr/local/lib/libfxx.a
+uninstall: uninstall-fxx
+uninstall-fxx:
+	rm -f $(DESTDIR)/usr/local/lib/libfxx.a
 clean: clean-fxx
 clean-fxx:
 	rm -f libfxx.a
@@ -196,7 +203,7 @@ distclean: clean-fxx
 
 ################################################################################
 # LIBRARIES
-# mkrule lib -all -install -shared -ldflags=-lX11 -lXt -lXm -n fxx -ver 1.0.1 -objdir _pic -src common.c net.c www.c tty.c ghf.c rx.c
+# mkrule lib -all -install -shared -ldflags=-lX11 -lXt -lXm -n fxx -ver 1.0.1 -objdir _pic -sobj common.c net.c www.c tty.c ghf.c rx.c
 all: libfxx.so libfxx.so.1 libfxx.so.1.0.1
 libfxx.so libfxx.so.1 libfxx.so.1.0.1: _pic/common.o _pic/net.o _pic/www.o _pic/tty.o _pic/ghf.o _pic/rx.o 
 	rm -f libfxx.so libfxx.so.1 libfxx.so.1.0.1
@@ -205,9 +212,14 @@ libfxx.so libfxx.so.1 libfxx.so.1.0.1: _pic/common.o _pic/net.o _pic/www.o _pic/
 	ln -s libfxx.so.1.0.1 libfxx.so
 install: install-fxx
 install-fxx: libfxx.so libfxx.so.1 libfxx.so.1.0.1
-	install -m 0755 -D libfxx.so.1.0.1 /usr/local/lib/libfxx.so.1.0.1
-	/bin/cp --no-dereference libfxx.so /usr/local/lib
-	/bin/cp --no-dereference libfxx.so.1 /usr/local/lib
+	install -m 0755 -D libfxx.so.1.0.1 $(DESTDIR)/usr/local/lib/libfxx.so.1.0.1
+	/bin/cp --no-dereference libfxx.so $(DESTDIR)/usr/local/lib
+	/bin/cp --no-dereference libfxx.so.1 $(DESTDIR)/usr/local/lib
+uninstall: uninstall-fxx
+uninstall-fxx:
+	rm -f $(DESTDIR)/usr/local/lib/libfxx.so.1.0.1
+	rm -f $(DESTDIR)/usr/local/lib/libfxx.so
+	rm -f $(DESTDIR)/usr/local/lib/libfxx.so.1
 clean: clean-fxx
 clean-fxx:
 	rm -f libfxx.so libfxx.so.1 libfxx.so.1.0.1
@@ -216,28 +228,42 @@ distclean: clean-fxx
 ################################################################################
 # INSTALL
 # mkrule install bin script1
-install: install-bin-784169
-install-bin-784169: script1
-	install -m 0755 -D script1 /usr/local/bin/script1
+install: install-bin-716141
+install-bin-716141: script1
+	install -m 0755 -D script1 $(DESTDIR)/usr/local/bin/script1
+uninstall: uninstall-bin-716141
+uninstall-bin-716141:
+	rm -Rf $(DESTDIR)/usr/local/bin/script1
 
 ################################################################################
 # INSTALL
 # mkrule install lib libvga.a
-install: install-lib-429288
-install-lib-429288: libvga.a
-	install -m 0644 -D libvga.a /usr/local/lib/libvga.a
+install: install-lib-899923
+install-lib-899923: libvga.a
+	install -m 0644 -D libvga.a $(DESTDIR)/usr/local/lib/libvga.a
+uninstall: uninstall-lib-899923
+uninstall-lib-899923:
+	rm -Rf $(DESTDIR)/usr/local/lib/libvga.a
 
 ################################################################################
 # INSTALL
 # mkrule install inc common.h vga.h fxx.h ui.h tty.h con.h
-install: install-inc-9979
-install-inc-9979: common.h vga.h fxx.h ui.h tty.h con.h
-	install -m 0444 -D common.h /usr/local/include/common.h
-	install -m 0444 -D vga.h /usr/local/include/vga.h
-	install -m 0444 -D fxx.h /usr/local/include/fxx.h
-	install -m 0444 -D ui.h /usr/local/include/ui.h
-	install -m 0444 -D tty.h /usr/local/include/tty.h
-	install -m 0444 -D con.h /usr/local/include/con.h
+install: install-inc-490561
+install-inc-490561: common.h vga.h fxx.h ui.h tty.h con.h
+	install -m 0444 -D common.h $(DESTDIR)/usr/local/include/common.h
+	install -m 0444 -D vga.h $(DESTDIR)/usr/local/include/vga.h
+	install -m 0444 -D fxx.h $(DESTDIR)/usr/local/include/fxx.h
+	install -m 0444 -D ui.h $(DESTDIR)/usr/local/include/ui.h
+	install -m 0444 -D tty.h $(DESTDIR)/usr/local/include/tty.h
+	install -m 0444 -D con.h $(DESTDIR)/usr/local/include/con.h
+uninstall: uninstall-inc-490561
+uninstall-inc-490561:
+	rm -Rf $(DESTDIR)/usr/local/include/common.h
+	rm -Rf $(DESTDIR)/usr/local/include/vga.h
+	rm -Rf $(DESTDIR)/usr/local/include/fxx.h
+	rm -Rf $(DESTDIR)/usr/local/include/ui.h
+	rm -Rf $(DESTDIR)/usr/local/include/tty.h
+	rm -Rf $(DESTDIR)/usr/local/include/con.h
 
 ################################################################################
 # DIST
@@ -298,6 +324,9 @@ subdir-mod1:
 install: install-mod1
 install-mod1:
 	$(MAKE) -C mod1 install
+uninstall: uninstall-mod1
+uninstall-mod1:
+	$(MAKE) -C mod1 uninstall
 clean: clean-mod1
 clean-mod1:
 	$(MAKE) -C mod1 clean
@@ -314,6 +343,9 @@ subdir-mod2:
 install: install-mod2
 install-mod2:
 	$(MAKE) -C mod2 install
+uninstall: uninstall-mod2
+uninstall-mod2:
+	$(MAKE) -C mod2 uninstall
 clean: clean-mod2
 clean-mod2:
 	$(MAKE) -C mod2 clean
@@ -330,6 +362,9 @@ subdir-tests:
 install: install-tests
 install-tests:
 	$(MAKE) -C tests install
+uninstall: uninstall-tests
+uninstall-tests:
+	$(MAKE) -C tests uninstall
 clean: clean-tests
 clean-tests:
 	$(MAKE) -C tests clean
@@ -346,6 +381,9 @@ subdir-libeee:
 install: install-libeee
 install-libeee:
 	$(MAKE) -C libeee install
+uninstall: uninstall-libeee
+uninstall-libeee:
+	$(MAKE) -C libeee uninstall
 clean: clean-libeee
 clean-libeee:
 	$(MAKE) -C libeee clean
@@ -362,6 +400,9 @@ subdir-libeee2:
 install: install-libeee2
 install-libeee2:
 	$(MAKE) -C libeee2 install
+uninstall: uninstall-libeee2
+uninstall-libeee2:
+	$(MAKE) -C libeee2 uninstall
 clean: clean-libeee2
 clean-libeee2:
 	$(MAKE) -C libeee2 clean

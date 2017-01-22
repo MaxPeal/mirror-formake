@@ -77,8 +77,8 @@ $script_name prog [OPTIONS] -src SRC.. -obj OBJ..
   -rc FILE         create RC file
   -var [PREFIX]    create a Make variable [PREFIX_]PROGRAM containing a generated executable file
   -objdir PATH     path to the object directory
-  -src SRC..       list of source files
   -obj OBJ..       list of object files. RC files are accepted
+  -sobj SRC..      convert list of source files into a list of object files
 EOF
 }
 
@@ -106,8 +106,8 @@ $script_name lib [OPTIONS] -src SRC.. -obj OBJ..
                      [PREFIX_]LIB_SO_C      - shared library file with '.so.X' extension
                      [PREFIX_]LIB_SO_CRA    - shared library file with '.so.X.X.X' extension
   -objdir PATH     path to the object directory
-  -src SRC..       list of source files
   -obj OBJ..       list of object files. RC files are accepted
+  -sobj SRC..      convert list of source files into a list of object files
 EOF
 }
 
@@ -144,7 +144,7 @@ EOF
 print_install_help() {
   cat <<EOF
 $script_name install TYPE [OPTIONS] FILE..
-  TYPE             files type: bin, sbin, libexec, lib, inc, share, man[1-8], doc, etc
+  TYPE             files type: bin, sbin, libexec, lib, inc, share, man[0-9], doc, etc
   -t TARGET        specify phony target that start generated rules
   -rename NAME     set destination file name
   -d DIR           installation directory
@@ -567,8 +567,8 @@ EOF
 
 
 mkprog() {
-  if test -n "$op_src"; then
-    for file in $op_src; do
+  if test -n "$op_sobj"; then
+    for file in $op_sobj; do
       obj=`echo -n "$file" | sed 's/\.[^.]*/.o/'`
       op_obj="$op_obj $obj"
     done
@@ -646,7 +646,10 @@ EOF
     cat <<EOF
 install: install-$op_name
 install-$op_name: $prog_local
-	$INSTALL -m 0755 -D $prog_local $op_install_path/$file_base
+	$INSTALL -m 0755 -D $prog_local \$(DESTDIR)$op_install_path/$file_base
+uninstall: uninstall-$op_name
+uninstall-$op_name:
+	rm -f \$(DESTDIR)$op_install_path/$file_base
 EOF
   fi
 
@@ -664,8 +667,8 @@ EOF
 }
 
 mklib() {
-  if test -n "$op_src"; then
-    for file in $op_src; do
+  if test -n "$op_sobj"; then
+    for file in $op_sobj; do
       obj=`echo -n "$file" | sed 's/\.[^.]*/.o/'`
       op_obj="$op_obj $obj"
     done
@@ -834,13 +837,21 @@ EOF
     for file in $lib_regular; do
       file_base=`basename $file`
       if test x$op_shared = x1; then
-	    echo "	$INSTALL -m 0755 -D $file $op_install_path/$file_base"
+	    echo "	$INSTALL -m 0755 -D $file \$(DESTDIR)$op_install_path/$file_base"
       else
-	    echo "	$INSTALL -m 0644 -D $file $op_install_path/$file_base"
+	    echo "	$INSTALL -m 0644 -D $file \$(DESTDIR)$op_install_path/$file_base"
       fi
     done
     for file in $lib_symbolic; do
-      echo "	/bin/cp $cp_no_deref $file $op_install_path"
+      echo "	/bin/cp $cp_no_deref $file \$(DESTDIR)$op_install_path"
+    done
+    cat <<EOF
+uninstall: uninstall-$op_name
+uninstall-$op_name:
+EOF
+    for file in $lib_regular $lib_symbolic; do
+      file_base=`basename $file`
+	  echo "	rm -f \$(DESTDIR)$op_install_path/$file_base"
     done
   fi
 
@@ -900,6 +911,9 @@ EOF
 install: install-$dir
 install-$dir:
 	\$(MAKE) -C $dir install
+uninstall: uninstall-$dir
+uninstall-$dir:
+	\$(MAKE) -C $dir uninstall
 EOF
     fi
     if test x$op_clean = x1; then
@@ -1014,7 +1028,7 @@ EOF
 
   if test -z "$op_target"; then
     get_random
-    op_target="install-$op_type-$RANDOM"
+    op_target="$op_type-$RANDOM"
   fi
 
   case $op_type in
@@ -1042,7 +1056,7 @@ EOF
       perm="0444"
       dir=$SHAREDIR
       ;;
-    man[1-8])
+    man[0-9])
       perm="0444"
       man_index=`echo -n "$op_type" | sed 's/^man//'`
       dir="$MANDIR/man$man_index"
@@ -1060,15 +1074,27 @@ EOF
   test -z "$op_dir" || dir=$op_dir
 
   cat <<EOF
-install: $op_target
-$op_target: $op_files
+install: install-$op_target
+install-$op_target: $op_files
 EOF
   if test -n "$op_rename"; then
-    printf "\t%s\n" "$INSTALL -m $perm -D $op_files $dir/$op_rename"
+    printf "\t%s\n" "$INSTALL -m $perm -D $op_files \$(DESTDIR)$dir/$op_rename"
   else
     for file in $op_files; do
       file_base=`basename $file`
-      printf "\t%s\n" "$INSTALL -m $perm -D $file $dir/$file_base"
+      printf "\t%s\n" "$INSTALL -m $perm -D $file \$(DESTDIR)$dir/$file_base"
+    done
+  fi
+  cat <<EOF
+uninstall: uninstall-$op_target
+uninstall-$op_target:
+EOF
+  if test -n "$op_rename"; then
+    printf "\t%s\n" "rm -Rf \$(DESTDIR)$dir/$op_rename"
+  else
+    for file in $op_files; do
+      file_base=`basename $file`
+      printf "\t%s\n" "rm -Rf \$(DESTDIR)$dir/$file_base"
     done
   fi
   echo ""
@@ -1225,7 +1251,7 @@ if test $op_mode = install; then
     exit 1
   fi
   case $1 in
-    bin|sbin|libexec|lib|inc|share|man[1-8]|doc|etc)
+    bin|sbin|libexec|lib|inc|share|man[0-9]|doc|etc)
       op_type=$1
       ;;
     -h|-help|--help)
@@ -1429,16 +1455,24 @@ while test $# -gt 0; do
       current_opt=var
       ;;
     -src)
+      if test $op_mode != obj; then
+        echo "$script_name: error: invalid parameter $1 for current mode" >&2
+        exit 1
+      fi
+      op_src=
+      current_opt=src
+      ;;
+    -sobj)
       case $op_mode in
-        obj|prog|lib)
+        prog|lib)
           : ;;
         *)
           echo "$script_name: error: invalid parameter $1 for current mode" >&2
           exit 1
           ;;
       esac
-      op_src=
-      current_opt=src
+      op_sobj=
+      current_opt=sobj
       ;;
     -n)
       case $op_mode in
@@ -1694,6 +1728,9 @@ while test $# -gt 0; do
           esac
           op_src="$op_src $1"
           ;;
+        sobj)
+          op_sobj="$op_sobj $1"
+          ;;
         n)
           op_name=$1
           current_opt=
@@ -1845,6 +1882,7 @@ case $op_mode in
 # $script_name $script_options
 all:
 install:
+uninstall:
 clean:
 distclean:
 dist:
