@@ -88,12 +88,12 @@ $script_name options
  -cstr TEXT      one line source string
  -cflags=FLAGS   compiler flags
  -ldflags=FLAGS  linker flags
- -cc[=cmd]       use C compiler. Optional compiler command can be passed
- -cxx[=cmd]      use C++ compiler. Optional compiler command can be passed
+ -cc [CMD]       use C compiler. Optional compiler command can be passed
+ -cxx [CMD]      use C++ compiler. Optional compiler command can be passed
  "#if* ..."      test preprocessor condition directives
  *.h|*.hh        lib include headers. Different file extensions are recognized
  *.c|*.cc        test source files. Different file extensions are recognized
- -log[=FILE]     print log to stdout or specified file
+ -log [FILE]     print log to stdout or specified file
  -short          run short test - do not check compiler, linker, cflags,
                  ldflags, includes and libraries
  -no-ld          disable any ld tests
@@ -163,9 +163,7 @@ while test $# -gt 0; do
       current_opt=rval
       ;;
     -cstr)
-      shift
-      op_cstr=$1
-      current_opt=
+      current_opt=cstr
       ;;
     -cflags=*)
       arg=`echo -n "$param" | sed 's/^[^=]*=//'`
@@ -179,32 +177,18 @@ while test $# -gt 0; do
       ;;
     -cc)
       cc_type=cc
-      current_opt=
-      ;;
-    -cc=*)
-      cc_type=cc
-      arg=`echo -n "$param" | sed 's/^[^=]*=//'`
-      op_cmd=$arg
-      current_opt=
+      current_opt=cc
       ;;
     -cxx)
       cc_type=cxx
-      current_opt=
-      ;;
-    -cxx=*)
-      cc_type=cxx
-      arg=`echo -n "$param" | sed 's/^[^=]*=//'`
-      op_cmd=$arg
-      current_opt=
+      current_opt=cxx
       ;;
     -log)
       op_echo_log=1
       current_opt=
       ;;
-    -log=*)
-      arg=`echo -n "$param" | sed 's/^[^=]*=//'`
-      op_log_file=$arg
-      current_opt=
+    -log)
+      current_opt=log
       ;;
     -[ID]*)
       op_cflags="$op_cflags $param"
@@ -260,7 +244,19 @@ while test $# -gt 0; do
         echo "$script_name: error: bad option $param" >&2
         exit 1
       fi
-      case $current_opt in
+      case "$current_opt" in
+        cstr)
+          op_cstr=$1
+          current_opt=
+          ;;
+        cc|cxx)
+          op_cmd=$param
+          current_opt=
+          ;;
+        log)
+          op_log_file=$param
+          current_opt=
+          ;;
         inc)
           op_inc="$op_inc $param"
           ;;
@@ -600,7 +596,7 @@ EOF
       def_name=`echo -n "$def_string" | sed 's/[^a-zA-Z0-9_].*//'`
       inv_chars=`echo -n "$def_name" | sed 's/[_a-zA-Z0-9]//g'`
       if test -n "$inv_chars" || echo -n "$def_name" | grep "^[0-9]" > /dev/null; then
-        echo "$script_name: error invalid macro $def_name"
+        echo "$script_name: error invalid macro $def_name" >&2
         exit 1
       fi
       rpart=`echo -n "$def_string" | sed 's/[a-zA-Z0-9_]*//'`
@@ -622,7 +618,7 @@ EOF
             opstr="=="
             ;;
           *)
-            echo "$script_name: error invalid argument $def_string"
+            echo "$script_name: error invalid argument $def_string" >&2
             exit 1
             ;;
         esac
@@ -818,19 +814,21 @@ fi
 # CHECKING SOURCE FILES
 if test -n "$op_src"; then
   for src in $op_src; do
-    if echo -n "$src" | grep "^/" > /dev/null; then : ; else
-      src="$orig_dir/$src"
+    if echo -n "$src" | grep "^/" > /dev/null; then 
+      src_full=$src
+    else
+      src_full="$orig_dir/$src"
     fi
 
     echo_status "%s" "checking source file $src ... "
 
-    if test ! -f $src; then
+    if test ! -f $src_full; then
       echo_status "%s\n" "Failed"
       echo_status "%s\n" "  file $src not found"
       script_exit 1
     fi
-    cp $src .
-    src_base=`basename $src`
+    cp $src_full .
+    src_base=`basename $src_full`
 
     echo "\$ $CC_CMD -c -o test.o $src_base" >> iflib.log
     $CC_CMD -c -o test.o $src_base >> iflib.log 2>&1

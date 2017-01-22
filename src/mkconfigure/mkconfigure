@@ -63,22 +63,10 @@ while test $# -gt 0; do
       clean_exit 0
       ;;
     -name)
-      shift
-      if test -z "$1"; then
-        echo "$script_name: error. Parameter -name requires argument" >&2
-        clean_exit 1
-      fi
-      op_pkgname=$1
-      current_opt=
+      current_opt=name
       ;;
     -ver)
-      shift
-      if test -z "$1"; then
-        echo "$script_name: error. Parameter -ver requires argument" >&2
-        clean_exit 1
-      fi
-      op_pkgver=$1
-      current_opt=
+      current_opt=ver
       ;;
     -params=*)
       op_params=`echo -n "$1" | sed 's/^[^=]*=//'`
@@ -101,37 +89,13 @@ while test $# -gt 0; do
       current_opt=
       ;;
     -iflib)
-      shift
-      if test -z "$1"; then
-        echo "$script_name: error. Parameter -iflib requires argument" >&2
-        clean_exit 1
-      fi
-      op_iflib=1
-      params=$1
-      eval iflib${iflib_index}_params=\$params
-      iflib_index=`expr $iflib_index + 1`
-      current_opt=
+      current_opt=iflib
       ;;
     -iftool)
-      shift
-      if test -z "$1"; then
-        echo "$script_name: error. Parameter -iftool requires argument" >&2
-        clean_exit 1
-      fi
-      op_iftool=1
-      params=$1
-      eval iftool${iftool_index}_params=\$params
-      iftool_index=`expr $iftool_index + 1`
-      current_opt=
+      current_opt=iftool
       ;;
     -sh)
-      shift
-      if test -z "$1"; then
-        echo "$script_name: error. Parameter -sh requires argument" >&2
-        clean_exit 1
-      fi
-      op_sh=$1
-      current_opt=
+      current_opt=sh
       ;;
     -build-h)
       op_build_h=1
@@ -146,29 +110,57 @@ while test $# -gt 0; do
       current_opt=
       ;;
     -o)
-      shift
-      if test -z "$1"; then
-        echo "$script_name: error. Parameter -o requires argument" >&2
-        clean_exit 1
-      fi
-      out_file=$1
-      if test -d "$out_file"; then
-        out_file="$out_file/configure"
-      fi
-      out_file_dir=`dirname "$out_file"`
-      if test ! -d "$out_file_dir"; then
-        echo "$script_name: error. Directory not found: $out_file_dir" >&2
-        clean_exit 1
-      fi
-      current_opt=
+      current_opt=o
       ;;
     -mkpackage)
       op_mkpackage=1
       current_opt=
       ;;
     *)
-      echo "$script_name: error. Invalid parameter: $1" >&2
-      clean_exit 1
+      case "$current_opt" in
+        name)
+          op_pkgname=$1
+          current_opt=
+          ;;
+        ver)
+          op_pkgver=$1
+          current_opt=
+          ;;
+        iflib)
+          op_iflib=1
+          params=$1
+          eval iflib${iflib_index}_params=\$params
+          iflib_index=`expr $iflib_index + 1`
+          current_opt=
+          ;;
+        iftool)
+          op_iftool=1
+          params=$1
+          eval iftool${iftool_index}_params=\$params
+          iftool_index=`expr $iftool_index + 1`
+          current_opt=
+          ;;
+        sh)
+          op_sh=$1
+          current_opt=
+          ;;
+        o)
+          out_file=$1
+          if test -d "$out_file"; then
+            out_file="$out_file/configure"
+          fi
+          out_file_dir=`dirname "$out_file"`
+          if test ! -d "$out_file_dir"; then
+            echo "$script_name: error. Directory not found: $out_file_dir" >&2
+            clean_exit 1
+          fi
+          current_opt=
+          ;;
+        *)
+          echo "$script_name: error. Invalid parameter: $1" >&2
+          clean_exit 1
+          ;;
+      esac
       ;;
   esac
   shift
@@ -354,10 +346,10 @@ if test -n "$op_cstem$op_cstemx"; then
 # PROBE AND CONFIGURE COMPILERS
 TOP_EOF
   if test x$op_cstem = x1; then
-    echo "cstem config -cc=\$CC -cflags=\"\$CFLAGS\"" >>$out_file
+    echo "cstem config -cc \$CC -cflags=\"\$CFLAGS\"" >>$out_file
   fi
   if test x$op_cstemx = x1; then
-    echo "cstem+ config -cc=\$CXX -cflags=\"\$CXXFLAGS\"" >>$out_file
+    echo "cstem+ config -cc \$CXX -cflags=\"\$CXXFLAGS\"" >>$out_file
   fi
   echo "" >>$out_file
 fi
@@ -371,11 +363,11 @@ TOP_EOF
   while test $idx -lt $iflib_index; do
     eval iflib_params=\$iflib${idx}_params
     if test x$op_cstem$op_cstemx = x11; then
-      echo "iflib -cc $iflib_params -log=\"configure.log\" || exit 1" >>$out_file
+      echo "iflib -cc $iflib_params -log configure.log || exit 1" >>$out_file
     elif test x$op_cstemx = x1; then
-      echo "iflib -cxx $iflib_params -log=\"configure.log\" || exit 1" >>$out_file
+      echo "iflib -cxx $iflib_params -log configure.log || exit 1" >>$out_file
     else
-      echo "iflib -cc $iflib_params -log=\"configure.log\" || exit 1" >>$out_file
+      echo "iflib -cc $iflib_params -log configure.log || exit 1" >>$out_file
     fi
     idx=`expr $idx + 1`
   done
@@ -410,9 +402,9 @@ if test x$op_no_install = x; then
 
 ################################################################################
 # MKRULE
-mkrule config -prefix=$PREFIX -exec-prefix=$EXEC_PREFIX -bindir=$BINDIR -sbindir=$SBINDIR \
-          -libexecdir=$LIBEXECDIR -libdir=$LIBDIR -incdir=$INCDIR -etcdir=$ETCDIR \
-          -sharedir=$PACKAGE_SHAREDIR -mandir=$MANDIR -docdir=$PACKAGE_DOCDIR
+mkrule config -prefix $PREFIX -exec-prefix $EXEC_PREFIX -bindir $BINDIR -sbindir $SBINDIR \
+          -libexecdir $LIBEXECDIR -libdir $LIBDIR -incdir $INCDIR -etcdir $ETCDIR \
+          -sharedir $PACKAGE_SHAREDIR -mandir $MANDIR -docdir $PACKAGE_DOCDIR
 TOP_EOF
 fi
 

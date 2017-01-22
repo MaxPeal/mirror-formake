@@ -28,7 +28,7 @@ EOF
     shift
     while test $# -gt 0; do
       case "$1" in
-        -*)
+        -*|*=*)
           if test -n "$sbs_param"; then
             test -n "$sbs_param_val$sbs_param_set" || sbs_param_val=1
             if test $mode = rc; then
@@ -48,6 +48,10 @@ EOF
                   exit 1
                 fi
                 op_prefix=`echo -n "$1" | sed 's/[^a-zA-Z0-9_]//g'`
+                if test -z "$op_prefix"; then 
+                  echo "$script_name: error: invalid prefix '$1'" >&2
+                  exit 1
+                fi
                 param_skip=1
                 ;;
               -nc)
@@ -61,7 +65,7 @@ EOF
               -)
                 disable_special=1
                 ;;
-              -*)
+              *)
                 sbs_param=`echo -n "$1" | sed "s/^-*//" | sed 's/=.*//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g'`
                 sbs_param="$op_prefix$sbs_param"
                 if test -z $no_case_change; then
@@ -70,7 +74,7 @@ EOF
                 sbs_param_val=
                 sbs_param_set=
                 case "$1" in
-                  -*=*)
+                  *=*)
                     sbs_param_val=`echo -n "$1" | sed 's/^[^=]*=//'`
                     sbs_param_set=1
                     ;;
@@ -80,7 +84,7 @@ EOF
           fi
           ;;
         *)
-          if test -z "$sbs_param"; then
+          if test -z "$sbs_param" || test x$sbs_param_set = x1; then
             echo "invalid parameter: $1" >&2
             exit 1
           fi
@@ -129,7 +133,7 @@ EOF
         -)
           break
           ;;
-        -*)
+        -*|*=*)
           sbs_param=`echo -n "$param" | sed 's/=.*//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g' | tr '[a-z]' '[A-Z]'`
           eval is_valid=\$SBS_VALID_$sbs_param
           if test x$is_valid != x1; then
@@ -160,7 +164,7 @@ EOF
         -)
           break
           ;;
-        -*)
+        -*|*=*)
           sbs_param=`echo -n "$param" | sed 's/=.*//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g' | tr '[a-z]' '[A-Z]'`
           eval SBS_SET_$sbs_param=1
           ;;

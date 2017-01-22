@@ -11,10 +11,10 @@ cat <<EOF
 C/C++ compiler frontend based on cstem/cstem+
 
 $script_name OPTIONS
-  -c++                Force C++ mode [autodetect]
-  -echo               Echo backend command without running it
-  *                   Any unrecognized options are passed unmodified to a
-                      backend compiler
+  -c++     Force C++ mode [autodetect]
+  -echo    Echo backend command without running it
+  *        Any unrecognized options are passed unmodified to a
+           backend compiler
 EOF
 }
 

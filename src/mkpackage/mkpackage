@@ -22,7 +22,7 @@ $script_name [OPTIONS] [SCRIPTS]
 
 Options:
  -p DIR  create package directory
- -d DIR  package script dir name [formake]
+ -d DIR  package script directory name [formake]
  -std    install standard set of scripts
 
 Scripts:

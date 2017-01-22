@@ -162,38 +162,13 @@ current_opt=
 while test $# -gt 0; do
   case $1 in
     -name)
-      shift
-      if test -z "$1"; then
-        echo "$script_name: error: parameter -name requires argument" >&2
-        exit 1
-      fi
-      op_name=$1
-      current_opt=
+      current_opt=name
       ;;
     -ver)
-      shift
-      if test -z "$1"; then
-        echo "$script_name: error: parameter -ver requires argument" >&2
-        exit 1
-      fi
-      _current=`echo -n $1 | sed 's/^\([0-9]*\).*/\1/'`
-      rest=`echo -n $1 | sed 's/^[0-9]*\.*//'`
-      _revision=`echo -n $rest | sed 's/^\([0-9]*\).*/\1/'`
-      rest=`echo -n $rest | sed 's/^[0-9]*\.*//'`
-      _age=`echo -n $rest | sed 's/^\([0-9]*\).*/\1/'`
-      op_ver=$1
-      op_current=$_current
-      op_revision=$_revision
-      op_age=$_age
-      current_opt=
+      current_opt=ver
       ;;
     -obj)
-      shift
-      if test -z "$1"; then
-        echo "$script_name: error: parameter -obj requires argument" >&2
-        exit 1
-      fi
-      op_obj=$1
+      op_obj=
       current_opt=obj
       ;;
     -ldflags=*)
@@ -205,13 +180,7 @@ while test $# -gt 0; do
       current_opt=
       ;;
     -o)
-      shift
-      if test -z "$1"; then
-        echo "$script_name: error: parameter -o requires argument" >&2
-        exit 1
-      fi
-      op_dir=$1
-      current_opt=
+      current_opt=o
       ;;
     -p)
       op_print=1
@@ -228,11 +197,31 @@ while test $# -gt 0; do
       current_opt=
       ;;
     *)
-      case x$current_opt in
-        xobj)
+      case "$current_opt" in
+        name)
+          op_name=$1
+          current_opt=
+          ;;
+        ver)
+          _current=`echo -n $1 | sed 's/^\([0-9]*\).*/\1/'`
+          rest=`echo -n $1 | sed 's/^[0-9]*\.*//'`
+          _revision=`echo -n $rest | sed 's/^\([0-9]*\).*/\1/'`
+          rest=`echo -n $rest | sed 's/^[0-9]*\.*//'`
+          _age=`echo -n $rest | sed 's/^\([0-9]*\).*/\1/'`
+          op_ver=$1
+          op_current=$_current
+          op_revision=$_revision
+          op_age=$_age
+          current_opt=
+          ;;
+        o)
+          op_dir=$1
+          current_opt=
+          ;;
+        obj)
           op_obj="$op_obj $1"
           ;;
-        x*)
+        *)
           echo "$script_name: error: invalid parameter $1" >&2
           exit 1
           ;;

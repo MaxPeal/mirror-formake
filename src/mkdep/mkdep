@@ -14,23 +14,24 @@ print_help() {
 cat <<EOF
 Generate dependencies of C/C++ source files for Makefile
 
-${script_name} [-c++] [-cc=cmd] [-o object] [-cflags=flags] [-I<path>] [-D<define>[=value]] [-stdout|-d file] src..
+${script_name} [-c++] [-cc CMD] [-o OBJECT] [-cflags=FLAGS] [-I<PATH>] [-D<NAME>[=VALUE]] [-stdout|-d FILE] SRC..
 
 Options:
   -c++              force using C++ compiler [autodetect]
-  -cc=cmd           compiler command
-  -o object         output object file
-  -cflags=flags     compiler flags
-  -I<path>          headers path
-  -D<name>[=value]  define a CPP macro
+  -cc CMD           compiler command
+  -o OBJECT         output object file
+  -cflags=FLAGS     compiler flags
+  -I<PATH>          headers path
+  -D<NAME>[=VALUE]  define a CPP macro
   -stdout           print dependency information to a standard output
-  -d file           specify output dependency file
-  src..             source files
+  -d FILE           specify output dependency file
+  SRC..             source files
 EOF
 }
 
 source_num=0
 op_sources=
+current_opt=
 while test $# -gt 0; do
   case $1 in
     -h|-help|--help)
@@ -39,58 +40,66 @@ while test $# -gt 0; do
       ;;
     -c++)
       op_cxx=1
+      current_opt=
       ;;
     -cc)
-      shift
-      if test -z "$1"; then
-        echo "$script_name: error. Parameter -cc requires argument" >&2
-        exit 1
-      fi
-      op_cc=$1
+      current_opt=cc
       ;;
     -o)
-      shift
-      if test -z "$1"; then
-        echo "$script_name: error. Parameter -o requires argument" >&2
-        exit 1
-      fi
-      op_object=$1
+      current_opt=o
       ;;
     -cflags=*)
       op_cflags=`echo -n "$1" | sed 's/^-cflags=//'`
+      current_opt=
       ;;
     -I*)
       op_cflags2="$op_cflags2 $1"
+      current_opt=
       ;;
     -D*)
       op_cflags2="$op_cflags2 $1"
+      current_opt=
       ;;
     -stdout)
       op_stdout=1
       op_out_file=
+      current_opt=
       ;;
     -d)
-      shift
-      if test -z "$1"; then
-        echo "$script_name: error. Parameter -d requires argument" >&2
-        exit 1
-      fi
-      op_out_file=$1
       op_stdout=
+      current_opt=d
       ;;
     *.c)
       op_sources="$op_sources $1"
       source_num=`expr $source_num + 1`
       have_c=1
+      current_opt=
       ;;
     *.C|*.[Cc][Cc]|*.[Cc][Pp][Pp]|*.[Cc][Xx][Xx])
       op_sources="$op_sources $1"
       source_num=`expr $source_num + 1`
       have_cxx=1
+      current_opt=
       ;;
     *)
-      echo "$script_name: error. Invalid parameter: $1" >&2
-      exit 1
+      case "$current_opt" in
+        cc)
+          op_cc=$1
+          current_opt=
+          ;;
+        o)
+          op_object=$1
+          current_opt=
+          ;;
+        d)
+          op_out_file=$1
+          current_opt=
+          ;;
+        *)
+          echo "$script_name: error. Invalid parameter: $1" >&2
+          exit 1
+          ;;
+      esac
       ;;
   esac
   shift

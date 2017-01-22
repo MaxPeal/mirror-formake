@@ -134,7 +134,7 @@ rel_path2() {
   fi
 
   file_from_tmp=$file_from
-  while test `expr "$file_to" : "^$file_from_tmp"` -eq 0; do
+  while test `expr "$file_to/" : "^$file_from_tmp/"` -eq 0; do
     file_from_tmp=`dirname "$file_from_tmp"`
   done
   dir_up=`echo -n "$file_from" | sed "s:^$file_from_tmp::" | sed 's:^/::' | sed 's:[^/][^/]*:..:g'`
@@ -155,7 +155,7 @@ if test $# -eq 1; then
 elif test $# -eq 2; then
   rel_path2 $1 $2
 else
-  echo "Usage: $0 FROM [TO]"
+  echo "Usage: $0 FROM [TO]" >&2
   exit 1
 fi
 

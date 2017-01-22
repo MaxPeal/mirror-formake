@@ -1,47 +1,42 @@
 #!/bin/sh
 ################################################################################
 # This script was generated with the following command:
-#  mkmkmf -app1-src file1.c file2.c app1.c common.c net.c db.c -app1-name app1 -lib1-src common.c net.c www.c tty.c ghf.c rx.c -lib1-name fxx -lib1-ldflags=-lX11 -lXt -lXm -lib1-ver 1.0.1 -inst-bin script1 -inst-lib libvga.a -inst-inc common.h vga.h fxx.h ui.h tty.h con.h -subdirs mod1 mod2 tests libeee libeee2
+#  mkmkmf -prog1-src file1.c file2.c app1.c common.c net.c db.c -prog1-name app1 -lib1-src common.c net.c www.c tty.c ghf.c rx.c -lib1-name fxx -lib1-ldflags=-lX11 -lXt -lXm -lib1-ver 1.0.1 -inst-bin script1 -inst-lib libvga.a -inst-inc common.h vga.h fxx.h ui.h tty.h con.h -subdirs mod1 mod2 tests libeee libeee2
 #
 #
 # Important variables to use:
-#   SRCROOT          - relative path to the source root directory (package top dir)
-#   SRCDIR           - relative path to the source directory where mkmf is located
-#   BUILDROOT        - relative path to the build root directory (VPATH build root)
-#   BUILD_CONF       - name of the build config file
+#   BUILDROOT        - relative path to the build root directory
+#   CONF             - name of the build config file
 #   MAKEFILE         - name of output Make file
+#   TOOLS            - tools used in this script
 #   SUBDIRS          - subdirectories to run mkmf in
-#   FORMAKE_TOOLS    - Formake tools used in this script
+#   SCRIPT           - name of this script
+#   SRCDIR           - relative path to the source directory (mkmf location)
+#   SRCROOT          - relative path to the source root directory (package top dir)
+#   ASB_BUILDDIR     - absolute path to the build directory (current dir)
+#   SUBDIR           - current directory path from BUILDROOT
 
 ################################################################################
 # BASE CONFIGURATION
-SRCROOT=.
-BUILD_CONF="build.conf"
+export BUILDROOT=.
+CONF="build.conf"
 MAKEFILE="Makefile"
-#SUBDIRS="mod1 mod2 tests libeee libeee2"
-FORMAKE_TOOLS="abspath relpath mkrule listed cstem libro"
+TOOLS="relpath mkrule"
+SUBDIRS="mod1 mod2 tests libeee libeee2"
 
 ################################################################################
 # INIT
-SCRIPT_NAME=`basename $0`
-cd `dirname $0`
-ABS_SRCDIR=`pwd`
-PATH=$PATH:$ABS_SRCDIR/$SRCROOT/formake
-iftool -f $FORMAKE_TOOLS || exit 1
-ABS_SRCROOT=`abspath -b $ABS_SRCDIR $SRCROOT`
-ABS_BUILDROOT=$ABS_SRCROOT
-test -n "$BUILDROOT" && ABS_BUILDROOT=`abspath $BUILDROOT`
-PATH="$ABS_BUILDROOT/formake:$PATH"
-SRCSUBDIR=`relpath $ABS_SRCROOT $ABS_SRCDIR`
-mkdir -p $ABS_BUILDROOT/$SRCSUBDIR || exit 1
-cd $ABS_BUILDROOT/$SRCSUBDIR
-BUILDROOT=`relpath ./ $ABS_BUILDROOT`
-SRCROOT=`relpath ./ $ABS_SRCROOT`
-SRCDIR=`relpath ./ $ABS_SRCDIR`
+SCRIPT=`basename $0`
+PATH=$PWD/$BUILDROOT/formake:$PATH
+iftool -f $TOOLS || exit 1
+export SRCDIR=`dirname $0 | xargs relpath ./`
+SRCROOT=`relpath ./ $SRCDIR/$BUILDROOT`
+ABS_BUILDDIR=`pwd`
+SUBDIR=`relpath $BUILDROOT ./`
 
 ################################################################################
 # READ CONFIG
-#. $BUILDROOT/$BUILD_CONF
+#. $BUILDROOT/$CONF
 
 ################################################################################
 # INIT MAKEFILE
@@ -53,30 +48,24 @@ mkrule distclean $MAKEFILE >>$MAKEFILE
 CFLAGS=""
 STATIC_DIR="_static"
 PIC_DIR="_pic"
-app1_sources="file1.c file2.c app1.c common.c net.c db.c"
+prog1_sources="file1.c file2.c app1.c common.c net.c db.c"
 lib1_sources="common.c net.c www.c tty.c ghf.c rx.c"
-
-static_sources=`listed -pref=$SRCDIR/ $app1_sources $lib1_sources`
-pic_sources=`listed -pref=$SRCDIR/ $lib1_sources`
-mkrule obj -cflags="$CFLAGS" -src $static_sources -d $STATIC_DIR >>$MAKEFILE
-mkrule obj -pic -cflags="$CFLAGS" -src $pic_sources -d $PIC_DIR >>$MAKEFILE
+mkrule obj -cflags="$CFLAGS" -src $prog1_sources $lib1_sources -d $STATIC_DIR >>$MAKEFILE
+mkrule obj -pic -cflags="$CFLAGS" -src $lib1_sources -d $PIC_DIR >>$MAKEFILE
 
 ################################################################################
 # APPLICATIONS
-app1_name="app1"
-app1_ldflags=""
-app1_obj=`listed -pref=$STATIC_DIR/ -edit-ext=o $app1_sources`
-mkrule app -all -install -ldflags="$app1_ldflags" -n $app1_name -obj $app1_obj >>$MAKEFILE
+prog1_name="app1"
+prog1_ldflags=""
+mkrule prog -all -install -ldflags="$prog1_ldflags" -n $prog1_name -objdir $STATIC_DIR -src $prog1_sources >>$MAKEFILE
 
 ################################################################################
 # LIBRARIES
 lib1_name="fxx"
 lib1_version="1.0.1"
 lib1_ldflags="-lX11 -lXt -lXm"
-lib1_static_obj=`listed -pref=$STATIC_DIR/ -edit-ext=o $lib1_sources`
-lib1_pic_obj=`listed -pref=$PIC_DIR/ -edit-ext=o $lib1_sources`
-mkrule lib -all -install -static -ldflags="$lib1_ldflags" -n $lib1_name -ver $lib1_version -obj $lib1_static_obj >>$MAKEFILE
-mkrule lib -all -install -shared -ldflags="$lib1_ldflags" -n $lib1_name -ver $lib1_version -obj $lib1_pic_obj >>$MAKEFILE
+mkrule lib -all -install -static -ldflags="$lib1_ldflags" -n $lib1_name -ver $lib1_version -objdir $STATIC_DIR -src $lib1_sources >>$MAKEFILE
+mkrule lib -all -install -shared -ldflags="$lib1_ldflags" -n $lib1_name -ver $lib1_version -objdir $PIC_DIR -src $lib1_sources >>$MAKEFILE
 
 ################################################################################
 # CUSTOM CODE
@@ -84,21 +73,28 @@ mkrule lib -all -install -shared -ldflags="$lib1_ldflags" -n $lib1_name -ver $li
 
 ################################################################################
 # INSTALLATION FILES
-install_bin=`listed -pref=$SRCDIR/ script1`
-install_lib=`listed -pref=$SRCDIR/ libvga.a`
-install_inc=`listed -pref=$SRCDIR/ common.h vga.h fxx.h ui.h tty.h con.h`
+install_bin="script1"
+install_lib="libvga.a"
+install_inc="common.h vga.h fxx.h ui.h tty.h con.h"
 mkrule install bin $install_bin >>$MAKEFILE
 mkrule install lib $install_lib >>$MAKEFILE
 mkrule install inc $install_inc >>$MAKEFILE
 
 ################################################################################
+# DIST
+dist_files="configure formake/relpath formake/mkrule formake/abspath formake/cstem formake/cstem+ formake/iflib formake/iftool formake/libro formake/mkbuildroot formake/mkdep formake/optool formake/pofig mkmf $install_bin $install_lib $install_inc $lib1_sources $prog1_sources"
+mkrule dist -n $PACKAGE_NAME -ver $PACKAGE_VERSION -f $dist_files >>$MAKEFILE || exit 1
+
+################################################################################
 # SUBDIRS
-#mkrule subdir -all -install -clean -distclean -d $SUBDIRS >>$MAKEFILE
-for dir in $SUBDIRS; do
-  BUILDROOT=$ABS_BUILDROOT $ABS_SRCDIR/$dir/mkmf || exit 1
-done
+mkrule subdir -all -install -clean -dist -distclean -d $SUBDIRS >>$MAKEFILE
+cd $ABS_BUILDDIR
+#for dir in $SUBDIRS; do
+#  test -d $dir || mkdir -p $dir
+#  `cd $dir; $ABS_BUILDDIR/$SRCDIR/$dir/mkmf` || exit 1
+#done
 
 ################################################################################
 # DONE
-printf "%s\n" "$SRCSUBDIR/$SCRIPT_NAME: DONE"
+echo "$SUBDIR/$SCRIPT: DONE"
 

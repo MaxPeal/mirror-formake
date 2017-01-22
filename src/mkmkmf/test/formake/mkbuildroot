@@ -27,7 +27,7 @@ case x$1 in
 esac
 
 if test $# -ne 2; then
-  echo "$script_name: error: invalid number of parameters"
+  echo "$script_name: error: invalid number of parameters" >&2
   exit 1
 fi
 
@@ -35,7 +35,7 @@ srcroot=$1
 buildroot=$2
 
 if test ! -d $srcroot; then
-  echo "$script_name: error: invalid source root path"
+  echo "$script_name: error: invalid source root path" >&2
   exit 1
 fi
 
@@ -44,7 +44,7 @@ if test ! -d $buildroot; then
 fi
 
 if test ! -d $buildroot; then
-  echo "$script_name: error: could not create build root dir"
+  echo "$script_name: error: could not create build root dir" >&2
   exit 1
 fi
 

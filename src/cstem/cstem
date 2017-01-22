@@ -88,8 +88,8 @@ cat <<EOF
 Configure and probe C compiler
 
 $script_name [options]
-$script_name config [-cc=CMD] [-cflags=FLAGS]
-$script_name probe [-cc=CMD] [-cflags=FLAGS] [-f1|-f2|-f3]
+$script_name config [-cc CMD] [-cflags=FLAGS]
+$script_name probe [-cc CMD] [-cflags=FLAGS] [-f1|-f2|-f3]
 
 By default $script_name prints information about configured compiler
  -id            get compiler id
@@ -107,11 +107,11 @@ By default $script_name prints information about configured compiler
 
 
 Config mode. Probe compiler and generate config file
- -cc=CMD        specify compiler command with optional flags
+ -cc CMD        specify compiler command with optional flags
  -cflags=FLAGS  specify compiler flags
 
 Probe mode. Probe compiler and print information to a standard output
- -cc=CMD        specify compiler command with optional flags
+ -cc CMD        specify compiler command with optional flags
  -cflags=FLAGS  specify compiler flags
  -f1            print in format 1> VAR="VALUE"
  -f2            print in format 2> FIELD: VALUE
@@ -1016,13 +1016,15 @@ case x"$1" in
 esac
 
 if test x$mode_config$mode_probe = x1; then
+  current_opt=
   while test $# -gt 0; do
     case "$1" in
-      -cc=*)
-        probe_cc_cmd=`echo -n "$1" | sed 's/^[^=]*=//'`
+      -cc)
+        current_opt=cc
         ;;
       -cflags=*)
         probe_cc_flags=`echo -n "$1" | sed 's/^[^=]*=//'`
+        current_opt=
         ;;
       -f1|-f2|-f3)
         if test x$mode_probe = x; then
@@ -1030,10 +1032,19 @@ if test x$mode_config$mode_probe = x1; then
           exit 1
         fi
         out_format=`echo -n "$1" | sed 's/^-f//'`
+        current_opt=
         ;;
       *)
-        printf "%s\n" "$script_name: invalid parameter $1" >&2
-        exit 1
+        case "$current_opt" in
+          cc)
+            probe_cc_cmd=$1
+            current_opt=
+            ;;
+          *)
+            printf "%s\n" "$script_name: invalid parameter $1" >&2
+            exit 1
+            ;;
+        esac
         ;;
     esac
     shift
