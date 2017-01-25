@@ -15,6 +15,25 @@
 
 
 script_name=`basename $0`
+script_dir=`dirname $0`
+
+################################################################################
+# LOAD CONFIG
+PATH=$FORMAKE:$PATH
+POFIG=
+if test -f $script_dir/config.rc; then
+  . $script_dir/config.rc
+fi
+test -n "$FORMAKE_POFIG" && POFIG=$FORMAKE_POFIG
+if test -n "$POFIG" && test -z "$POFIG_REDIRECT"; then
+  export POFIG_REDIRECT=1
+  $POFIG "$@"
+  ret=$?
+  if test $ret -ne 64; then
+    exit $ret
+  fi
+fi
+################################################################################
 
 print_help() {
 cat <<EOF >&2

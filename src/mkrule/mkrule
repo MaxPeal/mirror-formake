@@ -7,7 +7,55 @@ version_string="mkrule 1.0"
 
 script_name=`basename "$0"`
 script_options="$@"
-config_file="mkrule.conf"
+script_dir=`dirname $0`
+
+################################################################################
+# LOAD CONFIG
+PATH=$FORMAKE:$PATH
+MKRULE=
+TAR=
+INSTALL=
+PREFIX=
+EXEC_PREFIX=
+BINDIR=
+SBINDIR=
+LIBEXECDIR=
+ETCDIR=
+LIBDIR=
+INCDIR=
+SHAREDIR=
+MANDIR=
+DOCDIR=
+
+if test -f $script_dir/config.rc; then
+  . $script_dir/config.rc
+fi
+test -n "$FORMAKE_MKRULE" && MKRULE=$FORMAKE_MKRULE
+if test -n "$MKRULE" && test -z "$MKRULE_REDIRECT"; then
+  export MKRULE_REDIRECT=1
+  $MKRULE "$@"
+  ret=$?
+  if test $ret -ne 64; then
+    exit $ret
+  fi
+fi
+test -z "$CONFIG_TAR"      || TAR=$CONFIG_TAR
+test -n "$TAR"             || TAR=tar
+test -z "$CONFIG_INSTALL"  || INSTALL=$CONFIG_INSTALL
+test -n "$INSTALL"         || INSTALL=install
+
+test -n "$PREFIX"      || PREFIX=/usr/local
+test -n "$EXEC_PREFIX" || EXEC_PREFIX=$PREFIX
+test -n "$BINDIR"      || BINDIR=$EXEC_PREFIX/bin
+test -n "$SBINDIR"     || SBINDIR=$EXEC_PREFIX/sbin
+test -n "$LIBEXECDIR"  || LIBEXECDIR=$EXEC_PREFIX/libexec
+test -n "$ETCDIR"      || ETCDIR=$PREFIX/etc
+test -n "$LIBDIR"      || LIBDIR=$EXEC_PREFIX/lib
+test -n "$INCDIR"      || INCDIR=$PREFIX/include
+test -n "$SHAREDIR"    || SHAREDIR=$PREFIX/share
+test -n "$MANDIR"      || MANDIR=$SHAREDIR/man
+test -n "$DOCDIR"      || DOCDIR=$SHAREDIR/doc
+################################################################################
 
 cd_param=
 orig_dir=`pwd`
@@ -20,7 +68,6 @@ cd "$orig_dir"
 print_help() {
   cat <<EOF
 $script_name init|obj|prog|lib|subdir|clean|distclean|install OPTIONS
-$script_name config OPTIONS
 $script_name -v
   init        generate standard init macros and rules
   obj         generate rules that compile objects from sources
@@ -29,9 +76,8 @@ $script_name -v
   subdir      generate rule that runs Make in other sub-directories
   clean       generate rule that cleans files
   distclean   generate rule that cleans build configuration files
-  install     generate rule that installs files on system
+  install     generate rules that install/uninstall files on system
   dist        generate rule that creates distribution tarball
-  config      configure $script_name
   -v          print version
 
 First parameter specifies the mode. To get help on each mode run '$script_name MODE -help'
@@ -73,7 +119,7 @@ $script_name prog [OPTIONS] -src SRC.. -obj OBJ..
   -d DIR           output directory for generated executable file
   -p PREREQ..      additional prerequisites of a rule
   -all             add to default 'all' rule
-  -install [PATH]  create 'install' rule. Specify optional installation path if needed
+  -install [PATH]  create install/uninstall rules. Specify optional installation path if needed
   -rc FILE         create RC file
   -var [PREFIX]    create a Make variable [PREFIX_]PROGRAM containing a generated executable file
   -objdir PATH     path to the object directory
@@ -95,7 +141,7 @@ $script_name lib [OPTIONS] -src SRC.. -obj OBJ..
   -d DIR           output directory for generated library files
   -p PREREQ..      additional prerequisites of a rule
   -all             add to default 'all' rule
-  -install [PATH]  create 'install' rule. Specify optional installation path if needed
+  -install [PATH]  create install/uninstall rules. Specify optional installation path if needed
   -rc FILE         create RC file
   -var [PREFIX]    create the following Make variables:
                      [PREFIX_]LIB_NAME      - library name
@@ -116,7 +162,7 @@ print_subdir_help() {
 $script_name subdir [OPTIONS] -d DIR..
   -t TARGET        specify phony target that start generated rule
   -all             add to default 'all' rule
-  -install         add to 'install' rule
+  -install         add to install/uninstall rules
   -clean           add to 'clean' rule
   -distclean       add to 'distclean' rule
   -dist            add to 'dist' rule
@@ -161,24 +207,6 @@ $script_name dist [OPTIONS]
   -n NAME          package name
   -ver VERSION     package version
   -f FILE..        files to put in distribution tarball
-EOF
-}
-
-print_config_help() {
-  cat <<EOF
-$script_name config [OPTIONS]
-  -prefix [PREFIX]         path to install architecture-independent files [/usr/local]
-  -exec-prefix [EPREFIX]   path to install architecture-dependent files [PREFIX]
-  -bindir [DIR]            bin path [EPREFIX/bin]
-  -sbindir [DIR]           sbin path [EPREFIX/sbin]
-  -libexecdir [DIR]        libexec path [EPREFIX/libexec]
-  -etcdir [DIR]            etc path [PREFIX/etc]
-  -libdir [DIR]            lib path [EPREFIX/lib]
-  -incdir [DIR]            include path [PREFIX/include]
-  -sharedir [DIR]          share path [PREFIX/share]
-  -mandir [DIR]            man path [SHAREDIR/man]
-  -docdir [DIR]            doc path [SHAREDIR/doc]
-  -install-cmd CMD         specify 'install' command
 EOF
 }
 
@@ -258,11 +286,11 @@ rel_path() {
 
 get_pofig() {
   pofig -h >/dev/null 2>&1
-  if test $? -eq 0; then
+  if test $? -ne 127; then
     POFIG=pofig
   else
     $script_dir/pofig -h >/dev/null 2>&1
-    if test $? -eq 0; then
+    if test $? -ne 127; then
       POFIG=$script_dir/pofig
     else
       echo "$script_name: error: pofig not found" >&2
@@ -278,12 +306,12 @@ get_cstem() {
     xstem=cstem+
   fi
   
-  if test -f $script_dir/$xstem; then
-    CSTEM=$script_dir/$xstem
+  $xstem -h >/dev/null 2>&1
+  if test $? -ne 127; then
+    CSTEM=$xstem
   else
-    $xstem -h >/dev/null 2>&1
-    if test $? -eq 0; then
-      CSTEM=$xstem
+    if test -f $script_dir/$xstem; then
+      CSTEM=$script_dir/$xstem
     else
       echo "$script_name: error: $xstem not found" >&2
       exit 1
@@ -296,7 +324,7 @@ get_mkdep() {
     MKDEP=$op_mkdep_cmd
   else
     $script_dir/mkdep -h >/dev/null 2>&1
-    if test $? -eq 0; then
+    if test $? -ne 127; then
       if test -n "$op_builddir"; then
         rel_path $op_builddir $script_dir/mkdep
       else
@@ -305,7 +333,7 @@ get_mkdep() {
       MKDEP=$rel_path_ret
     else
       mkdep -h >/dev/null 2>&1
-      if test $? -eq 0; then
+      if test $? -ne 127; then
         MKDEP=mkdep
       else
         echo "$script_name: error: mkdep not found" >&2
@@ -320,11 +348,11 @@ get_random() {
   if test -z "$RANDOM"; then
     if test -f /dev/urandom; then
       fold --help >/dev/null 2>&1
-      if test $? != 127; then
+      if test $? -ne 127; then
         have_fold=1
       fi
       head --help >/dev/null 2>&1
-      if test $? != 127; then
+      if test $? -ne 127; then
         have_head=1
       fi
       if test x$have_fold$have_head = x11; then
@@ -336,7 +364,7 @@ get_random() {
 # RANDOM METHOD 2
   if test -z "$RANDOM"; then
     shuf --help >/dev/null 2>&1
-    if test $? != 127; then
+    if test $? -ne 127; then
       RANDOM=`shuf -i 0-999999 -n 1`
     fi
   fi
@@ -344,46 +372,10 @@ get_random() {
 # RANDOM METHOD 3
   if test -z "$RANDOM"; then
       mktemp --help >/dev/null 2>&1
-      if test $? != 127; then
+      if test $? -ne 127; then
         RANDOM=`mktemp -u "XXXXXX"`
       fi
   fi
-}
-
-write_config() {
-cat <<EOF >$script_dir/$config_file
-PREFIX="$op_prefix"
-EXEC_PREFIX="$op_exec_prefix"
-BINDIR="$op_bindir"
-SBINDIR="$op_sbindir"   
-LIBEXECDIR="$op_libexecdir"
-ETCDIR="$op_etcdir"    
-LIBDIR="$op_libdir"    
-INCDIR="$op_incdir"    
-SHAREDIR="$op_sharedir"  
-MANDIR="$op_mandir"    
-DOCDIR="$op_docdir"    
-INSTALL="$op_install_cmd"
-EOF
-}
-
-read_config() {
-  if test -f $script_dir/$config_file; then
-    . $script_dir/$config_file
-  fi
-
-  test -n "$PREFIX"      || PREFIX=/usr/local
-  test -n "$EXEC_PREFIX" || EXEC_PREFIX=$PREFIX
-  test -n "$BINDIR"      || BINDIR=$EXEC_PREFIX/bin
-  test -n "$SBINDIR"     || SBINDIR=$EXEC_PREFIX/sbin
-  test -n "$LIBEXECDIR"  || LIBEXECDIR=$EXEC_PREFIX/libexec
-  test -n "$ETCDIR"      || ETCDIR=$PREFIX/etc
-  test -n "$LIBDIR"      || LIBDIR=$EXEC_PREFIX/lib
-  test -n "$INCDIR"      || INCDIR=$PREFIX/include
-  test -n "$SHAREDIR"    || SHAREDIR=$PREFIX/share
-  test -n "$MANDIR"      || MANDIR=$SHAREDIR/man
-  test -n "$DOCDIR"      || DOCDIR=$SHAREDIR/doc
-  test -n "$INSTALL"     || INSTALL=install
 }
 
 mkobj() {
@@ -704,11 +696,11 @@ mklib() {
   esac
     
   libro -h >/dev/null 2>&1
-  if test $? -eq 0; then
+  if test $? -ne 127; then
     libro_cmd=libro
   else
     $script_dir/libro -h >/dev/null 2>&1
-    if test $? -eq 0; then
+    if test $? -ne 127; then
       libro_cmd=$script_dir/libro
     else
       echo "$script_name: error: libro not found" >&2
@@ -1162,7 +1154,7 @@ dist:
 	rm -Rf dist_tree
 	\$(MAKE) dist-tree
 	mv dist_tree $dist_package
-	tar -czvf ${dist_package}.tar.gz $dist_package
+	$TAR -czvf ${dist_package}.tar.gz $dist_package
 	rm -Rf $dist_package
 
 EOF
@@ -1210,9 +1202,6 @@ case $1 in
     ;;
   init)
     op_mode=init
-    ;;
-  config)
-    op_mode=config
     ;;
   obj)
     op_mode=obj
@@ -1272,9 +1261,6 @@ while test $# -gt 0; do
   case $1 in
     -h|-help|--help)
       case $op_mode in
-        config)
-          print_config_help
-          ;;
         init)
           print_init_help
           ;;
@@ -1585,90 +1571,6 @@ while test $# -gt 0; do
       fi
       current_opt=rename
       ;;
-    -prefix=*)
-      if test $op_mode != config; then
-        echo "$script_name: error: invalid parameter $1 for current mode" >&2
-        exit 1
-      fi
-      current_opt=prefix
-      ;;
-    -exec-prefix=*)
-      if test $op_mode != config; then
-        echo "$script_name: error: invalid parameter $1 for current mode" >&2
-        exit 1
-      fi
-      current_opt="exec-prefix"
-      ;;
-    -bindir=*)
-      if test $op_mode != config; then
-        echo "$script_name: error: invalid parameter $1 for current mode" >&2
-        exit 1
-      fi
-      current_opt=bindir
-      ;;
-    -sbindir=*)
-      if test $op_mode != config; then
-        echo "$script_name: error: invalid parameter $1 for current mode" >&2
-        exit 1
-      fi
-      current_opt=sbindir
-      ;;
-    -libexecdir=*)
-      if test $op_mode != config; then
-        echo "$script_name: error: invalid parameter $1 for current mode" >&2
-        exit 1
-      fi
-      current_opt=libexecdir
-      ;;
-    -etcdir=*)
-      if test $op_mode != config; then
-        echo "$script_name: error: invalid parameter $1 for current mode" >&2
-        exit 1
-      fi
-      current_opt=etcdir
-      ;;
-    -libdir=*)
-      if test $op_mode != config; then
-        echo "$script_name: error: invalid parameter $1 for current mode" >&2
-        exit 1
-      fi
-      current_opt=libdir
-      ;;
-    -incdir=*)
-      if test $op_mode != config; then
-        echo "$script_name: error: invalid parameter $1 for current mode" >&2
-        exit 1
-      fi
-      current_opt=incdir
-      ;;
-    -sharedir=*)
-      if test $op_mode != config; then
-        echo "$script_name: error: invalid parameter $1 for current mode" >&2
-        exit 1
-      fi
-      current_opt=sharedir
-      ;;
-    -mandir=*)
-      if test $op_mode != config; then
-        echo "$script_name: error: invalid parameter $1 for current mode" >&2
-        exit 1
-      fi
-      current_opt=mandir
-      ;;
-    -docdir=*)
-      if test $op_mode != config; then
-        echo "$script_name: error: invalid parameter $1 for current mode" >&2
-        exit 1
-      fi
-      current_opt=docdir
-      ;;
-    -install-cmd)
-      if test $op_mode != config; then
-        echo "$script_name: error: invalid parameter $1 for current mode" >&2
-        exit 1
-      fi
-      current_opt="install-cmd"
-      ;;
     *)
       case "$current_opt" in
         buildroot)
@@ -1700,10 +1602,6 @@ while test $# -gt 0; do
           ;;
         dirs)
           op_dirs="$op_dirs $1"
-          ;;
-        install-cmd)
-          op_install_cmd=$1
-          current_opt=
           ;;
         prereq)
           op_prereq="$op_prereq $1"
@@ -1774,50 +1672,6 @@ while test $# -gt 0; do
           op_rename=$1
           current_opt=
           ;;
-        prefix)
-          op_prefix=$1
-          current_opt=
-          ;;
-        exec-prefix)
-          op_exec_prefix=$1
-          current_opt=
-          ;;
-        bindir)
-          op_bindir=$1
-          current_opt=
-          ;;
-        sbindir)
-          op_sbindir=$1
-          current_opt=
-          ;;
-        libexecdir)
-          op_libexecdir=$1
-          current_opt=
-          ;;
-        etcdir)
-          op_etcdir=$1
-          current_opt=
-          ;;
-        libdir)
-          op_libdir=$1
-          current_opt=
-          ;;
-        incdir)
-          op_incdir=$1
-          current_opt=
-          ;;
-        sharedir)
-          op_sharedir=$1
-          current_opt=
-          ;;
-        mandir)
-          op_mandir=$1
-          current_opt=
-          ;;
-        docdir)
-          op_docdir=$1
-          current_opt=
-          ;;
         *)
           case $op_mode in
             clean|distclean|install)
@@ -1843,14 +1697,7 @@ op_prereq=`echo -n "$op_prereq" | sed 's/^ *//'`
 op_obj=`echo -n "$op_obj" | sed 's/^ *//'`
 op_files=`echo -n "$op_files" | sed 's/^ *//'`
 
-if test $op_mode != config; then
-  read_config
-fi
-
 case $op_mode in
-  config)
-    write_config
-    ;;
   obj)
     mkobj
     ;;

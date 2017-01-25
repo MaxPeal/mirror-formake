@@ -475,7 +475,7 @@ cat <<"TOP_EOF" >>$op_out_file
 ################################################################################
 # INIT
 SCRIPT=`basename $0`
-PATH=$PWD/$BUILDROOT/formake:$PATH
+PATH=$FORMAKE:$PWD/$BUILDROOT/formake:$PATH
 iftool -f $TOOLS || exit 1
 export SRCDIR=`dirname $0 | xargs relpath ./`
 SRCROOT=`relpath ./ $SRCDIR/$BUILDROOT`

@@ -5,10 +5,30 @@
 
 
 script_name=`basename $0`
+script_dir=`dirname $0`
 orig_dir=`pwd`
 nl='
 '
 base_dir=
+
+################################################################################
+# LOAD CONFIG
+PATH=$FORMAKE:$PATH
+ABSPATH=
+if test -f $script_dir/config.rc; then
+  . $script_dir/config.rc
+fi
+test -n "$FORMAKE_ABSPATH" && ABSPATH=$FORMAKE_ABSPATH
+if test -n "$ABSPATH" && test -z "$ABSPATH_REDIRECT"; then
+  export ABSPATH_REDIRECT=1
+  $ABSPATH "$@"
+  ret=$?
+  if test $ret -ne 64; then
+    exit $ret
+  fi
+fi
+################################################################################
+
 
 _cd_param=
 cd -P / >/dev/null 2>&1

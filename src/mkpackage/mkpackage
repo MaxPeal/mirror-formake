@@ -10,7 +10,7 @@ script_name=`basename "$0"`
 script_dir=`dirname $0`
 
 op_dir=formake
-formake_scripts="abspath confighelp cstem cstem+ cfront iflib iftool install libro listed mkbuildroot mkdep mkrule optool pofig relpath"
+formake_scripts="abspath confighelp cstem cstem+ cfront iflib iftool install libro listed mkbuildroot mkdep mkrule optool pofig rccom rcrq relpath"
 share_dir=/tmp/opt/share/formake
 
 print_help() {
@@ -26,22 +26,24 @@ Options:
  -std    install standard set of scripts
 
 Scripts:
-  abspath      generic automation       calculate absolute path
+  abspath      general automation       calculate absolute path
   confighelp   configure automation     print configure help
   cstem        configure automation     configure and probe C compiler
   cstem+       configure automation     configure and probe C++ compiler
   cfront       mkmf automation          C/C++ compiler frontend based on cstem/cstem+
   iflib        configure automation     library test tool
   iftool       configure automation     command test tool
-  install      generic automation       portable version of BSD install
+  install      general automation       portable version of BSD install
   libro        mkmf automation          build static and dynamic libraries
-  listed       generic automation       process space separated text lists
+  listed       general automation       process space separated text lists
   mkbuildroot  configure automation     create build root directory
   mkdep        mkmf automation          generate dependencies of C/C++ source files for Makefile
   mkrule       mkmf automation          generate Make rules
-  optool       generic automation       options processing tool
+  optool       general automation       options processing tool
   pofig        configure automation     portable tool to figure out base system properties
-  relpath      generic automation       calculate relative path between two directories
+  rccom        general automation       command redirection based on configuration resources
+  rcrq         general automation       configuration query tool
+  relpath      general automation       calculate relative path between two directories
 EOF
 }
 
@@ -59,6 +61,7 @@ select_standard() {
   s_confighelp=1
   s_optool=1
   s_iftool=1
+  s_rcrq=1
   have_list=1
 }
 
@@ -151,6 +154,12 @@ while test $# -gt 0; do
       s_pofig=1
       have_list=1
       ;;
+    rccom)
+      s_rccom=1
+      have_list=1
+    rcrq)
+      s_rcrq=1
+      have_list=1
     relpath)
       s_relpath=1
       have_list=1

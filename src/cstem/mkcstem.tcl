@@ -129,11 +129,41 @@ config_file="$script_dir/cstem.conf"
 ########## CX_BLOCK_START
 config_file="$script_dir/cstem+.conf"
 ########## BLOCK_END
-PATH="$script_dir:$PATH"
+
+################################################################################
+# LOAD CONFIG
+PATH=$FORMAKE:$PATH
+########## CC_BLOCK_START
+CSTEM=
+########## CX_BLOCK_START
+CSTEMX=
+########## BLOCK_END
+if test -f $script_dir/config.rc; then
+  . $script_dir/config.rc
+fi
+########## CC_BLOCK_START
+test -n "$FORMAKE_CSTEM" && CSTEM=$FORMAKE_CSTEM
+if test -n "$CSTEM" && test -z "$CSTEM_REDIRECT"; then
+  export CSTEM_REDIRECT=1
+  $CSTEM "$@"
+########## CX_BLOCK_START
+test -n "$FORMAKE_CSTEMX" && CSTEMX=$FORMAKE_CSTEMX
+if test -n "$CSTEMX" && test -z "$CSTEMX_REDIRECT"; then
+  export CSTEMX_REDIRECT=1
+  $CSTEMX "$@"
+########## BLOCK_END
+  ret=$?
+  if test $ret -ne 64; then
+    exit $ret
+  fi
+fi
+################################################################################
 
 pofig -h >/dev/null 2>&1
 if test $? -ne 127; then
-  have_pofig=1
+  POFIG=pofig
+elif test -f $script_dir/pofig; then
+  POFIG=$script_dir/pofig
 fi
 
 config_list="
@@ -1071,8 +1101,8 @@ perform_probe() {
   fi
 
   if test -z "$probe_cc_cmd"; then
-    if test x$have_pofig = x1; then
-      case `pofig -os` in
+    if test -n "$POFIG"; then
+      case `$POFIG -os` in
         aix)
           cc_list="cc xlc gcc c99"   ###CC_LINE
           cc_list="xlc++ xlC c++ CC g++"    ###CX_LINE
@@ -1107,7 +1137,7 @@ perform_probe() {
   fi
 
   if test x$cc_is_ok = x1; then
-    if test x$mode_config = x1; then
+    if test x$mode_config = x1 && test -z "$silent_config"; then
       printf "%s\n" "found %C% compiler $cc_cmd" >&2
     fi
     read_cc_props
@@ -1133,7 +1163,7 @@ perform_probe() {
       eval $config_var=\$config_val
     done
   else
-    if test x$mode_config = x1; then
+    if test x$mode_config = x1 && test -z "$silent_config"; then
       printf "%s\n" "${script_name}: %C% compiler not found" >&2
     fi
     exit 1
@@ -1160,6 +1190,13 @@ case x"$1" in
 esac
 
 if test x$mode_config$mode_probe = x1; then
+########## CC_BLOCK_START
+  test -n "$CC" && probe_cc_cmd=$CC
+  test -n "$CFLAGS" && probe_cc_cmd=$CFLAGS
+########## CX_BLOCK_START
+  test -n "$CXX" && probe_cc_cmd=$CXX
+  test -n "$CXXFLAGS" && probe_cc_cmd=$CXXFLAGS
+########## BLOCK_END
   current_opt=
   while test $# -gt 0; do
     case "$1" in
@@ -1244,6 +1281,7 @@ fi
 
 if test x$mode_info = x1 && test ! -f $config_file; then
   mode_config=1
+  silent_config=1
 fi
 
 if test x$mode_config$mode_probe = x1; then

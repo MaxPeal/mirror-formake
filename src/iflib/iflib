@@ -60,18 +60,37 @@ script_name=`basename $0`
 abs_path `dirname $0`
 script_dir=$abs_path_ret
 tmp_dir=/tmp/iflib_$$
-PATH="$script_dir:$PATH"
+
+################################################################################
+# LOAD CONFIG
+PATH=$FORMAKE:$PATH
+IFLIB=
+if test -f $script_dir/config.rc; then
+  . $script_dir/config.rc
+fi
+test -n "$FORMAKE_IFLIB" && IFLIB=$FORMAKE_IFLIB
+if test -n "$IFLIB" && test -z "$IFLIB_REDIRECT"; then
+  export IFLIB_REDIRECT=1
+  $IFLIB "$@"
+  ret=$?
+  if test $ret -ne 64; then
+    exit $ret
+  fi
+fi
+################################################################################
 
 cstem -h >/dev/null 2>&1
 if test $? -ne 127; then
-  have_cstem=1
+  CSTEM=cstem
+elif test -f $script_dir/cstem; then
+  CSTEM=$script_dir/cstem
 fi
-
 cstem+ -h >/dev/null 2>&1
 if test $? -ne 127; then
-  have_cstemx=1
+  CSTEMX=cstem+
+elif test -f $script_dir/cstem+; then
+  CSTEMX=$script_dir/cstem+
 fi
-
 
 print_help() {
 cat <<EOF
@@ -303,9 +322,9 @@ op_ldflags=`echo "$op_ldflags" | sed 's/^ *//' | sed 's/ *$//'`
 if test x$cc_type = xcxx; then
   if test -n "$op_cmd"; then
     CC_CMD=$op_cmd
-  elif test x$have_cstemx = x1; then
-    CC_CMD=`cstem+ -cmd -cflags`
-    CC_ID=`cstem+ -id`
+  elif test -n "$CSTEMX"; then
+    CC_CMD=`$CSTEMX -cmd -cflags`
+    CC_ID=`$CSTEMX -id`
   else
     for cmd in CC xlc++ xlC c++ g++; do
       $cmd >/dev/null 2>&1 
@@ -319,9 +338,9 @@ if test x$cc_type = xcxx; then
 else
   if test -n "$op_cmd"; then
     CC_CMD=$op_cmd
-  elif test x$have_cstem = x1; then
-    CC_CMD=`cstem -cmd -cflags`
-    CC_ID=`cstem -id`
+  elif test -n "$CSTEM"; then
+    CC_CMD=`$CSTEM -cmd -cflags`
+    CC_ID=`$CSTEM -id`
   else
     for cmd in cc xlc c99 c89 gcc; do
       $cmd >/dev/null 2>&1 

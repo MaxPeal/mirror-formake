@@ -3,11 +3,31 @@
 # Author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
 #
 
-SCRIPT_NAME=`basename $0`
+script_name=`basename $0`
+script_dir=`dirname $0`
+
+################################################################################
+# LOAD CONFIG
+PATH=$FORMAKE:$PATH
+CONFIGHELP=
+if test -f $script_dir/config.rc; then
+  . $script_dir/config.rc
+fi
+test -n "$FORMAKE_CONFIGHELP" && CONFIGHELP=$FORMAKE_CONFIGHELP
+if test -n "$CONFIGHELP" && test -z "$CONFIGHELP_REDIRECT"; then
+  export CONFIGHELP_REDIRECT=1
+  $CONFIGHELP "$@"
+  ret=$?
+  if test $ret -ne 64; then
+    exit $ret
+  fi
+fi
+################################################################################
+
 
 print_help() {
   cat <<EOF
-Usage: $SCRIPT_NAME [-install] [-cc] [-cxx]
+Usage: $script_name [-install] [-cc] [-cxx]
   -install   print installation related options
   -cc        print C compilation options
   -cxx       print C++ compilation options
@@ -33,7 +53,7 @@ for param in "$@"; do
       op_install=1
       ;;
     *)
-      echo "$SCRIPT_NAME: error: invalid parameter: $param" >&2
+      echo "$script_name: error: invalid parameter: $param" >&2
       exit 1
       ;;
   esac

@@ -10,6 +10,24 @@ tmp_file=/tmp/dep$$.t
 tmp_file2=/tmp/dep$$.t2
 tmp_file3=/tmp/dep$$.t3
 
+################################################################################
+# LOAD CONFIG
+PATH=$FORMAKE:$PATH
+MKDEP=
+if test -f $script_dir/config.rc; then
+  . $script_dir/config.rc
+fi
+test -n "$FORMAKE_MKDEP" && MKDEP=$FORMAKE_MKDEP
+if test -n "$MKDEP" && test -z "$MKDEP_REDIRECT"; then
+  export MKDEP_REDIRECT=1
+  $MKDEP "$@"
+  ret=$?
+  if test $ret -ne 64; then
+    exit $ret
+  fi
+fi
+################################################################################
+
 print_help() {
 cat <<EOF
 Generate dependencies of C/C++ source files for Makefile
@@ -121,13 +139,14 @@ else
   cstem_cmd="cstem"
 fi
 
-if $cstem_cmd -h >/dev/null 2>&1; then
-  :
-elif $script_dir/$cstem_cmd -h >/dev/null 2>&1; then
-  cstem_cmd=$script_dir/$cstem_cmd
-else
-  echo "$script_name: error. $cstem_cmd not found" >&2
-  exit 1
+$cstem_cmd -h >/dev/null 2>&1
+if test $? -eq 127; then
+  if test -f $script_dir/$cstem_cmd; then
+    cstem_cmd=$script_dir/$cstem_cmd
+  else
+    echo "$script_name: error: $cstem_cmd not found" >&2
+    exit 1
+  fi
 fi
 
 cc_cmd=$op_cc

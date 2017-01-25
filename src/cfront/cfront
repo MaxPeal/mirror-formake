@@ -6,6 +6,24 @@
 script_name=`basename $0`
 script_dir=`dirname $0`
 
+################################################################################
+# LOAD CONFIG
+PATH=$FORMAKE:$PATH
+CFRONT=
+if test -f $script_dir/config.rc; then
+  . $script_dir/config.rc
+fi
+test -n "$FORMAKE_CFRONT" && CFRONT=$FORMAKE_CFRONT
+if test -n "$CFRONT" && test -z "$CFRONT_REDIRECT"; then
+  export CFRONT_REDIRECT=1
+  $CFRONT "$@"
+  ret=$?
+  if test $ret -ne 64; then
+    exit $ret
+  fi
+fi
+################################################################################
+
 print_help() {
 cat <<EOF
 C/C++ compiler frontend based on cstem/cstem+
@@ -18,7 +36,7 @@ $script_name OPTIONS
 EOF
 }
 
-xstem=cstem 
+xstem=cstem
 while test $# -gt 0; do
   case $1 in
     -h|-help|--help)
@@ -44,11 +62,11 @@ done
 
 op_params=`echo -n "$op_params" | sed 's/^ *//'`
 
-if test -f $script_dir/$xstem; then
-  xstem=$script_dir/$xstem
-else
-  $xstem -h >/dev/null 2>&1
-  if test $? -ne 0; then
+$xstem -h >/dev/null 2>&1
+if test $? -eq 127; then
+  if test -f $script_dir/$xstem; then
+    xstem=$script_dir/$xstem
+  else
     echo "$script_name: error: $xstem not found" >&2
     exit 1
   fi

@@ -4,9 +4,28 @@
 #
 
 script_name=`basename $0`
+script_dir=`dirname $0`
 tmp_file="/tmp/iftool_$$.txt"
 tmp_buf="/tmp/iftool_$$_buf.txt"
 rm -f $tmp_buf
+
+################################################################################
+# LOAD CONFIG
+PATH=$FORMAKE:$PATH
+IFTOOL=
+if test -f $script_dir/config.rc; then
+  . $script_dir/config.rc
+fi
+test -n "$FORMAKE_IFTOOL" && IFTOOL=$FORMAKE_IFTOOL
+if test -n "$IFTOOL" && test -z "$IFTOOL_REDIRECT"; then
+  export IFTOOL_REDIRECT=1
+  $IFTOOL "$@"
+  ret=$?
+  if test $ret -ne 64; then
+    exit $ret
+  fi
+fi
+################################################################################
 
 print_help() {
 cat <<EOF

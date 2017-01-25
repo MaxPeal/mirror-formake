@@ -4,6 +4,25 @@
 #
 
 script_name=`basename $0`
+script_dir=`dirname $0`
+
+################################################################################
+# LOAD CONFIG
+PATH=$FORMAKE:$PATH
+OPTOOL=
+if test -f $script_dir/formake.conf; then
+  . $script_dir/formake.conf
+fi
+test -n "$FORMAKE_OPTOOL" && OPTOOL=$FORMAKE_OPTOOL
+if test -n "$OPTOOL" && test -z "$OPTOOL_REDIRECT"; then
+  export OPTOOL_REDIRECT=1
+  $OPTOOL "$@"
+  ret=$?
+  if test $ret -ne 64; then
+    exit $ret
+  fi
+fi
+################################################################################
 
 sbs_param=
 disable_special=
@@ -13,8 +32,8 @@ no_case_change=
 case x$1 in
   x-h|x-help|x--help)
     cat <<EOF
-Usage: $script_name rc [-p <PREFIX>] [-nc] [-] OPTIONS
-       $script_name def [-p <PREFIX>] [-nc] [-] OPTIONS
+Usage: $script_name dump [-p <PREFIX>] [-nc] [-] OPTIONS
+       $script_name hdump [-p <PREFIX>] [-nc] [-] OPTIONS
        $script_name validate OPTIONS - VALID_OPTIONS
        $script_name if OPTIONS - COND_OPTIONS
        $script_name ifor OPTIONS - COND_OPTIONS
@@ -23,7 +42,7 @@ Usage: $script_name rc [-p <PREFIX>] [-nc] [-] OPTIONS
 EOF
     exit 0
     ;;
-  xrc|xdef)
+  xdump|xhdump)
     mode=$1
     shift
     while test $# -gt 0; do
@@ -31,7 +50,7 @@ EOF
         -*|*=*)
           if test -n "$sbs_param"; then
             test -n "$sbs_param_val$sbs_param_set" || sbs_param_val=1
-            if test $mode = rc; then
+            if test $mode = dump; then
               echo "$sbs_param=\"$sbs_param_val\""
             else
               echo "#define $sbs_param \"$sbs_param_val\""
@@ -48,6 +67,10 @@ EOF
                   exit 1
                 fi
                 op_prefix=`echo -n "$1" | sed 's/[^a-zA-Z0-9_]//g'`
+                if test -z "$op_prefix"; then 
+                  echo "$script_name: error: invalid prefix '$1'" >&2
+                  exit 1
+                fi
                 param_skip=1
                 ;;
               -nc)
@@ -95,7 +118,7 @@ EOF
     done
     if test -n "$sbs_param"; then
       test -n "$sbs_param_val$sbs_param_set" || sbs_param_val=1
-      if test $mode = rc; then
+      if test $mode = dump; then
         echo "$sbs_param=\"$sbs_param_val\""
       else
         echo "#define $sbs_param \"$sbs_param_val\""
@@ -214,7 +237,7 @@ EOF
 #!/bin/sh
 rm -f $tmp_file
 EOF
-    $0 rc "$@" >>$tmp_file
+    $0 dump "$@" >>$tmp_file
     echo -n "$tmp_file"
     ;;
   x)

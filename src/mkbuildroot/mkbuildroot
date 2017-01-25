@@ -6,6 +6,25 @@
 version_string="mkbuildroot 1.0"
 
 script_name=`basename "$0"`
+script_dir=`dirname $0`
+
+################################################################################
+# LOAD CONFIG
+PATH=$FORMAKE:$PATH
+MKBUILDROOT=
+if test -f $script_dir/config.rc; then
+  . $script_dir/config.rc
+fi
+test -n "$FORMAKE_MKBUILDROOT" && MKBUILDROOT=$FORMAKE_MKBUILDROOT
+if test -n "$MKBUILDROOT" && test -z "$MKBUILDROOT_REDIRECT"; then
+  export MKBUILDROOT_REDIRECT=1
+  $MKBUILDROOT "$@"
+  ret=$?
+  if test $ret -ne 64; then
+    exit $ret
+  fi
+fi
+################################################################################
 
 print_help() {
   cat <<EOF

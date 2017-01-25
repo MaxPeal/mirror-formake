@@ -7,6 +7,30 @@ version_string="libro 1.0"
 script_name=`basename $0`
 script_dir=`dirname $0`
 
+################################################################################
+# LOAD CONFIG
+PATH=$FORMAKE:$PATH
+LIBRO=
+AR=
+AR_FLAGS=
+if test -f $script_dir/config.rc; then
+  . $script_dir/config.rc
+fi
+test -n "$FORMAKE_LIBRO" && LIBRO=$FORMAKE_LIBRO
+if test -n "$LIBRO" && test -z "$LIBRO_REDIRECT"; then
+  export LIBRO_REDIRECT=1
+  $LIBRO "$@"
+  ret=$?
+  if test $ret -ne 64; then
+    exit $ret
+  fi
+fi
+test -n "$CONFIG_AR" && AR=$CONFIG_AR
+test -n "$AR" || AR=ar
+test -n "$CONFIG_AR_FLAGS" && AR_FLAGS=$CONFIG_AR_FLAGS
+test -n "$AR_FLAGS" || AR_FLAGS=clq
+################################################################################
+
 print_help() {
   cat <<EOF
 $script_name [static] -name NAME [-ver VERSION] -obj OBJECTS [-o dir] [-p] [-s]
@@ -47,9 +71,9 @@ EOF
 
 mkstatic() {
   if test x$op_print = x; then
-    ar -h >dev/null 2>&1
-    if test $? = 127; then
-      echo "$script_name: ar not found" >&2
+    $AR -h >dev/null 2>&1
+    if test $? -eq 127; then
+      echo "$script_name: $AR not found" >&2
       exit 1
     fi
   fi
@@ -66,7 +90,7 @@ mkstatic() {
   fi
 
   run_command rm -f $lib_static
-  run_command ar clq $lib_static $op_obj
+  run_command $AR $AR_FLAGS $lib_static $op_obj
 }
 
 mkshared() {
@@ -77,11 +101,11 @@ mkshared() {
   fi
   
   $xstem -h >/dev/null 2>&1
-  if test $? -eq 0; then
+  if test $? -ne 127; then
     CSTEM=$xstem
   else
     $script_dir/$xstem -h >/dev/null 2>&1
-    if test $? -eq 0; then
+    if test $? -ne 127; then
       CSTEM=$script_dir/$xstem
     else
       echo "$script_name: error: $xstem not found" >&2

@@ -1,6 +1,33 @@
 #!/bin/sh
 # install - install a program, script, or datafile
 
+script_dir=`dirname $0`
+
+################################################################################
+# LOAD CONFIG
+PATH=$FORMAKE:$PATH
+INSTALL=
+if test -f $script_dir/config.rc; then
+  . $script_dir/config.rc
+fi
+test -n "$FORMAKE_INSTALL" && INSTALL=$FORMAKE_INSTALL
+if test -n "$INSTALL" && test -z "$INSTALL_REDIRECT"; then
+  export INSTALL_REDIRECT=1
+  $INSTALL "$@"
+  ret=$?
+  if test $ret -ne 64; then
+    exit $ret
+  fi
+elif test -z "$INSTALL"; then
+  install "$@"
+  ret=$?
+  if test $ret -ne 127; then
+    exit $ret
+  fi
+fi
+################################################################################
+
+
 scriptversion=2011-11-20.07; # UTC
 
 # This originates from X11R5 (mit/util/scripts/install.sh), which was

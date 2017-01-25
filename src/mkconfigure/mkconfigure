@@ -20,18 +20,16 @@ print_help() {
 $script_name [options]
  -name NAME     package name (PACKAGE_NAME) [$op_pkgname]
  -ver VERSION   package version (PACKAGE_VERSION)
- -o FILE        output script file [$out_file]
  -params=".."   list of parameters for parsing
- -pofig         probe a system with pofig test tool
+ -cc            probe and configure C compiler
+ -c++           probe and configure C++ compiler
+ -lib           probe the tools required for building C/C++ libraries
  -iftool ".."   probe a system with iftool test tool
  -iflib ".."    probe a system with iflib test tool
- -cstem         configure/probe C compiler with cstem tool
- -cstem+        configure/probe C++ compiler with cstem+ tool
  -sh CODE       insert shell string
  -build-h       generate BUILDROOT/build.h config header
- -no-install    disable installation parameters
- -no-vpath      disable VPATH feature
  -mkpackage     create package
+ -o FILE        output script file [$out_file]
  -v             print version
 EOF
 }
@@ -76,16 +74,16 @@ while test $# -gt 0; do
       done
       current_opt=
       ;;
-    -pofig)
-      op_pofig=1
+    -cc)
+      op_cc=1
       current_opt=
       ;;
-    -cstem)
-      op_cstem=1
+    -c++)
+      op_cxx=1
       current_opt=
       ;;
-    -cstem+)
-      op_cstemx=1
+    -lib)
+      op_lib=1
       current_opt=
       ;;
     -iflib)
@@ -99,14 +97,6 @@ while test $# -gt 0; do
       ;;
     -build-h)
       op_build_h=1
-      current_opt=
-      ;;
-    -no-install)
-      op_no_install=1
-      current_opt=
-      ;;
-    -no-vpath)
-      op_no_vpath=1
       current_opt=
       ;;
     -o)
@@ -166,28 +156,28 @@ while test $# -gt 0; do
   shift
 done
 
-
-if test $op_iflib:$op_cstemx:$op_cstem = 1::; then
-  op_cstem=1
-fi
-
-formake_scripts=
-if test x$op_no_install = x; then
-  formake_scripts="$formake_scripts install"
-fi
-if test x$op_pofig = x1; then
-  formake_scripts="$formake_scripts pofig"
-fi
-if test x$op_cstem = x1; then
-  formake_scripts="$formake_scripts cstem"
-fi
-if test x$op_cstemx = x1; then
-  formake_scripts="$formake_scripts cstem+"
+formake_scripts=pofig
+system_tools=
+system_tools="$system_tools install"
+test -n "$op_iflib$op_lib" && test -z "$op_cc$op_cxx" && op_cc=1
+if test x$op_lib = x1; then
+  formake_scripts="$formake_scripts libro"
+  system_tools="$system_tools ar"
 fi
 if test x$op_iflib = x1; then
   formake_scripts="$formake_scripts iflib"
 fi
+if test x$op_cc = x1; then
+  formake_scripts="$formake_scripts cstem"
+fi
+if test x$op_cxx = x1; then
+  formake_scripts="$formake_scripts cstem+"
+fi
+if test -n "$op_cc$op_cxx"; then
+  formake_scripts="$formake_scripts mkdep"
+fi
 formake_scripts=`echo -n "$formake_scripts" | sed 's/^ *//'`
+system_tools=`echo -n "$system_tools" | sed 's/^ *//'`
 
 if test x$op_mkpackage = x1; then
   if mkpackage -h >/dev/null; then
@@ -214,71 +204,55 @@ cat <<TOP_EOF >$out_file
 # Important variables to use:
 #   PACKAGE_NAME     - name of package
 #   PACKAGE_VERSION  - package version
+#   CONF             - name of the build config file
+#   CONF_H           - name of the build config header file
 #   CUSTOM_OPTIONS   - custom configure options
-#   FORMAKE_TOOLS    - list of Formake tools used in this package
+#   TOOLS            - tools used in this package
 #   SRCROOT          - package source root directory (package top dir)
-#   BUILDROOT        - VPATH build root (package build root dir)
-#   SUBSCRIPT        - path to a subscript - script with custom subroutines
-#   VPATH            - enable/disable vpath
+#   BUILDROOT        - path to the build root directory (current dir)
 
 ################################################################################
 # BASE CONFIGURATION
 PACKAGE_NAME="$op_pkgname"
 PACKAGE_VERSION="$op_pkgver"
-TOP_EOF
-if test x$op_no_install = x; then
-  cat <<"TOP_EOF" >>$out_file
-INSTALL_OPTIONS="-prefix -exec-prefix -bindir -sbindir -libexecdir -libdir \
-                 -incdir -etcdir -vardir -sharedir -mandir -docdir"
-TOP_EOF
-  validate_ops="$validate_ops \$INSTALL_OPTIONS"
-  config_help_ops="$config_help_ops -install"
-fi
-if test x$op_cstem$op_cstemx = x11; then
-  cat <<"TOP_EOF" >>$out_file
-C_OPTIONS="-cc -cflags -ldflags -c-ldflags CC CFLAGS LDFLAGS C_LDFLAGS"
-CXX_OPTIONS="-cxx -cxxflags -ldflags -cxx-ldflags CXX CXXFLAGS LDFLAGS CXX_LDFLAGS"
-TOP_EOF
-  validate_ops="$validate_ops \$C_OPTIONS \$CXX_OPTIONS"
-  config_help_ops="$config_help_ops -cc -cxx"
-elif test x$op_cstem = x1; then
-  cat <<"TOP_EOF" >>$out_file
-C_OPTIONS="-cc -cflags -ldflags CC CFLAGS LDFLAGS"
-TOP_EOF
-  validate_ops="$validate_ops \$C_OPTIONS"
-  config_help_ops="$config_help_ops -cc"
-elif test x$op_cstemx = x1; then
-  cat <<"TOP_EOF" >>$out_file
-CXX_OPTIONS="-cxx -cxxflags -ldflags CXX CXXFLAGS LDFLAGS"
-TOP_EOF
-  validate_ops="$validate_ops \$CXX_OPTIONS"
-  config_help_ops="$config_help_ops -cxx"
-fi
-
-cat <<TOP_EOF >>$out_file
+CONF="build.conf"
+CONF_H="build.h"
 CUSTOM_OPTIONS="$op_params"
-FORMAKE_TOOLS="mkbuildroot abspath relpath listed mkrule $formake_scripts"
+TOOLS="rcrq mkbuildroot relpath mkrule $formake_scripts $system_tools"
+
 TOP_EOF
 
 cat <<"TOP_EOF" >>$out_file
+################################################################################
+# INIT
 SRCROOT=`dirname $0`
 BUILDROOT=`pwd`
-PATH=$BUILDROOT/formake:$SRCROOT/formake:$PATH
+PATH=$FORMAKE:$BUILDROOT/formake:$SRCROOT/formake:$PATH
 
 TOP_EOF
 
 rm_out_file=1
 
-validate_ops=`echo -n "$validate_ops" | sed 's/^ *//'`
-config_help_ops=`echo -n "$config_help_ops" | sed 's/^ *//'`
+validate_ops="-install-options"
+config_help_ops="-install"
+if test x$op_cc$op_cxx = x11; then
+  validate_ops="$validate_ops -c-options -cxx-options"
+  config_help_ops="$config_help_ops -cc -cxx"
+elif test x$op_cc = x1; then
+  validate_ops="$validate_ops -c-options"
+  config_help_ops="$config_help_ops -cc"
+elif test x$op_cxx = x1; then
+  validate_ops="$validate_ops -cxx-options"
+  config_help_ops="$config_help_ops -cxx"
+fi
 
 cat <<TOP_EOF >>$out_file
 ################################################################################
 # OPTIONS
-confighelp -h >/dev/null || exit 1
-optool validate "\$@" - -h -help --help $validate_ops \$CUSTOM_OPTIONS || exit 1
+std_options=\`rcrq $validate_ops\` || exit 1
+optool validate "\$@" - -h -help --help \$std_options \$CUSTOM_OPTIONS || exit 1
 if optool ifor "\$@" - -h -help --help; then
-  confighelp $config_help_ops
+  confighelp $config_help_ops || exit 1
 TOP_EOF
 if test -f $tmp_help; then
   echo "  cat <<EOF" >>$out_file
@@ -289,38 +263,15 @@ fi
 cat <<TOP_EOF >>$out_file
   exit 0
 fi
-optool rc "\$@" >build.conf
-. ./build.conf
+optool dump "\$@" >\$CONF
+. \$CONF
 
 TOP_EOF
-
-if test x$op_no_install = x; then
-  cat <<"TOP_EOF" >>$out_file
-################################################################################
-# VERIFY OPTIONS
-test -n "$PREFIX"      || PREFIX=/usr/local
-test -n "$EXEC_PREFIX" || EXEC_PREFIX=$PREFIX
-test -n "$BINDIR"      || BINDIR=$EXEC_PREFIX/bin
-test -n "$SBINDIR"     || SBINDIR=$EXEC_PREFIX/sbin
-test -n "$LIBEXECDIR"  || LIBEXECDIR=$EXEC_PREFIX/libexec
-test -n "$VARDIR"      || VARDIR=/var
-test -n "$ETCDIR"      || ETCDIR=$PREFIX/etc
-test -n "$LIBDIR"      || LIBDIR=$EXEC_PREFIX/lib
-test -n "$INCDIR"      || INCDIR=$PREFIX/include
-test -n "$SHAREDIR"    || SHAREDIR=$PREFIX/share
-test -n "$MANDIR"      || MANDIR=$SHAREDIR/man
-test -n "$DOCDIR"      || DOCDIR=$SHAREDIR/doc
-
-PACKAGE_SHAREDIR=$SHAREDIR/$PACKAGE_NAME
-PACKAGE_DOCDIR=$SHAREDIR/doc/$PACKAGE_NAME
-
-TOP_EOF
-fi
 
 cat <<TOP_EOF >>$out_file
 ################################################################################
 # DEPENDENCY TOOLS
-iftool \$FORMAKE_TOOLS || exit 1
+iftool \$TOOLS || exit 1
 TOP_EOF
 if test x$op_iftool = x1; then
   idx=0
@@ -338,17 +289,21 @@ cat <<"TOP_EOF" >>$out_file
 mkbuildroot $SRCROOT $BUILDROOT || exit 1
 rm -f configure.log
 
+################################################################################
+# CONFIGURE FORMAKE
+optool dump "$@ -package-name $PACKAGE_NAME -package-version $PACKAGE_VERSION" >formake/config.rc
+
 TOP_EOF
 
-if test -n "$op_cstem$op_cstemx"; then
+if test -n "$op_cc$op_cxx"; then
   cat <<TOP_EOF >>$out_file
 ################################################################################
 # PROBE AND CONFIGURE COMPILERS
 TOP_EOF
-  if test x$op_cstem = x1; then
+  if test x$op_cc = x1; then
     echo "cstem config -cc \$CC -cflags=\"\$CFLAGS\"" >>$out_file
   fi
-  if test x$op_cstemx = x1; then
+  if test x$op_cxx = x1; then
     echo "cstem+ config -cc \$CXX -cflags=\"\$CXXFLAGS\"" >>$out_file
   fi
   echo "" >>$out_file
@@ -362,9 +317,9 @@ TOP_EOF
   idx=0
   while test $idx -lt $iflib_index; do
     eval iflib_params=\$iflib${idx}_params
-    if test x$op_cstem$op_cstemx = x11; then
+    if test x$op_cc$op_cxx = x11; then
       echo "iflib -cc $iflib_params -log configure.log || exit 1" >>$out_file
-    elif test x$op_cstemx = x1; then
+    elif test x$op_cxx = x1; then
       echo "iflib -cxx $iflib_params -log configure.log || exit 1" >>$out_file
     else
       echo "iflib -cc $iflib_params -log configure.log || exit 1" >>$out_file
@@ -387,32 +342,18 @@ echo "" >>$out_file
 cat <<"TOP_EOF" >>$out_file
 ################################################################################
 # CONFIG FILES
-optool rc -package-name $PACKAGE_NAME -package-ver $PACKAGE_VERSION \
-          -prefix $PREFIX -exec-prefix $EXEC_PREFIX -bindir $BINDIR -sbindir $SBINDIR \
-          -libexecdir $LIBEXECDIR -vardir $VARDIR -etcdir $ETCDIR -libdir $LIBDIR \
-          -incdir $INCDIR -sharedir $SHAREDIR -mandir $MANDIR -docdir $DOCDIR \
-          -package-sharedir $PACKAGE_SHAREDIR -package-docdir $PACKAGE_DOCDIR >build.conf
+optool dump -package-name $PACKAGE_NAME -package-version $PACKAGE_VERSION >>$CONF
 TOP_EOF
 if test x"$op_build_h" = x1; then
-  echo "optool def \"\$@\" -package-name \"\$PACKAGE_NAME\" -package-ver \$PACKAGE_VERSION >build.h" >>$out_file
-fi
-
-if test x$op_no_install = x; then
-  cat <<"TOP_EOF" >>$out_file
-
-################################################################################
-# MKRULE
-mkrule config -prefix $PREFIX -exec-prefix $EXEC_PREFIX -bindir $BINDIR -sbindir $SBINDIR \
-          -libexecdir $LIBEXECDIR -libdir $LIBDIR -incdir $INCDIR -etcdir $ETCDIR \
-          -sharedir $PACKAGE_SHAREDIR -mandir $MANDIR -docdir $PACKAGE_DOCDIR
-TOP_EOF
+  echo "optool hdump \"\$@\" -package-name \"\$PACKAGE_NAME\" -package-version \$PACKAGE_VERSION >\$CONF_H" >>$out_file
 fi
 
 cat <<"TOP_EOF" >>$out_file
 
 ################################################################################
 # MKMF
-BUILDROOT=$BUILDROOT $SRCROOT/mkmf || exit 1
+cd $BUILDROOT
+$SRCROOT/mkmf || exit 1
 
 ################################################################################
 # FINISH
