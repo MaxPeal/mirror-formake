@@ -1,0 +1,47 @@
+#!/bin/sh
+
+script_name=`basename $0`
+script_dir=`dirname $0`
+
+################################################################################
+# LOAD CONFIG
+PATH=$FORMAKE:$PATH
+RCCOM=
+if test -f $script_dir/config.rc; then
+  . $script_dir/config.rc
+fi
+test -n "$FORMAKE_RCCOM" && RCCOM=$FORMAKE_RCCOM
+if test -n "$RCCOM" && test -z "$RCCOM_REDIRECT"; then
+  export RCCOM_REDIRECT=1
+  $RCCOM "$@"
+  ret=$?
+  if test $ret -ne 64; then
+    exit $ret
+  fi
+fi
+################################################################################
+
+if test $# -eq 0; then
+  echo "$script_name: error: command not specified" >&2
+  exit 1
+fi
+
+cmd=$1
+shift
+qstr=`echo -n "$cmd" | sed 's/-/_/g' | tr 'a-z' 'A-Z'`
+if echo -n "$qstr" | grep "[^a-zA-Z0-9_]" > /dev/null; then
+  $cmd "$@" 
+else
+  eval $qstr=
+  if test -f $script_dir/config.rc; then
+    . $script_dir/config.rc
+  fi
+  
+  eval rcmd=\$$qstr
+  eval config_val=\$CONFIG_$qstr
+  test -z "$config_val" || rcmd=$config_val
+  test -n "$rcmd" || rcmd=$cmd
+
+  $rcmd "$@" 
+fi 
+

@@ -1,0 +1,224 @@
+#!/bin/sh
+
+script_name=`basename $0`
+script_dir=`dirname $0`
+
+################################################################################
+# LOAD CONFIG
+PATH=$FORMAKE:$PATH
+RCRQ=
+if test -f $script_dir/config.rc; then
+  . $script_dir/config.rc
+fi
+test -n "$FORMAKE_RCRQ" && RCRQ=$FORMAKE_RCRQ
+if test -n "$RCRQ" && test -z "$RCRQ_REDIRECT"; then
+  export RCRQ_REDIRECT=1
+  $RCRQ "$@"
+  ret=$?
+  if test $ret -ne 64; then
+    exit $ret
+  fi
+fi
+################################################################################
+
+AR=
+AR_FLAGS=
+TAR=
+INSTALL=
+
+PREFIX=
+EXEC_PREFIX=
+BINDIR=
+SBINDIR=
+LIBEXECDIR=
+ETCDIR=
+LIBDIR=
+INCDIR=
+SHAREDIR=
+MANDIR=
+DOCDIR=
+
+PACKAGE_NAME=
+PACKAGE_VERSION=
+PACKAGE_SHAREDIR=
+PACKAGE_DOCDIR=
+
+INSTALL_OPTIONS=
+C_OPTIONS=
+CXX_OPTIONS=
+
+if test -f $script_dir/config.rc; then
+  . $script_dir/config.rc
+fi
+
+
+test -z "$CONFIG_AR"       || AR=$CONFIG_AR
+test -n "$AR"              || AR=ar
+test -z "$CONFIG_AR_FLAGS" || AR_FLAGS=$CONFIG_AR_FLAGS
+test -n "$AR_FLAGS"        || AR_FLAGS=clq
+test -z "$CONFIG_TAR"      || TAR=$CONFIG_TAR
+test -n "$TAR"             || TAR=tar
+test -z "$CONFIG_INSTALL"  || INSTALL=$CONFIG_INSTALL
+test -n "$INSTALL"         || INSTALL=install
+
+test -n "$PREFIX"      || PREFIX=/usr/local
+test -n "$EXEC_PREFIX" || EXEC_PREFIX=$PREFIX
+test -n "$BINDIR"      || BINDIR=$EXEC_PREFIX/bin
+test -n "$SBINDIR"     || SBINDIR=$EXEC_PREFIX/sbin
+test -n "$LIBEXECDIR"  || LIBEXECDIR=$EXEC_PREFIX/libexec
+test -n "$ETCDIR"      || ETCDIR=$PREFIX/etc
+test -n "$LIBDIR"      || LIBDIR=$EXEC_PREFIX/lib
+test -n "$INCDIR"      || INCDIR=$PREFIX/include
+test -n "$SHAREDIR"    || SHAREDIR=$PREFIX/share
+test -n "$MANDIR"      || MANDIR=$SHAREDIR/man
+test -n "$DOCDIR"      || DOCDIR=$SHAREDIR/doc
+
+test -n "$PACKAGE_NAME" || PACKAGE_NAME=package
+
+PACKAGE_SHAREDIR=$SHAREDIR/$PACKAGE_NAME
+PACKAGE_DOCDIR=$SHAREDIR/doc/$PACKAGE_NAME
+
+test -n "$INSTALL_OPTIONS" || INSTALL_OPTIONS="-prefix -exec-prefix -bindir -sbindir -libexecdir -libdir -incdir -etcdir -vardir -sharedir -mandir -docdir"
+test -n "$C_OPTIONS"       || C_OPTIONS="-cc -cflags -ldflags -c-ldflags CC CFLAGS LDFLAGS C_LDFLAGS"
+test -n "$CXX_OPTIONS"     || CXX_OPTIONS="-cxx -cxxflags -ldflags -cxx-ldflags CXX CXXFLAGS LDFLAGS CXX_LDFLAGS"
+
+if test $# -eq 0; then
+  cat <<EOF
+AR           $AR
+AR_FLAGS     $AR_FLAGS
+TAR          $TAR
+INSTALL      $INSTALL
+PREFIX       $PREFIX
+EXEC_PREFIX  $EXEC_PREFIX
+BINDIR       $BINDIR
+SBINDIR      $SBINDIR
+LIBEXECDIR   $LIBEXECDIR
+ETCDIR       $ETCDIR
+LIBDIR       $LIBDIR
+INCDIR       $INCDIR
+SHAREDIR     $SHAREDIR
+MANDIR       $MANDIR
+DOCDIR       $DOCDIR
+EOF
+  exit 0
+fi
+
+echo_space=
+while test $# -gt 0; do
+  qstr=`echo -n "$1" | sed 's/^-*//' | sed 's/-/_/g' | tr 'a-z' 'A-Z'`
+  if echo -n "$qstr" | grep "[^a-zA-Z0-9_]" > /dev/null; then
+    echo "$script_name: error: invalid query string '$1'" >&2
+    exit 1
+  fi 
+
+  test -n "$echo_space" && echo -n " "
+
+  case $qstr in
+    CC)
+      echo -n "$CC"
+      ;;
+    CXX)
+      echo -n "$CXX"
+      ;;
+    CFLAGS)
+      echo -n "$CFLAGS"
+      ;;
+    CXXFLAGS)
+      echo -n "$CXXFLAGS"
+      ;;
+    LDFLAGS)
+      echo -n "$LDFLAGS"
+      ;;
+    C_LDFLAGS)
+      echo -n "$C_LDFLAGS"
+      ;;
+    CXX_LDFLAGS)
+      echo -n "$CXX_LDFLAGS"
+      ;;
+    AR)
+      echo -n "$AR"
+      ;;
+    AR_FLAGS)
+      echo -n "$AR_FLAGS"
+      ;;
+    TAR)
+      echo -n "$TAR"
+      ;;
+    INSTALL)
+      echo -n "$INSTALL"
+      ;;
+    PREFIX)
+      echo -n "$PREFIX"
+      ;;
+    EXEC_PREFIX)
+      echo -n "$EXEC_PREFIX"
+      ;;
+    BINDIR)
+      echo -n "$BINDIR"
+      ;;
+    SBINDIR)
+      echo -n "$SBINDIR"
+      ;;
+    LIBEXECDIR)
+      echo -n "$LIBEXECDIR"
+      ;;
+    ETCDIR)
+      echo -n "$ETCDIR"
+      ;;
+    LIBDIR)
+      echo -n "$LIBDIR"
+      ;;
+    INCDIR)
+      echo -n "$INCDIR"
+      ;;
+    SHAREDIR)
+      echo -n "$SHAREDIR"
+      ;;
+    MANDIR)
+      echo -n "$MANDIR"
+      ;;
+    DOCDIR)
+      echo -n "$DOCDIR"
+      ;;
+    PACKAGE_NAME)
+      echo -n "$PACKAGE_NAME"
+      ;;
+    PACKAGE_VERSION)
+      echo -n "$PACKAGE_VERSION"
+      ;;
+    PACKAGE_SHAREDIR)
+      echo -n "$PACKAGE_SHAREDIR"
+      ;;
+    PACKAGE_DOCDIR)
+      echo -n "$PACKAGE_DOCDIR"
+      ;;
+    INSTALL_OPTIONS)
+      echo -n "$INSTALL_OPTIONS"
+      ;;
+    C_OPTIONS)
+      echo -n "$C_OPTIONS"
+      ;;
+    CXX_OPTIONS)
+      echo -n "$CXX_OPTIONS"
+      ;;
+    [0-9]*)
+      echo "$script_name: error: invalid query string '$1'" >&2
+      exit 1
+      ;;
+    *)
+      eval $qstr=
+      if test -f $script_dir/config.rc; then
+        . $script_dir/config.rc
+      fi
+      eval val=\$$qstr
+      eval config_val=\$CONFIG_$qstr
+      test -z "$config_val" || val=$config_val
+      echo -n "$val"
+      ;;
+  esac
+  shift
+  echo_space=1
+done
+
+echo ""
+
