@@ -159,11 +159,11 @@ if test -n "$CSTEMX" && test -z "$CSTEMX_REDIRECT"; then
 fi
 ################################################################################
 
-pofig -h >/dev/null 2>&1
+syscap -h >/dev/null 2>&1
 if test $? -ne 127; then
-  POFIG=pofig
-elif test -f $script_dir/pofig; then
-  POFIG=$script_dir/pofig
+  SYSCAP=syscap
+elif test -f $script_dir/syscap; then
+  SYSCAP=$script_dir/syscap
 fi
 
 config_list="
@@ -1101,8 +1101,8 @@ perform_probe() {
   fi
 
   if test -z "$probe_cc_cmd"; then
-    if test -n "$POFIG"; then
-      case `$POFIG -os` in
+    if test -n "$SYSCAP"; then
+      case `$SYSCAP -os` in
         aix)
           cc_list="cc xlc gcc c99"   ###CC_LINE
           cc_list="xlc++ xlC c++ CC g++"    ###CX_LINE

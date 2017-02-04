@@ -476,7 +476,7 @@ cat <<"TOP_EOF" >>$op_out_file
 # INIT
 SCRIPT=`basename $0`
 PATH=$FORMAKE:$PWD/$BUILDROOT/formake:$PATH
-iftool -f $TOOLS || exit 1
+syscap test -f $TOOLS || exit 1
 export SRCDIR=`dirname $0 | xargs relpath ./`
 SRCROOT=`relpath ./ $SRCDIR/$BUILDROOT`
 ABS_BUILDDIR=`pwd`
@@ -827,7 +827,7 @@ dist_files="$dist_files $src_dist_files"
 
 if test "$op_srcroot" = "."; then
   if test -d formake; then
-    opt_fscripts="abspath confighelp cstem cstem+ cfront iflib iftool install libro listed mkbuildroot mkdep optool pofig"
+    opt_fscripts="abspath cfront cstem cstem+ install libro listed mkdep optool syscap"
     formake_dist=
     for script in $opt_fscripts; do
       if test -f formake/$script; then

@@ -3,6 +3,26 @@
 # Author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
 #
 
+script_dir=`dirname $0`
+
+################################################################################
+# LOAD CONFIG
+PATH=$FORMAKE:$PATH
+RELPATH=
+if test -f $script_dir/config.rc; then
+  . $script_dir/config.rc
+fi
+test -n "$FORMAKE_RELPATH" && RELPATH=$FORMAKE_RELPATH
+if test -n "$RELPATH" && test -z "$RELPATH_REDIRECT"; then
+  export RELPATH_REDIRECT=1
+  $RELPATH "$@"
+  ret=$?
+  if test $ret -ne 64; then
+    exit $ret
+  fi
+fi
+################################################################################
+
 abs_path() {
   _sub_orig_dir=`pwd`
   if test $# = 0; then
@@ -134,7 +154,7 @@ rel_path2() {
   fi
 
   file_from_tmp=$file_from
-  while test `expr "$file_to" : "^$file_from_tmp"` -eq 0; do
+  while test `expr "$file_to/" : "^$file_from_tmp/"` -eq 0; do
     file_from_tmp=`dirname "$file_from_tmp"`
   done
   dir_up=`echo -n "$file_from" | sed "s:^$file_from_tmp::" | sed 's:^/::' | sed 's:[^/][^/]*:..:g'`
@@ -155,7 +175,7 @@ if test $# -eq 1; then
 elif test $# -eq 2; then
   rel_path2 $1 $2
 else
-  echo "Usage: $0 FROM [TO]"
+  echo "Usage: $0 FROM [TO]" >&2
   exit 1
 fi
 

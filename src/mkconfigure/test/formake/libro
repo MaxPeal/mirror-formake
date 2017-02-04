@@ -25,8 +25,9 @@ if test -n "$LIBRO" && test -z "$LIBRO_REDIRECT"; then
     exit $ret
   fi
 fi
-test -n "$PROG_AR" && AR=$PROG_AR
+test -n "$CONFIG_AR" && AR=$CONFIG_AR
 test -n "$AR" || AR=ar
+test -n "$CONFIG_AR_FLAGS" && AR_FLAGS=$CONFIG_AR_FLAGS
 test -n "$AR_FLAGS" || AR_FLAGS=clq
 ################################################################################
 
@@ -90,7 +91,6 @@ mkstatic() {
 
   run_command rm -f $lib_static
   run_command $AR $AR_FLAGS $lib_static $op_obj
-  run_command ranlib $lib_static
 }
 
 mkshared() {

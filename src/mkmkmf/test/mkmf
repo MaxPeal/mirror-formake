@@ -28,7 +28,7 @@ SUBDIRS="mod1 mod2 tests libeee libeee2"
 # INIT
 SCRIPT=`basename $0`
 PATH=$FORMAKE:$PWD/$BUILDROOT/formake:$PATH
-iftool -f $TOOLS || exit 1
+syscap test -f $TOOLS || exit 1
 export SRCDIR=`dirname $0 | xargs relpath ./`
 SRCROOT=`relpath ./ $SRCDIR/$BUILDROOT`
 ABS_BUILDDIR=`pwd`
@@ -82,7 +82,7 @@ mkrule install inc $install_inc >>$MAKEFILE
 
 ################################################################################
 # DIST
-dist_files="configure formake/relpath formake/mkrule formake/abspath formake/cstem formake/cstem+ formake/iflib formake/iftool formake/libro formake/mkbuildroot formake/mkdep formake/optool formake/pofig mkmf $install_bin $install_lib $install_inc $lib1_sources $prog1_sources"
+dist_files="configure formake/relpath formake/mkrule  mkmf $install_bin $install_lib $install_inc $lib1_sources $prog1_sources"
 mkrule dist -n $PACKAGE_NAME -ver $PACKAGE_VERSION -f $dist_files >>$MAKEFILE || exit 1
 
 ################################################################################

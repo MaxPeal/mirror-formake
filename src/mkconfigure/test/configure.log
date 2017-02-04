@@ -1,78 +1,463 @@
-$ cc -O0 -g3 -c -o test.o test.c
-$ cc -O0 -g3  -c -o test.o test.c
-$ cc -O0 -g3 -o app test.o
-$ cc -O0 -g3 -lX11 -lXt -o app test.o
-$ cc -O0 -g3  -c -o test.o test_cc.c
-$ cc -O0 -g3  -c -o test.o test_cc.c
-$ cc -O0 -g3  -c -o test.o test_cc.c
-$ cc -O0 -g3  -c -o test.o test_cc2.c
-$ cc -O0 -g3 -lX11 -lXt -o app test.o
+
+################################################################################
+# TEST COMPILER
+
+# checking compiler gcc -O0 -g3 ... 
+****************************************
+* int main(int argc, char *argv[]) {
+*   return 0;
+* }
+****************************************
+gcc -O0 -g3   -c -o test.o test.c
+
+################################################################################
+# TEST LD
+
+# checking linker gcc -O0 -g3 ... 
+****************************************
+* int main(int argc, char *argv[]) {
+*   return 0;
+* }
+****************************************
+gcc -O0 -g3    -c -o test.o test.c
+gcc -O0 -g3   -o app test.o
+
+################################################################################
+# TEST COMPILER FLAGS
+
+# checking compiler flags -O0 -g3 ... 
+****************************************
+* int main(int argc, char *argv[]) {
+*   return 0;
+* }
+****************************************
+gcc -O0 -g3   -O0 -g3 -c -o test.o test.c
+
+################################################################################
+# TEST LD FLAGS
+
+# checking linker flags -L. -L/home/alex/libs -L/usr/lib64/qt4 ... 
+****************************************
+* int main(int argc, char *argv[]) {
+*   return 0;
+* }
+****************************************
+gcc -O0 -g3   -O0 -g3 -c -o test.o test.c
+gcc -O0 -g3   -L. -L/home/alex/libs -L/usr/lib64/qt4 -o app test.o
+
+################################################################################
+# TEST COMPILER
+
+# checking compiler g++ -O3 -g0 -I/usr/include/qt4 ... 
+****************************************
+* int main(int argc, char *argv[]) {
+*   return 0;
+* }
+****************************************
+g++ -O3 -g0 -I/usr/include/qt4   -c -o test.o test.C
+
+################################################################################
+# TEST LD
+
+# checking linker g++ -O3 -g0 -I/usr/include/qt4 ... 
+****************************************
+* int main(int argc, char *argv[]) {
+*   return 0;
+* }
+****************************************
+g++ -O3 -g0 -I/usr/include/qt4    -c -o test.o test.C
+g++ -O3 -g0 -I/usr/include/qt4   -o app test.o
+
+################################################################################
+# TEST COMPILER FLAGS
+
+# checking compiler flags -O3 -g0 -I/usr/include/qt4 ... 
+****************************************
+* int main(int argc, char *argv[]) {
+*   return 0;
+* }
+****************************************
+g++ -O3 -g0 -I/usr/include/qt4   -O3 -g0 -I/usr/include/qt4 -c -o test.o test.C
+
+################################################################################
+# TEST LD FLAGS
+
+# checking linker flags -L. -L/home/alex/libs -L/usr/lib64/qt4 ... 
+****************************************
+* int main(int argc, char *argv[]) {
+*   return 0;
+* }
+****************************************
+g++ -O3 -g0 -I/usr/include/qt4   -O3 -g0 -I/usr/include/qt4 -c -o test.o test.C
+g++ -O3 -g0 -I/usr/include/qt4   -L. -L/home/alex/libs -L/usr/lib64/qt4 -o app test.o
+
+################################################################################
+# TEST HEADERS
+
+# checking header X11/Xlib.h ... 
+****************************************
+* #include <X11/Xlib.h>
+****************************************
+gcc -O0 -g3    -c -o test.o test_src.c
+
+# checking header X11/X.h ... 
+****************************************
+* #include <X11/X.h>
+****************************************
+gcc -O0 -g3    -c -o test.o test_src.c
+
+# checking header X11/Intrinsic.h ... 
+****************************************
+* #include <X11/Intrinsic.h>
+****************************************
+gcc -O0 -g3    -c -o test.o test_src.c
+
+################################################################################
+# TEST CPP DEFINES
+
+# checking define __linux__ ... 
+****************************************
+* #include <X11/Xlib.h>
+* #include <X11/X.h>
+* #include <X11/Intrinsic.h>
+* #ifndef __linux__
+* #error syscap: __linux__ not defined
+* #endif
+* 
+****************************************
+gcc -O0 -g3    -c -o test.o test_src.c
+
+# checking define __unix__ ... 
+****************************************
+* #include <X11/Xlib.h>
+* #include <X11/X.h>
+* #include <X11/Intrinsic.h>
+* #ifndef __unix__
+* #error syscap: __unix__ not defined
+* #endif
+* 
+****************************************
+gcc -O0 -g3    -c -o test.o test_src.c
+
+# checking define __GNUC__=4 ... 
+****************************************
+* #include <X11/Xlib.h>
+* #include <X11/X.h>
+* #include <X11/Intrinsic.h>
+* #if __GNUC__ == 4
+* #else
+* #error syscap: false expression: __GNUC__ == 4
+* #endif
+* 
+****************************************
+gcc -O0 -g3    -c -o test.o test_src.c
+
+# checking define #ifdef __linux__ && defined __unix__ ... 
+****************************************
+* #include <X11/Xlib.h>
+* #include <X11/X.h>
+* #include <X11/Intrinsic.h>
+* #ifdef __linux__ && defined __unix__
+* #else
+* #error syscap: false directive: #ifdef __linux__ && defined __unix__
+* #endif
+* 
+****************************************
+gcc -O0 -g3    -c -o test.o test_src.c
+test_src.c:4:18: warning: extra tokens at end of #ifdef directive
+ #ifdef __linux__ && defined __unix__
+                  ^
+
+# checking define #if (__GNUC__ == 4 && __GNUC_MINOR__ == 7) || __SIZEOF_LONG_LONG__ == 8 ... 
+****************************************
+* #include <X11/Xlib.h>
+* #include <X11/X.h>
+* #include <X11/Intrinsic.h>
+* #if (__GNUC__ == 4 && __GNUC_MINOR__ == 7) || __SIZEOF_LONG_LONG__ == 8
+* #else
+* #error syscap: false directive: #if (__GNUC__ == 4 && __GNUC_MINOR__ == 7) || __SIZEOF_LONG_LONG__ == 8
+* #endif
+* 
+****************************************
+gcc -O0 -g3    -c -o test.o test_src.c
+
+################################################################################
+# TEST TYPES
+
+# checking type Widget ... 
+****************************************
+* #include <X11/Xlib.h>
+* #include <X11/X.h>
+* #include <X11/Intrinsic.h>
+* Widget *syscap_Widget;
+****************************************
+gcc -O0 -g3    -c -o test.o test_src.c
+
+# checking type int32_t ... 
+****************************************
+* #include <X11/Xlib.h>
+* #include <X11/X.h>
+* #include <X11/Intrinsic.h>
+* int32_t *syscap_int32_t;
+****************************************
+gcc -O0 -g3    -c -o test.o test_src.c
+
+################################################################################
+# TEST LIBRARIES
+
+# checking libraries  -lX11 -lXt ... 
+****************************************
+* int main(int argc, char *argv[]) {
+*   return 0;
+* }
+****************************************
+gcc -O0 -g3    -c -o test.o test.c
+gcc -O0 -g3  -L. -L/home/alex/libs -L/usr/lib64/qt4   -lX11 -lXt -o app test.o
+
+################################################################################
+# TEST CSTR
+
+# checking source string Widget *w = NULL; ... 
+****************************************
+* #include <X11/Xlib.h>
+* #include <X11/X.h>
+* #include <X11/Intrinsic.h>
+* Widget *w = NULL;
+****************************************
+gcc -O0 -g3    -c -o test.o test_src.c
+gcc -O0 -g3  -L. -L/home/alex/libs -L/usr/lib64/qt4   -lX11 -lXt -o app test.o
 /usr/lib/gcc/x86_64-linux-gnu/4.9/../../../x86_64-linux-gnu/crt1.o: In function `_start':
 /build/glibc-daoqzt/glibc-2.19/csu/../sysdeps/x86_64/start.S:118: undefined reference to `main'
 collect2: error: ld returned 1 exit status
 test again ...
-$ cc -O0 -g3  -c -o test.o test_cc2.c
-$ cc -O0 -g3  -c -o test.o test_cc.c
-$ cc -O0 -g3  -c -o test.o test_cc.c
-$ cc -O0 -g3  -c -o test.o test_cc.c
-$ cc -O0 -g3  -c -o test.o test_cc.c
-test_cc.c:18:18: warning: extra tokens at end of #ifdef directive
- #ifdef __linux__ && defined __unix__
-                  ^
-$ cc -O0 -g3  -c -o test.o test_cc.c
-test_cc.c:18:18: warning: extra tokens at end of #ifdef directive
- #ifdef __linux__ && defined __unix__
-                  ^
-$ cc -O0 -g3  -c -o test.o test_cc.c
-test_cc.c:18:18: warning: extra tokens at end of #ifdef directive
- #ifdef __linux__ && defined __unix__
-                  ^
-$ cc -O0 -g3  -c -o test.o test_cc.c
-test_cc.c:18:18: warning: extra tokens at end of #ifdef directive
- #ifdef __linux__ && defined __unix__
-                  ^
-$ cc -O0 -g3  -c -o test.o test_cc2.c
-test_cc2.c:18:18: warning: extra tokens at end of #ifdef directive
- #ifdef __linux__ && defined __unix__
-                  ^
-$ cc -O0 -g3 -lX11 -lXt -o app test.o
-$ cc -O0 -g3  -c -o test.o test_cc2.c
-test_cc2.c:18:18: warning: extra tokens at end of #ifdef directive
- #ifdef __linux__ && defined __unix__
-                  ^
-$ cc -O0 -g3 -lX11 -lXt -o app test.o
-$ cc -O0 -g3  -c -o test.o test_cc2.c
-$ cc -O0 -g3 -lX11 -lXt -o app test.o
-$ cc -O0 -g3  -c -o test.o test_cc2.c
-test_cc2.c:1:5: warning: conflicting types for built-in function ‘fprintf’
+****************************************
+* #include <X11/Xlib.h>
+* #include <X11/X.h>
+* #include <X11/Intrinsic.h>
+* Widget *w = NULL;
+* int main(int argc, char *argv[]) { return 0;}
+****************************************
+gcc -O0 -g3    -c -o test.o test_src.c
+gcc -O0 -g3  -L. -L/home/alex/libs -L/usr/lib64/qt4   -lX11 -lXt -o app test.o
+
+################################################################################
+# TEST RVALS
+
+# checking rval __GNUC__ ... 
+****************************************
+* #include <X11/Xlib.h>
+* #include <X11/X.h>
+* #include <X11/Intrinsic.h>
+* int main(int argc, char *argv[]) {int syscap___GNUC__ = (int) __GNUC__; return 0;}
+****************************************
+gcc -O0 -g3    -c -o test.o test_src.c
+gcc -O0 -g3  -L. -L/home/alex/libs -L/usr/lib64/qt4   -lX11 -lXt -o app test.o
+
+# checking rval __linux__ ... 
+****************************************
+* #include <X11/Xlib.h>
+* #include <X11/X.h>
+* #include <X11/Intrinsic.h>
+* int main(int argc, char *argv[]) {int syscap___linux__ = (int) __linux__; return 0;}
+****************************************
+gcc -O0 -g3    -c -o test.o test_src.c
+gcc -O0 -g3  -L. -L/home/alex/libs -L/usr/lib64/qt4   -lX11 -lXt -o app test.o
+
+################################################################################
+# TEST FUNCTIONS
+
+# checking function XtCreateWidget ... 
+****************************************
+* int XtCreateWidget(int);
+* int main(int argc, char *argv[]) { int syscap_XtCreateWidget = XtCreateWidget(1); return syscap_XtCreateWidget; }
+****************************************
+gcc -O0 -g3    -c -o test.o test_src.c
+gcc -O0 -g3  -L. -L/home/alex/libs -L/usr/lib64/qt4   -lX11 -lXt -o app test.o
+
+# checking function fprintf ... 
+****************************************
+* int fprintf(int);
+* int main(int argc, char *argv[]) { int syscap_fprintf = fprintf(1); return syscap_fprintf; }
+****************************************
+gcc -O0 -g3    -c -o test.o test_src.c
+test_src.c:1:5: warning: conflicting types for built-in function ‘fprintf’
  int fprintf(int);
      ^
-$ cc -O0 -g3 -lX11 -lXt -o app test.o
-$ cc -O0 -g3  -c -o test.o test_cc2.c
-$ cc -O0 -g3 -lX11 -lXt -o app test.o
-$ cc -O0 -g3  -c -o test.o test.c
-$ cc -O0 -g3 -lX11 -lXt -o app test.o
-$ cc -O0 -g3  -c -o test.o test_cc.c
-$ cc -O0 -g3  -c -o test.o test_cc.c
-$ cc -O0 -g3  -c -o test.o test_cc2.c
-test_cc2.c: In function ‘main’:
-test_cc2.c:6:71: warning: cast from pointer to integer of different size [-Wpointer-to-int-cast]
- int main(int argc, char *argv[]) {int iflib_xmPushButtonWidgetClass = (int) xmPushButtonWidgetClass; return 0;}
-                                                                       ^
-$ cc -O0 -g3 -lXm -o app test.o
-$ cc -O0 -g3  -c -o test.o test_cc2.c
-$ cc -O0 -g3 -lXm -o app test.o
-$ cc -O0 -g3  -c -o test.o test_cc2.c
-$ cc -O0 -g3 -lXm -o app test.o
-$ cc -O0 -g3  -c -o test.o test_cc2.c
-$ cc -O0 -g3 -lXm -o app test.o
-$ cc -O0 -g3 -c -o test.o test.c
-$ cc -O0 -g3  -c -o test.o test.c
-$ cc -O0 -g3 -o app test.o
-$ cc -O0 -g3 -lgif -o app test.o
-$ cc -O0 -g3  -c -o test.o test_cc.c
-$ c++ -O3 -g0 -I/usr/include/qt4 -c -o test.o test.C
-$ c++ -O3 -g0 -I/usr/include/qt4  -c -o test.o test.C
-$ c++ -O3 -g0 -I/usr/include/qt4 -o app test.o
-$ c++ -O3 -g0 -I/usr/include/qt4 -lQtGui -o app test.o
-$ c++ -O3 -g0 -I/usr/include/qt4  -c -o test.o test_cc.C
+gcc -O0 -g3  -L. -L/home/alex/libs -L/usr/lib64/qt4   -lX11 -lXt -o app test.o
+
+# checking function atoi ... 
+****************************************
+* int atoi(int);
+* int main(int argc, char *argv[]) { int syscap_atoi = atoi(1); return syscap_atoi; }
+****************************************
+gcc -O0 -g3    -c -o test.o test_src.c
+gcc -O0 -g3  -L. -L/home/alex/libs -L/usr/lib64/qt4   -lX11 -lXt -o app test.o
+
+################################################################################
+# TEST SOURCE FILES
+
+# checking source file ./test.c ... 
+****************************************
+* 
+* enum mon_type {
+*   JAN=1,
+*   FEB,
+*   MAR
+* };
+* 
+* 
+* extern void *XCreateWindow;
+* 
+* int month = FEB;
+* 
+* int main(int argc, char *argv[]) {
+*   void *a;
+* 
+*   a= XCreateWindow;
+* }
+* 
+****************************************
+gcc -O0 -g3    -c -o test.o test.c
+gcc -O0 -g3  -L. -L/home/alex/libs -L/usr/lib64/qt4   -lX11 -lXt -o app test.o
+
+# checking grep ... 
+
+# checking tclsh ... 
+
+################################################################################
+# TEST HEADERS
+
+# checking header Xm/Xm.h ... 
+****************************************
+* #include <Xm/Xm.h>
+****************************************
+gcc -O0 -g3    -c -o test.o test_src.c
+
+# checking header Xm/PushB.h ... 
+****************************************
+* #include <Xm/PushB.h>
+****************************************
+gcc -O0 -g3    -c -o test.o test_src.c
+
+################################################################################
+# TEST ENUMS
+
+# checking enum XmSET ... 
+****************************************
+* #include <Xm/Xm.h>
+* #include <Xm/PushB.h>
+* int syscap_XmSET = XmSET;
+****************************************
+gcc -O0 -g3    -c -o test.o test_src.c
+
+# checking enum XmTOGGLEBUTTON ... 
+****************************************
+* #include <Xm/Xm.h>
+* #include <Xm/PushB.h>
+* int syscap_XmTOGGLEBUTTON = XmTOGGLEBUTTON;
+****************************************
+gcc -O0 -g3    -c -o test.o test_src.c
+
+################################################################################
+# TEST LIBRARIES
+
+# checking libraries  -lXm ... 
+****************************************
+* int main(int argc, char *argv[]) {
+*   return 0;
+* }
+****************************************
+gcc -O0 -g3    -c -o test.o test.c
+gcc -O0 -g3  -L. -L/home/alex/libs -L/usr/lib64/qt4   -lXm -o app test.o
+
+################################################################################
+# TEST VARIABLES
+
+# checking variable xmPushButtonWidgetClass ... 
+****************************************
+* #include <Xm/Xm.h>
+* #include <Xm/PushB.h>
+* int main(int argc, char *argv[]) {int syscap_xmPushButtonWidgetClass = (int) xmPushButtonWidgetClass; return 0;}
+****************************************
+gcc -O0 -g3    -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:72: warning: cast from pointer to integer of different size [-Wpointer-to-int-cast]
+ int main(int argc, char *argv[]) {int syscap_xmPushButtonWidgetClass = (int) xmPushButtonWidgetClass; return 0;}
+                                                                        ^
+gcc -O0 -g3  -L. -L/home/alex/libs -L/usr/lib64/qt4   -lXm -o app test.o
+
+################################################################################
+# TEST SYMBOLS
+
+# checking symbol xmTextFieldWidgetClass ... 
+****************************************
+* extern void *xmTextFieldWidgetClass;
+* int main(int argc, char *argv[]) {void *syscap_xmTextFieldWidgetClass = xmTextFieldWidgetClass; return 0;}
+****************************************
+gcc -O0 -g3    -c -o test.o test_src.c
+gcc -O0 -g3  -L. -L/home/alex/libs -L/usr/lib64/qt4   -lXm -o app test.o
+
+################################################################################
+# TEST RVALS
+
+# checking rval XmSET ... 
+****************************************
+* #include <Xm/Xm.h>
+* #include <Xm/PushB.h>
+* int main(int argc, char *argv[]) {int syscap_XmSET = (int) XmSET; return 0;}
+****************************************
+gcc -O0 -g3    -c -o test.o test_src.c
+gcc -O0 -g3  -L. -L/home/alex/libs -L/usr/lib64/qt4   -lXm -o app test.o
+
+################################################################################
+# TEST FUNCTIONS
+
+# checking function XmCreatePushButton ... 
+****************************************
+* int XmCreatePushButton(int);
+* int main(int argc, char *argv[]) { int syscap_XmCreatePushButton = XmCreatePushButton(1); return syscap_XmCreatePushButton; }
+****************************************
+gcc -O0 -g3    -c -o test.o test_src.c
+gcc -O0 -g3  -L. -L/home/alex/libs -L/usr/lib64/qt4   -lXm -o app test.o
+
+################################################################################
+# TEST HEADERS
+
+# checking header gif_lib.h ... 
+****************************************
+* #include <gif_lib.h>
+****************************************
+gcc -O0 -g3    -c -o test.o test_src.c
+
+################################################################################
+# TEST LIBRARIES
+
+# checking libraries  -lgif ... 
+****************************************
+* int main(int argc, char *argv[]) {
+*   return 0;
+* }
+****************************************
+gcc -O0 -g3    -c -o test.o test.c
+gcc -O0 -g3  -L. -L/home/alex/libs -L/usr/lib64/qt4   -lgif -o app test.o
+
+################################################################################
+# TEST HEADERS
+
+# checking header QtGui/QtGui ... 
+****************************************
+* #include <QtGui/QtGui>
+****************************************
+g++ -O3 -g0 -I/usr/include/qt4    -c -o test.o test_src.C
+
+################################################################################
+# TEST LIBRARIES
+
+# checking libraries  -lQtGui ... 
+****************************************
+* int main(int argc, char *argv[]) {
+*   return 0;
+* }
+****************************************
+g++ -O3 -g0 -I/usr/include/qt4    -c -o test.o test.C
+g++ -O3 -g0 -I/usr/include/qt4  -L. -L/home/alex/libs -L/usr/lib64/qt4   -lQtGui -o app test.o

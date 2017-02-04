@@ -10,11 +10,13 @@ script_name=`basename "$0"`
 script_dir=`dirname $0`
 
 op_dir=formake
-formake_scripts="abspath confighelp cstem cstem+ cfront iflib iftool install libro listed mkbuildroot mkdep mkrule optool pofig rccom rcrq relpath"
+formake_scripts="abspath cfront cstem cstem+ install libro listed mkdep mkrule optool relpath syscap"
 share_dir=/tmp/opt/share/formake
 
 print_help() {
   cat <<EOF
+Initialize new package
+
 $script_name -v
 $script_name [OPTIONS] [SCRIPTS]
 
@@ -23,26 +25,20 @@ $script_name [OPTIONS] [SCRIPTS]
 Options:
  -p DIR  create package directory
  -d DIR  package script directory name [formake]
- -std    install standard set of scripts
+ -std    install standard minimum set of scripts
 
 Scripts:
   abspath      general automation       calculate absolute path
-  confighelp   configure automation     print configure help
   cstem        configure automation     configure and probe C compiler
   cstem+       configure automation     configure and probe C++ compiler
   cfront       mkmf automation          C/C++ compiler frontend based on cstem/cstem+
-  iflib        configure automation     library test tool
-  iftool       configure automation     command test tool
   install      general automation       portable version of BSD install
   libro        mkmf automation          build static and dynamic libraries
   listed       general automation       process space separated text lists
-  mkbuildroot  configure automation     create build root directory
   mkdep        mkmf automation          generate dependencies of C/C++ source files for Makefile
   mkrule       mkmf automation          generate Make rules
   optool       general automation       options processing tool
-  pofig        configure automation     portable tool to figure out base system properties
-  rccom        general automation       command redirection based on configuration resources
-  rcrq         general automation       configuration query tool
+  syscap       configure automation     system capabilities query and test tool
   relpath      general automation       calculate relative path between two directories
 EOF
 }
@@ -52,16 +48,10 @@ print_version() {
 }
 
 select_standard() {
-  s_mkbuildroot=1
-  s_abspath=1
-  s_relpath=1
-  s_install=1
-  s_listed=1
-  s_pofig=1
-  s_confighelp=1
+  s_mkrule=1
   s_optool=1
-  s_iftool=1
-  s_rcrq=1
+  s_relpath=1
+  s_syscap=1
   have_list=1
 }
 
@@ -98,10 +88,6 @@ while test $# -gt 0; do
       s_abspath=1
       have_list=1
       ;;
-    confighelp)
-      s_confighelp=1
-      have_list=1
-      ;;
     cstem)
       s_cstem=1
       have_list=1
@@ -112,14 +98,6 @@ while test $# -gt 0; do
       ;;
     cfront)
       s_cfront=1
-      have_list=1
-      ;;
-    iflib)
-      s_iflib=1
-      have_list=1
-      ;;
-    iftool)
-      s_iftool=1
       have_list=1
       ;;
     install)
@@ -134,10 +112,6 @@ while test $# -gt 0; do
       s_listed=1
       have_list=1
       ;;
-    mkbuildroot)
-      s_mkbuildroot=1
-      have_list=1
-      ;;
     mkdep)
       s_mkdep=1
       have_list=1
@@ -150,16 +124,10 @@ while test $# -gt 0; do
       s_optool=1
       have_list=1
       ;;
-    pofig)
-      s_pofig=1
+    syscap)
+      s_syscap=1
       have_list=1
       ;;
-    rccom)
-      s_rccom=1
-      have_list=1
-    rcrq)
-      s_rcrq=1
-      have_list=1
     relpath)
       s_relpath=1
       have_list=1
@@ -175,9 +143,9 @@ if test -n "$s_mkrule"; then
   s_libro=1
   s_mkdep=1
 fi
-test -n "$s_iflib$s_libro$s_mkdep$s_cfront" && test -z "$s_cstem$s_cstemx" && s_cstem=1
+test -n "$s_libro$s_mkdep$s_cfront" && test -z "$s_cstem$s_cstemx" && s_cstem=1
 if test -n "$s_cstem$s_ctemx"; then
-  s_pofig=1
+  s_syscap=1
 fi
 
 for script in $formake_scripts; do

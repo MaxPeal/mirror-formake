@@ -39,9 +39,7 @@ if test -n "$MKRULE" && test -z "$MKRULE_REDIRECT"; then
     exit $ret
   fi
 fi
-test -z "$CONFIG_TAR"      || TAR=$CONFIG_TAR
 test -n "$TAR"             || TAR=tar
-test -z "$CONFIG_INSTALL"  || INSTALL=$CONFIG_INSTALL
 test -n "$INSTALL"         || INSTALL=install
 
 test -n "$PREFIX"      || PREFIX=/usr/local
@@ -80,7 +78,7 @@ $script_name -v
   dist        generate rule that creates distribution tarball
   -v          print version
 
-First parameter specifies the mode. To get help on each mode run '$script_name MODE -help'
+First parameter specifies a mode. To get help on each mode run '$script_name MODE -help'
 EOF
 }
 
@@ -284,16 +282,16 @@ rel_path() {
   rel_path_ret=`echo -n "$dir_up/$dir_down" | sed 's:^/*$:.:' | sed 's:^/*::' | sed 's:/*$::'`
 }
 
-get_pofig() {
-  pofig -h >/dev/null 2>&1
+get_syscap() {
+  syscap -h >/dev/null 2>&1
   if test $? -ne 127; then
-    POFIG=pofig
+    SYSCAP=syscap
   else
-    $script_dir/pofig -h >/dev/null 2>&1
+    $script_dir/syscap -h >/dev/null 2>&1
     if test $? -ne 127; then
-      POFIG=$script_dir/pofig
+      SYSCAP=$script_dir/syscap
     else
-      echo "$script_name: error: pofig not found" >&2
+      echo "$script_name: error: syscap not found" >&2
       exit 1
     fi
   fi
@@ -384,7 +382,7 @@ mkobj() {
     exit 1
   fi
 
-  get_pofig
+  get_syscap
   get_cstem
   if test x$op_disable_mkdep = x; then
     get_mkdep
@@ -423,7 +421,7 @@ mkobj() {
     cc_cmd="$cc_cmd $op_cflags"
   fi
   
-  os_type=`$POFIG -os`
+  os_type=`$SYSCAP -os`
   case "$os_type" in
     gnulinux|*)
       obj_ext="o"
@@ -581,7 +579,7 @@ mkprog() {
     exit 1
   fi
 
-  get_pofig
+  get_syscap
   get_cstem
   
   cc_cmd=`$CSTEM -cmd`
@@ -590,7 +588,7 @@ mkprog() {
     exit 1
   fi
 
-  os_type=`$POFIG -os`
+  os_type=`$SYSCAP -os`
   case "$os_type" in
     gnulinux|*)
       exe_ext=
@@ -681,8 +679,8 @@ mklib() {
     exit 1
   fi
 
-  get_pofig
-  os_type=`$POFIG -os`
+  get_syscap
+  os_type=`$SYSCAP -os`
   case "$os_type" in
     gnulinux)
       cp_no_deref="--no-dereference"
@@ -1187,7 +1185,7 @@ EOF
 }
 
 if test $# -eq 0; then
-  echo "$script_name: error: no parameters passed" >&2
+  echo "$script_name: error: no parameters specified" >&2
   exit 1
 fi
 

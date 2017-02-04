@@ -1,3 +1,0 @@
-#!/bin/sh
-
-./iflib Xm/Xm.h -lX11 -cstr "Widget *w = NULL;" -cflags="-O0 -g3 -Wall" -lXt -lXm -ljpeg -lQtGui -lz -L/usr/lib64/qt4 -ldflags="-L$HOME -L/usr/local/lib64" -def __linux__ __unix__ __GNUC__ X11/X.h X11/Xlib.h -def __GNUC__=4  -lXaw  "#ifdef __linux__ && defined __unix__" -lcrypto -var xmPushButtonWidgetClass Xm/Xm.h Xm/PushBP.h -sym xmTextFieldWidgetClass -type Widget int32_t  -enum XmSET XmTOGGLEBUTTON -func XmCreatePushButton XtCreateWidget fprintf atoi -rval XmSET __GNUC__ __linux__ test.c  "#if (__GNUC__ == 4 && __GNUC_MINOR__ == 7) || __SIZEOF_LONG_LONG__ == 8" -def __STDC__ __ATOMIC_CONSUME __ATOMIC_RELEASE=3 "$@"

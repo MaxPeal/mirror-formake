@@ -1,0 +1,1270 @@
+# checking compiler flags -O0 -g3 -Wall ... $ gcc   -O0 -g3 -Wall -c -o test.o test.c
+# OK
+# checking linker flags -L/home/alex -L/usr/local/lib64 ... $ gcc   -O0 -g3 -Wall -c -o test.o test.c
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64 -o app test.o
+# OK
+# checking libraries  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw ... $ gcc   -O0 -g3 -Wall -c -o test.o test.c
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking header Xm/Xm.h ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking header X11/X.h ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking header X11/Xlib.h ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking header Xm/Xm.h ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking header Xm/PushBP.h ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking source string Widget *w = NULL; ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+/usr/lib/gcc/x86_64-linux-gnu/4.9/../../../x86_64-linux-gnu/crt1.o: In function `_start':
+/build/glibc-daoqzt/glibc-2.19/csu/../sysdeps/x86_64/start.S:118: undefined reference to `main'
+collect2: error: ld returned 1 exit status
+test again ...
+$ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking define __linux__ ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking define __unix__ ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking define __GNUC__ ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking define __GNUC__=4 ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking define #ifdef __linux__ && defined __unix__ ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+test_src.c:6:18: warning: extra tokens at end of #ifdef directive
+ #ifdef __linux__ && defined __unix__
+                  ^
+# OK
+# checking define #if (__GNUC__ == 4 && __GNUC_MINOR__ == 7) || __SIZEOF_LONG_LONG__ == 8 ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking define __STDC__ ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking define __ATOMIC_CONSUME ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking define __ATOMIC_RELEASE=3 ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking type Widget ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking type int32_t ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking enum XmSET ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking enum XmTOGGLEBUTTON ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking variable xmPushButtonWidgetClass ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:6:72: warning: cast from pointer to integer of different size [-Wpointer-to-int-cast]
+ int main(int argc, char *argv[]) {int syscap_xmPushButtonWidgetClass = (int) xmPushButtonWidgetClass; return 0;}
+                                                                        ^
+test_src.c:6:39: warning: unused variable ‘syscap_xmPushButtonWidgetClass’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap_xmPushButtonWidgetClass = (int) xmPushButtonWidgetClass; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking symbol xmTextFieldWidgetClass ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:2:41: warning: unused variable ‘syscap_xmTextFieldWidgetClass’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {void *syscap_xmTextFieldWidgetClass = xmTextFieldWidgetClass; return 0;}
+                                         ^
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking rval XmSET ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:6:39: warning: unused variable ‘syscap_XmSET’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap_XmSET = (int) XmSET; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking rval __GNUC__ ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:6:39: warning: unused variable ‘syscap___GNUC__’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap___GNUC__ = (int) __GNUC__; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking rval __linux__ ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:6:39: warning: unused variable ‘syscap___linux__’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap___linux__ = (int) __linux__; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function XmCreatePushButton ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function XtCreateWidget ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function fprintf ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+test_src.c:1:5: warning: conflicting types for built-in function ‘fprintf’
+ int fprintf(int);
+     ^
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function atoi ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking source file test.c ... $ gcc   -O0 -g3 -Wall -c -o test.o test.c
+test.c: In function ‘main’:
+test.c:16:9: warning: unused variable ‘b’ [-Wunused-variable]
+   void *b = xmPushButtonWidgetClass;
+         ^
+test.c:15:9: warning: variable ‘a’ set but not used [-Wunused-but-set-variable]
+   void *a;
+         ^
+test.c:20:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking linker flags -L/home/alex -L/usr/local/lib64 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64 -o app test.o
+# OK
+# checking libraries  -ljpeg -lQtGui -lz -lXaw ... $ gcc  -O0 -g3 -Wall  -c -o test.o test.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking header Xm/Xm.h ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking header Xm/PushBP.h ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking source string Widget *w = NULL; ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+/usr/lib/gcc/x86_64-linux-gnu/4.9/../../../x86_64-linux-gnu/crt1.o: In function `_start':
+/build/glibc-daoqzt/glibc-2.19/csu/../sysdeps/x86_64/start.S:118: undefined reference to `main'
+collect2: error: ld returned 1 exit status
+test again ...
+$ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking define __linux__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __unix__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __GNUC__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __GNUC__=4 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define #ifdef __linux__ && defined __unix__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c:3:18: warning: extra tokens at end of #ifdef directive
+ #ifdef __linux__ && defined __unix__
+                  ^
+# OK
+# checking define #if (__GNUC__ == 4 && __GNUC_MINOR__ == 7) || __SIZEOF_LONG_LONG__ == 8 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __STDC__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __ATOMIC_CONSUME ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __ATOMIC_RELEASE=3 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking type Widget ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking type int32_t ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking enum XmSET ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking enum XmTOGGLEBUTTON ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking variable xmPushButtonWidgetClass ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:72: warning: cast from pointer to integer of different size [-Wpointer-to-int-cast]
+ int main(int argc, char *argv[]) {int syscap_xmPushButtonWidgetClass = (int) xmPushButtonWidgetClass; return 0;}
+                                                                        ^
+test_src.c:3:39: warning: unused variable ‘syscap_xmPushButtonWidgetClass’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap_xmPushButtonWidgetClass = (int) xmPushButtonWidgetClass; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking symbol xmTextFieldWidgetClass ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:2:41: warning: unused variable ‘syscap_xmTextFieldWidgetClass’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {void *syscap_xmTextFieldWidgetClass = xmTextFieldWidgetClass; return 0;}
+                                         ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking rval XmSET ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:39: warning: unused variable ‘syscap_XmSET’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap_XmSET = (int) XmSET; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking rval __GNUC__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:39: warning: unused variable ‘syscap___GNUC__’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap___GNUC__ = (int) __GNUC__; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking rval __linux__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:39: warning: unused variable ‘syscap___linux__’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap___linux__ = (int) __linux__; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function XmCreatePushButton ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function XtCreateWidget ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function fprintf ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c:1:5: warning: conflicting types for built-in function ‘fprintf’
+ int fprintf(int);
+     ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function atoi ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking source file test.c ... $ gcc  -O0 -g3 -Wall  -c -o test.o test.c
+test.c: In function ‘main’:
+test.c:16:9: warning: unused variable ‘b’ [-Wunused-variable]
+   void *b = xmPushButtonWidgetClass;
+         ^
+test.c:15:9: warning: variable ‘a’ set but not used [-Wunused-but-set-variable]
+   void *a;
+         ^
+test.c:20:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking compiler flags -O0 -g3 -Wall ... $ gcc   -O0 -g3 -Wall -c -o test.o test.c
+# OK
+# checking linker flags -L/home/alex -L/usr/local/lib64 ... $ gcc   -O0 -g3 -Wall -c -o test.o test.c
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64 -o app test.o
+# OK
+# checking libraries  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw ... $ gcc   -O0 -g3 -Wall -c -o test.o test.c
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking header Xm/Xm.h ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking header X11/X.h ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking header X11/Xlib.h ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking header Xm/Xm.h ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking header Xm/PushBP.h ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking source string Widget *w = NULL; ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+/usr/lib/gcc/x86_64-linux-gnu/4.9/../../../x86_64-linux-gnu/crt1.o: In function `_start':
+/build/glibc-daoqzt/glibc-2.19/csu/../sysdeps/x86_64/start.S:118: undefined reference to `main'
+collect2: error: ld returned 1 exit status
+test again ...
+$ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking define __linux__ ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking define __unix__ ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking define __GNUC__ ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking define __GNUC__=4 ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking define #ifdef __linux__ && defined __unix__ ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+test_src.c:6:18: warning: extra tokens at end of #ifdef directive
+ #ifdef __linux__ && defined __unix__
+                  ^
+# OK
+# checking define #if (__GNUC__ == 4 && __GNUC_MINOR__ == 7) || __SIZEOF_LONG_LONG__ == 8 ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking define __STDC__ ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking define __ATOMIC_CONSUME ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking define __ATOMIC_RELEASE=3 ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking type Widget ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking type int32_t ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking enum XmSET ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking enum XmTOGGLEBUTTON ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking variable xmPushButtonWidgetClass ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:6:72: warning: cast from pointer to integer of different size [-Wpointer-to-int-cast]
+ int main(int argc, char *argv[]) {int syscap_xmPushButtonWidgetClass = (int) xmPushButtonWidgetClass; return 0;}
+                                                                        ^
+test_src.c:6:39: warning: unused variable ‘syscap_xmPushButtonWidgetClass’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap_xmPushButtonWidgetClass = (int) xmPushButtonWidgetClass; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking symbol xmTextFieldWidgetClass ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:2:41: warning: unused variable ‘syscap_xmTextFieldWidgetClass’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {void *syscap_xmTextFieldWidgetClass = xmTextFieldWidgetClass; return 0;}
+                                         ^
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking rval XmSET ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:6:39: warning: unused variable ‘syscap_XmSET’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap_XmSET = (int) XmSET; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking rval __GNUC__ ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:6:39: warning: unused variable ‘syscap___GNUC__’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap___GNUC__ = (int) __GNUC__; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking rval __linux__ ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:6:39: warning: unused variable ‘syscap___linux__’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap___linux__ = (int) __linux__; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function XmCreatePushButton ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function XtCreateWidget ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function fprintf ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+test_src.c:1:5: warning: conflicting types for built-in function ‘fprintf’
+ int fprintf(int);
+     ^
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function atoi ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking source file test.c ... $ gcc   -O0 -g3 -Wall -c -o test.o test.c
+test.c: In function ‘main’:
+test.c:16:9: warning: unused variable ‘b’ [-Wunused-variable]
+   void *b = xmPushButtonWidgetClass;
+         ^
+test.c:15:9: warning: variable ‘a’ set but not used [-Wunused-but-set-variable]
+   void *a;
+         ^
+test.c:20:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking compiler flags -O0 -g3 -Wall ... $ gcc   -O0 -g3 -Wall -c -o test.o test.c
+# OK
+# checking linker flags -L/home/alex -L/usr/local/lib64 ... $ gcc   -O0 -g3 -Wall -c -o test.o test.c
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64 -o app test.o
+# OK
+# checking libraries  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw ... $ gcc   -O0 -g3 -Wall -c -o test.o test.c
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking header Xm/Xm.h ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking header X11/X.h ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking header X11/Xlib.h ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking header Xm/Xm.h ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking header Xm/PushBP.h ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking source string Widget *w = NULL; ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+/usr/lib/gcc/x86_64-linux-gnu/4.9/../../../x86_64-linux-gnu/crt1.o: In function `_start':
+/build/glibc-daoqzt/glibc-2.19/csu/../sysdeps/x86_64/start.S:118: undefined reference to `main'
+collect2: error: ld returned 1 exit status
+test again ...
+$ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking define __linux__ ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking define __unix__ ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking define __GNUC__ ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking define __GNUC__=4 ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking define #ifdef __linux__ && defined __unix__ ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+test_src.c:6:18: warning: extra tokens at end of #ifdef directive
+ #ifdef __linux__ && defined __unix__
+                  ^
+# OK
+# checking define #if (__GNUC__ == 4 && __GNUC_MINOR__ == 7) || __SIZEOF_LONG_LONG__ == 8 ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking define __STDC__ ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking define __ATOMIC_CONSUME ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking define __ATOMIC_RELEASE=3 ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking type Widget ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking type int32_t ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking enum XmSET ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking enum XmTOGGLEBUTTON ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+# OK
+# checking variable xmPushButtonWidgetClass ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:6:72: warning: cast from pointer to integer of different size [-Wpointer-to-int-cast]
+ int main(int argc, char *argv[]) {int syscap_xmPushButtonWidgetClass = (int) xmPushButtonWidgetClass; return 0;}
+                                                                        ^
+test_src.c:6:39: warning: unused variable ‘syscap_xmPushButtonWidgetClass’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap_xmPushButtonWidgetClass = (int) xmPushButtonWidgetClass; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking symbol xmTextFieldWidgetClass ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:2:41: warning: unused variable ‘syscap_xmTextFieldWidgetClass’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {void *syscap_xmTextFieldWidgetClass = xmTextFieldWidgetClass; return 0;}
+                                         ^
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking rval XmSET ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:6:39: warning: unused variable ‘syscap_XmSET’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap_XmSET = (int) XmSET; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking rval __GNUC__ ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:6:39: warning: unused variable ‘syscap___GNUC__’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap___GNUC__ = (int) __GNUC__; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking rval __linux__ ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:6:39: warning: unused variable ‘syscap___linux__’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap___linux__ = (int) __linux__; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function XmCreatePushButton ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function XtCreateWidget ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function fprintf ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+test_src.c:1:5: warning: conflicting types for built-in function ‘fprintf’
+ int fprintf(int);
+     ^
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function atoi ... $ gcc   -O0 -g3 -Wall -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking source file test.c ... $ gcc   -O0 -g3 -Wall -c -o test.o test.c
+test.c: In function ‘main’:
+test.c:16:9: warning: unused variable ‘b’ [-Wunused-variable]
+   void *b = xmPushButtonWidgetClass;
+         ^
+test.c:15:9: warning: variable ‘a’ set but not used [-Wunused-but-set-variable]
+   void *a;
+         ^
+test.c:20:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+$ gcc  -L/usr/lib64/qt4  -L/home/alex -L/usr/local/lib64  -lX11 -lXt -lXm -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking linker flags -L/home/alex -L/usr/local/lib64 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64 -o app test.o
+# OK
+# checking libraries  -ljpeg -lQtGui -lz -lXaw ... $ gcc  -O0 -g3 -Wall  -c -o test.o test.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking header Xm/Xm.h ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking header Xm/PushBP.h ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking source string Widget *w = NULL; ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+/usr/lib/gcc/x86_64-linux-gnu/4.9/../../../x86_64-linux-gnu/crt1.o: In function `_start':
+/build/glibc-daoqzt/glibc-2.19/csu/../sysdeps/x86_64/start.S:118: undefined reference to `main'
+collect2: error: ld returned 1 exit status
+test again ...
+$ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking define __linux__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __unix__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __GNUC__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __GNUC__=4 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define #ifdef __linux__ && defined __unix__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c:3:18: warning: extra tokens at end of #ifdef directive
+ #ifdef __linux__ && defined __unix__
+                  ^
+# OK
+# checking define #if (__GNUC__ == 4 && __GNUC_MINOR__ == 7) || __SIZEOF_LONG_LONG__ == 8 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __STDC__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __ATOMIC_CONSUME ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __ATOMIC_RELEASE=3 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking type Widget ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking type int32_t ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking enum XmSET ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking enum XmTOGGLEBUTTON ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking variable xmPushButtonWidgetClass ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:72: warning: cast from pointer to integer of different size [-Wpointer-to-int-cast]
+ int main(int argc, char *argv[]) {int syscap_xmPushButtonWidgetClass = (int) xmPushButtonWidgetClass; return 0;}
+                                                                        ^
+test_src.c:3:39: warning: unused variable ‘syscap_xmPushButtonWidgetClass’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap_xmPushButtonWidgetClass = (int) xmPushButtonWidgetClass; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking symbol xmTextFieldWidgetClass ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:2:41: warning: unused variable ‘syscap_xmTextFieldWidgetClass’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {void *syscap_xmTextFieldWidgetClass = xmTextFieldWidgetClass; return 0;}
+                                         ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking rval XmSET ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:39: warning: unused variable ‘syscap_XmSET’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap_XmSET = (int) XmSET; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking rval __GNUC__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:39: warning: unused variable ‘syscap___GNUC__’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap___GNUC__ = (int) __GNUC__; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking rval __linux__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:39: warning: unused variable ‘syscap___linux__’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap___linux__ = (int) __linux__; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function XmCreatePushButton ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function XtCreateWidget ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function fprintf ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c:1:5: warning: conflicting types for built-in function ‘fprintf’
+ int fprintf(int);
+     ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function atoi ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking source file test.c ... $ gcc  -O0 -g3 -Wall  -c -o test.o test.c
+test.c: In function ‘main’:
+test.c:16:9: warning: unused variable ‘b’ [-Wunused-variable]
+   void *b = xmPushButtonWidgetClass;
+         ^
+test.c:15:9: warning: variable ‘a’ set but not used [-Wunused-but-set-variable]
+   void *a;
+         ^
+test.c:20:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking linker flags -L/home/alex -L/usr/local/lib64 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64 -o app test.o
+# OK
+# checking libraries  -ljpeg -lQtGui -lz -lXaw ... $ gcc  -O0 -g3 -Wall  -c -o test.o test.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking header Xm/Xm.h ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking header Xm/PushBP.h ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking source string Widget *w = NULL; ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c:1:21: fatal error: -with-inc: No such file or directory
+ #include <-with-inc>
+                     ^
+compilation terminated.
+# Failed
+# checking linker flags -L/home/alex -L/usr/local/lib64 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64 -o app test.o
+# OK
+# checking libraries  -ljpeg -lQtGui -lz -lXaw ... $ gcc  -O0 -g3 -Wall  -c -o test.o test.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking source string Widget *w = NULL; ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+/usr/lib/gcc/x86_64-linux-gnu/4.9/../../../x86_64-linux-gnu/crt1.o: In function `_start':
+/build/glibc-daoqzt/glibc-2.19/csu/../sysdeps/x86_64/start.S:118: undefined reference to `main'
+collect2: error: ld returned 1 exit status
+test again ...
+$ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking define __linux__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __unix__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __GNUC__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __GNUC__=4 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define #ifdef __linux__ && defined __unix__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c:3:18: warning: extra tokens at end of #ifdef directive
+ #ifdef __linux__ && defined __unix__
+                  ^
+# OK
+# checking define #if (__GNUC__ == 4 && __GNUC_MINOR__ == 7) || __SIZEOF_LONG_LONG__ == 8 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __STDC__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __ATOMIC_CONSUME ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __ATOMIC_RELEASE=3 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking type Widget ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking type int32_t ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking enum XmSET ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking enum XmTOGGLEBUTTON ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking variable xmPushButtonWidgetClass ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:72: warning: cast from pointer to integer of different size [-Wpointer-to-int-cast]
+ int main(int argc, char *argv[]) {int syscap_xmPushButtonWidgetClass = (int) xmPushButtonWidgetClass; return 0;}
+                                                                        ^
+test_src.c:3:39: warning: unused variable ‘syscap_xmPushButtonWidgetClass’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap_xmPushButtonWidgetClass = (int) xmPushButtonWidgetClass; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking symbol xmTextFieldWidgetClass ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:2:41: warning: unused variable ‘syscap_xmTextFieldWidgetClass’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {void *syscap_xmTextFieldWidgetClass = xmTextFieldWidgetClass; return 0;}
+                                         ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking rval XmSET ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:39: warning: unused variable ‘syscap_XmSET’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap_XmSET = (int) XmSET; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking rval __GNUC__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:39: warning: unused variable ‘syscap___GNUC__’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap___GNUC__ = (int) __GNUC__; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking rval __linux__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:39: warning: unused variable ‘syscap___linux__’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap___linux__ = (int) __linux__; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function XmCreatePushButton ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function XtCreateWidget ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function fprintf ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c:1:5: warning: conflicting types for built-in function ‘fprintf’
+ int fprintf(int);
+     ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function atoi ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking source file test.c ... $ gcc  -O0 -g3 -Wall  -c -o test.o test.c
+test.c: In function ‘main’:
+test.c:16:9: warning: unused variable ‘b’ [-Wunused-variable]
+   void *b = xmPushButtonWidgetClass;
+         ^
+test.c:15:9: warning: variable ‘a’ set but not used [-Wunused-but-set-variable]
+   void *a;
+         ^
+test.c:20:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking linker flags -L/home/alex -L/usr/local/lib64 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64 -o app test.o
+# OK
+# checking libraries  -ljpeg -lQtGui -lz -lXaw ... $ gcc  -O0 -g3 -Wall  -c -o test.o test.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking source string Widget *w = NULL; ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+/usr/lib/gcc/x86_64-linux-gnu/4.9/../../../x86_64-linux-gnu/crt1.o: In function `_start':
+/build/glibc-daoqzt/glibc-2.19/csu/../sysdeps/x86_64/start.S:118: undefined reference to `main'
+collect2: error: ld returned 1 exit status
+test again ...
+$ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking define __linux__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __unix__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __GNUC__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __GNUC__=4 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define #ifdef __linux__ && defined __unix__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c:3:18: warning: extra tokens at end of #ifdef directive
+ #ifdef __linux__ && defined __unix__
+                  ^
+# OK
+# checking define #if (__GNUC__ == 4 && __GNUC_MINOR__ == 7) || __SIZEOF_LONG_LONG__ == 8 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __STDC__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __ATOMIC_CONSUME ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __ATOMIC_RELEASE=3 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking type Widget ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking type int32_t ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking enum XmSET ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking enum XmTOGGLEBUTTON ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking variable xmPushButtonWidgetClass ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:72: warning: cast from pointer to integer of different size [-Wpointer-to-int-cast]
+ int main(int argc, char *argv[]) {int syscap_xmPushButtonWidgetClass = (int) xmPushButtonWidgetClass; return 0;}
+                                                                        ^
+test_src.c:3:39: warning: unused variable ‘syscap_xmPushButtonWidgetClass’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap_xmPushButtonWidgetClass = (int) xmPushButtonWidgetClass; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking symbol xmTextFieldWidgetClass ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:2:41: warning: unused variable ‘syscap_xmTextFieldWidgetClass’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {void *syscap_xmTextFieldWidgetClass = xmTextFieldWidgetClass; return 0;}
+                                         ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking rval XmSET ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:39: warning: unused variable ‘syscap_XmSET’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap_XmSET = (int) XmSET; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking rval __GNUC__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:39: warning: unused variable ‘syscap___GNUC__’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap___GNUC__ = (int) __GNUC__; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking rval __linux__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:39: warning: unused variable ‘syscap___linux__’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap___linux__ = (int) __linux__; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function XmCreatePushButton ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function XtCreateWidget ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function fprintf ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c:1:5: warning: conflicting types for built-in function ‘fprintf’
+ int fprintf(int);
+     ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function atoi ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking source file test.c ... $ gcc  -O0 -g3 -Wall  -c -o test.o test.c
+test.c: In function ‘main’:
+test.c:16:9: warning: unused variable ‘b’ [-Wunused-variable]
+   void *b = xmPushButtonWidgetClass;
+         ^
+test.c:15:9: warning: variable ‘a’ set but not used [-Wunused-but-set-variable]
+   void *a;
+         ^
+test.c:20:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking linker flags -L/home/alex -L/usr/local/lib64 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64 -o app test.o
+# OK
+# checking libraries  -ljpeg -lQtGui -lz -lXaw ... $ gcc  -O0 -g3 -Wall  -c -o test.o test.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking source string Widget *w = NULL; ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+/usr/lib/gcc/x86_64-linux-gnu/4.9/../../../x86_64-linux-gnu/crt1.o: In function `_start':
+/build/glibc-daoqzt/glibc-2.19/csu/../sysdeps/x86_64/start.S:118: undefined reference to `main'
+collect2: error: ld returned 1 exit status
+test again ...
+$ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking define __linux__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __unix__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __GNUC__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __GNUC__=4 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define #ifdef __linux__ && defined __unix__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c:3:18: warning: extra tokens at end of #ifdef directive
+ #ifdef __linux__ && defined __unix__
+                  ^
+# OK
+# checking define #if (__GNUC__ == 4 && __GNUC_MINOR__ == 7) || __SIZEOF_LONG_LONG__ == 8 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __STDC__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __ATOMIC_CONSUME ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __ATOMIC_RELEASE=3 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking type Widget ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking type int32_t ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking enum XmSET ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking enum XmTOGGLEBUTTON ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking variable xmPushButtonWidgetClass ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:72: warning: cast from pointer to integer of different size [-Wpointer-to-int-cast]
+ int main(int argc, char *argv[]) {int syscap_xmPushButtonWidgetClass = (int) xmPushButtonWidgetClass; return 0;}
+                                                                        ^
+test_src.c:3:39: warning: unused variable ‘syscap_xmPushButtonWidgetClass’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap_xmPushButtonWidgetClass = (int) xmPushButtonWidgetClass; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking symbol xmTextFieldWidgetClass ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:2:41: warning: unused variable ‘syscap_xmTextFieldWidgetClass’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {void *syscap_xmTextFieldWidgetClass = xmTextFieldWidgetClass; return 0;}
+                                         ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking rval XmSET ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:39: warning: unused variable ‘syscap_XmSET’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap_XmSET = (int) XmSET; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking rval __GNUC__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:39: warning: unused variable ‘syscap___GNUC__’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap___GNUC__ = (int) __GNUC__; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking rval __linux__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:39: warning: unused variable ‘syscap___linux__’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap___linux__ = (int) __linux__; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function XmCreatePushButton ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function XtCreateWidget ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function fprintf ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c:1:5: warning: conflicting types for built-in function ‘fprintf’
+ int fprintf(int);
+     ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function atoi ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking source file test.c ... $ gcc  -O0 -g3 -Wall  -c -o test.o test.c
+test.c: In function ‘main’:
+test.c:16:9: warning: unused variable ‘b’ [-Wunused-variable]
+   void *b = xmPushButtonWidgetClass;
+         ^
+test.c:15:9: warning: variable ‘a’ set but not used [-Wunused-but-set-variable]
+   void *a;
+         ^
+test.c:20:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking linker flags -L/home/alex -L/usr/local/lib64 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64 -o app test.o
+# OK
+# checking libraries  -ljpeg -lQtGui -lz -lXaw ... $ gcc  -O0 -g3 -Wall  -c -o test.o test.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking source string Widget *w = NULL; ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+/usr/lib/gcc/x86_64-linux-gnu/4.9/../../../x86_64-linux-gnu/crt1.o: In function `_start':
+/build/glibc-daoqzt/glibc-2.19/csu/../sysdeps/x86_64/start.S:118: undefined reference to `main'
+collect2: error: ld returned 1 exit status
+test again ...
+$ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking define __linux__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __unix__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __GNUC__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __GNUC__=4 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define #ifdef __linux__ && defined __unix__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c:3:18: warning: extra tokens at end of #ifdef directive
+ #ifdef __linux__ && defined __unix__
+                  ^
+# OK
+# checking define #if (__GNUC__ == 4 && __GNUC_MINOR__ == 7) || __SIZEOF_LONG_LONG__ == 8 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __STDC__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __ATOMIC_CONSUME ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __ATOMIC_RELEASE=3 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking type Widget ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking type int32_t ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking enum XmSET ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking enum XmTOGGLEBUTTON ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking variable xmPushButtonWidgetClass ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:72: warning: cast from pointer to integer of different size [-Wpointer-to-int-cast]
+ int main(int argc, char *argv[]) {int syscap_xmPushButtonWidgetClass = (int) xmPushButtonWidgetClass; return 0;}
+                                                                        ^
+test_src.c:3:39: warning: unused variable ‘syscap_xmPushButtonWidgetClass’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap_xmPushButtonWidgetClass = (int) xmPushButtonWidgetClass; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking symbol xmTextFieldWidgetClass ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:2:41: warning: unused variable ‘syscap_xmTextFieldWidgetClass’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {void *syscap_xmTextFieldWidgetClass = xmTextFieldWidgetClass; return 0;}
+                                         ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking rval XmSET ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:39: warning: unused variable ‘syscap_XmSET’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap_XmSET = (int) XmSET; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking rval __GNUC__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:39: warning: unused variable ‘syscap___GNUC__’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap___GNUC__ = (int) __GNUC__; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking rval __linux__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:39: warning: unused variable ‘syscap___linux__’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap___linux__ = (int) __linux__; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function XmCreatePushButton ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function XtCreateWidget ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function fprintf ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c:1:5: warning: conflicting types for built-in function ‘fprintf’
+ int fprintf(int);
+     ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking function atoi ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking source file test.c ... $ gcc  -O0 -g3 -Wall  -c -o test.o test.c
+test.c: In function ‘main’:
+test.c:16:9: warning: unused variable ‘b’ [-Wunused-variable]
+   void *b = xmPushButtonWidgetClass;
+         ^
+test.c:15:9: warning: variable ‘a’ set but not used [-Wunused-but-set-variable]
+   void *a;
+         ^
+test.c:20:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+$ gcc  -L/usr/lib64/qt4 -lX11 -lXt -lXm -L/home/alex -L/usr/local/lib64  -ljpeg -lQtGui -lz -lXaw -o app test.o
+# OK
+# checking linker flags -ljpeg -lz ... $ gcc  -O0 -g3 -Wall  -c -o test.o test.c
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lX11 -lXt -lXm -ljpeg -lz -o app test.o
+# OK
+# checking libraries  -lQtGui -lXaw ... $ gcc  -O0 -g3 -Wall  -c -o test.o test.c
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lX11 -lXt -lXm -ljpeg -lz  -lQtGui -lXaw -o app test.o
+# OK
+# checking source string Widget *w = NULL; ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lX11 -lXt -lXm -ljpeg -lz  -lQtGui -lXaw -o app test.o
+/usr/lib/gcc/x86_64-linux-gnu/4.9/../../../x86_64-linux-gnu/crt1.o: In function `_start':
+/build/glibc-daoqzt/glibc-2.19/csu/../sysdeps/x86_64/start.S:118: undefined reference to `main'
+collect2: error: ld returned 1 exit status
+test again ...
+$ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lX11 -lXt -lXm -ljpeg -lz  -lQtGui -lXaw -o app test.o
+# OK
+# checking define __linux__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __unix__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __GNUC__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __GNUC__=4 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define #ifdef __linux__ && defined __unix__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c:3:18: warning: extra tokens at end of #ifdef directive
+ #ifdef __linux__ && defined __unix__
+                  ^
+# OK
+# checking define #if (__GNUC__ == 4 && __GNUC_MINOR__ == 7) || __SIZEOF_LONG_LONG__ == 8 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __STDC__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __ATOMIC_CONSUME ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __ATOMIC_RELEASE=3 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking type Widget ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking type int32_t ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking enum XmSET ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking enum XmTOGGLEBUTTON ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking variable xmPushButtonWidgetClass ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:72: warning: cast from pointer to integer of different size [-Wpointer-to-int-cast]
+ int main(int argc, char *argv[]) {int syscap_xmPushButtonWidgetClass = (int) xmPushButtonWidgetClass; return 0;}
+                                                                        ^
+test_src.c:3:39: warning: unused variable ‘syscap_xmPushButtonWidgetClass’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap_xmPushButtonWidgetClass = (int) xmPushButtonWidgetClass; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lX11 -lXt -lXm -ljpeg -lz  -lQtGui -lXaw -o app test.o
+# OK
+# checking symbol xmTextFieldWidgetClass ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:2:41: warning: unused variable ‘syscap_xmTextFieldWidgetClass’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {void *syscap_xmTextFieldWidgetClass = xmTextFieldWidgetClass; return 0;}
+                                         ^
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lX11 -lXt -lXm -ljpeg -lz  -lQtGui -lXaw -o app test.o
+# OK
+# checking rval XmSET ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:39: warning: unused variable ‘syscap_XmSET’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap_XmSET = (int) XmSET; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lX11 -lXt -lXm -ljpeg -lz  -lQtGui -lXaw -o app test.o
+# OK
+# checking rval __GNUC__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:39: warning: unused variable ‘syscap___GNUC__’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap___GNUC__ = (int) __GNUC__; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lX11 -lXt -lXm -ljpeg -lz  -lQtGui -lXaw -o app test.o
+# OK
+# checking rval __linux__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:39: warning: unused variable ‘syscap___linux__’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap___linux__ = (int) __linux__; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lX11 -lXt -lXm -ljpeg -lz  -lQtGui -lXaw -o app test.o
+# OK
+# checking function XmCreatePushButton ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lX11 -lXt -lXm -ljpeg -lz  -lQtGui -lXaw -o app test.o
+# OK
+# checking function XtCreateWidget ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lX11 -lXt -lXm -ljpeg -lz  -lQtGui -lXaw -o app test.o
+# OK
+# checking function fprintf ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c:1:5: warning: conflicting types for built-in function ‘fprintf’
+ int fprintf(int);
+     ^
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lX11 -lXt -lXm -ljpeg -lz  -lQtGui -lXaw -o app test.o
+# OK
+# checking function atoi ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lX11 -lXt -lXm -ljpeg -lz  -lQtGui -lXaw -o app test.o
+# OK
+# checking source file test.c ... $ gcc  -O0 -g3 -Wall  -c -o test.o test.c
+test.c: In function ‘main’:
+test.c:16:9: warning: unused variable ‘b’ [-Wunused-variable]
+   void *b = xmPushButtonWidgetClass;
+         ^
+test.c:15:9: warning: variable ‘a’ set but not used [-Wunused-but-set-variable]
+   void *a;
+         ^
+test.c:20:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lX11 -lXt -lXm -ljpeg -lz  -lQtGui -lXaw -o app test.o
+# OK
+# checking linker flags -ljpeg -lz ... $ gcc  -O0 -g3 -Wall  -c -o test.o test.c
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lX11 -lXt -lXm -ljpeg -lz -o app test.o
+# OK
+# checking libraries  -lQtGui -lXaw ... $ gcc  -O0 -g3 -Wall  -c -o test.o test.c
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lX11 -lXt -lXm -ljpeg -lz  -lQtGui -lXaw -o app test.o
+# OK
+# checking source string Widget *w = NULL; ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lX11 -lXt -lXm -ljpeg -lz  -lQtGui -lXaw -o app test.o
+/usr/lib/gcc/x86_64-linux-gnu/4.9/../../../x86_64-linux-gnu/crt1.o: In function `_start':
+/build/glibc-daoqzt/glibc-2.19/csu/../sysdeps/x86_64/start.S:118: undefined reference to `main'
+collect2: error: ld returned 1 exit status
+test again ...
+$ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lX11 -lXt -lXm -ljpeg -lz  -lQtGui -lXaw -o app test.o
+# OK
+# checking define __linux__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __unix__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __GNUC__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __GNUC__=4 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define #ifdef __linux__ && defined __unix__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c:3:18: warning: extra tokens at end of #ifdef directive
+ #ifdef __linux__ && defined __unix__
+                  ^
+# OK
+# checking define #if (__GNUC__ == 4 && __GNUC_MINOR__ == 7) || __SIZEOF_LONG_LONG__ == 8 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __STDC__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __ATOMIC_CONSUME ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking define __ATOMIC_RELEASE=3 ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking type Widget ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking type int32_t ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking enum XmSET ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking enum XmTOGGLEBUTTON ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+# OK
+# checking variable xmPushButtonWidgetClass ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:72: warning: cast from pointer to integer of different size [-Wpointer-to-int-cast]
+ int main(int argc, char *argv[]) {int syscap_xmPushButtonWidgetClass = (int) xmPushButtonWidgetClass; return 0;}
+                                                                        ^
+test_src.c:3:39: warning: unused variable ‘syscap_xmPushButtonWidgetClass’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap_xmPushButtonWidgetClass = (int) xmPushButtonWidgetClass; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lX11 -lXt -lXm -ljpeg -lz  -lQtGui -lXaw -o app test.o
+# OK
+# checking symbol xmTextFieldWidgetClass ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:2:41: warning: unused variable ‘syscap_xmTextFieldWidgetClass’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {void *syscap_xmTextFieldWidgetClass = xmTextFieldWidgetClass; return 0;}
+                                         ^
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lX11 -lXt -lXm -ljpeg -lz  -lQtGui -lXaw -o app test.o
+# OK
+# checking rval XmSET ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:39: warning: unused variable ‘syscap_XmSET’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap_XmSET = (int) XmSET; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lX11 -lXt -lXm -ljpeg -lz  -lQtGui -lXaw -o app test.o
+# OK
+# checking rval __GNUC__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:39: warning: unused variable ‘syscap___GNUC__’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap___GNUC__ = (int) __GNUC__; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lX11 -lXt -lXm -ljpeg -lz  -lQtGui -lXaw -o app test.o
+# OK
+# checking rval __linux__ ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c: In function ‘main’:
+test_src.c:3:39: warning: unused variable ‘syscap___linux__’ [-Wunused-variable]
+ int main(int argc, char *argv[]) {int syscap___linux__ = (int) __linux__; return 0;}
+                                       ^
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lX11 -lXt -lXm -ljpeg -lz  -lQtGui -lXaw -o app test.o
+# OK
+# checking function XmCreatePushButton ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lX11 -lXt -lXm -ljpeg -lz  -lQtGui -lXaw -o app test.o
+# OK
+# checking function XtCreateWidget ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lX11 -lXt -lXm -ljpeg -lz  -lQtGui -lXaw -o app test.o
+# OK
+# checking function fprintf ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+test_src.c:1:5: warning: conflicting types for built-in function ‘fprintf’
+ int fprintf(int);
+     ^
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lX11 -lXt -lXm -ljpeg -lz  -lQtGui -lXaw -o app test.o
+# OK
+# checking function atoi ... $ gcc  -O0 -g3 -Wall  -c -o test.o test_src.c
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lX11 -lXt -lXm -ljpeg -lz  -lQtGui -lXaw -o app test.o
+# OK
+# checking source file test.c ... $ gcc  -O0 -g3 -Wall  -c -o test.o test.c
+test.c: In function ‘main’:
+test.c:16:9: warning: unused variable ‘b’ [-Wunused-variable]
+   void *b = xmPushButtonWidgetClass;
+         ^
+test.c:15:9: warning: variable ‘a’ set but not used [-Wunused-but-set-variable]
+   void *a;
+         ^
+test.c:20:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+$ gcc  -L/usr/lib64/qt4 -L/home/alex -L/usr/local/lib64 -lX11 -lXt -lXm -ljpeg -lz  -lQtGui -lXaw -o app test.o
+# OK

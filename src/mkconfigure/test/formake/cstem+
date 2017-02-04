@@ -4,31 +4,55 @@
 #
 
 abs_path() {
-  arg=$1
-  if test -e "$arg"; then
-    if test -d $arg; then
-      file=
+  _sub_orig_dir=`pwd`
+  if test $# = 0; then
+    abs_path_ret=
+    return
+  fi
+  if test $# = 2; then
+    _arg_orig_dir=$1
+    _arg=$2
+    if echo -n "$_arg" | grep "^/" > /dev/null; then
+      :
     else
-      file=`basename -- $arg`
-      arg=`dirname -- $arg`
+      _arg=`echo -n "$_arg_orig_dir/$_arg" | sed 's!//*!/!g'`
     fi
-
-    cd $arg
-    abs_path_ret=`pwd`
-    if test x"$file" != "x"; then
-      abs_path_ret="$abs_path_ret/$file"
-    fi
-
-    cd $orig_dir
   else
-    if echo -n "$arg" | grep "^/" > /dev/null; then
-      abs_path_ret="$arg"
+    _arg=$1
+  fi
+  if test -e "$_arg"; then
+    if test -d $_arg; then
+      _file=
     else
-      abs_path_ret="$orig_dir/$arg"
+      _file=`basename -- $_arg`
+      _arg=`dirname -- $_arg`
     fi
+
+    cd $_cd_param $_arg
+    abs_path_ret=`pwd`
+    if test x"$_file" != "x"; then
+      abs_path_ret="$abs_path_ret/$_file"
+    fi
+
+    cd $_cd_param $_sub_orig_dir
+  else
+    if echo -n "$_arg" | grep "^/" > /dev/null; then
+      abs_path_ret="$_arg"
+    else
+      abs_path_ret="$_sub_orig_dir/$_arg"
+    fi
+    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#//*#/#g'`
+    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/*$#/#'`
+    string_prev=
+    while test "x$abs_path_ret" != "x$string_prev" ; do
+      string_prev=$abs_path_ret
+      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/[^/][^/][^/][^/]*/\.\./#/#g' | sed 's#/[^/][^/.]/\.\./#/#g' | sed 's#/[^/.][^/]/\.\./#/#g' | sed 's#/[^/.]/\.\./#/#g'`
+      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#^/\.\./#/#' | sed 's#^/\.\.$#/#'`
+      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/\./#/#g' | sed 's#/\.$#/#'`
+    done
+    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/$##' | sed 's#^$#/#'`
   fi
 }
-
 
 script_name=`basename $0`
 orig_dir=`pwd`
@@ -37,11 +61,30 @@ script_abs=$abs_path_ret
 script_dir=`dirname $script_abs`
 out_format=1
 config_file="$script_dir/cstem+.conf"
-PATH="$script_dir:$PATH"
 
-pofig -h >/dev/null 2>&1
+################################################################################
+# LOAD CONFIG
+PATH=$FORMAKE:$PATH
+CSTEMX=
+if test -f $script_dir/config.rc; then
+  . $script_dir/config.rc
+fi
+test -n "$FORMAKE_CSTEMX" && CSTEMX=$FORMAKE_CSTEMX
+if test -n "$CSTEMX" && test -z "$CSTEMX_REDIRECT"; then
+  export CSTEMX_REDIRECT=1
+  $CSTEMX "$@"
+  ret=$?
+  if test $ret -ne 64; then
+    exit $ret
+  fi
+fi
+################################################################################
+
+syscap -h >/dev/null 2>&1
 if test $? -ne 127; then
-  have_pofig=1
+  SYSCAP=syscap
+elif test -f $script_dir/syscap; then
+  SYSCAP=$script_dir/syscap
 fi
 
 config_list="
@@ -64,8 +107,8 @@ cat <<EOF
 Configure and probe C++ compiler
 
 $script_name [options]
-$script_name config [-cc=CMD] [-cflags=FLAGS]
-$script_name probe [-cc=CMD] [-cflags=FLAGS] [-f1|-f2|-f3]
+$script_name config [-cc CMD] [-cflags=FLAGS]
+$script_name probe [-cc CMD] [-cflags=FLAGS] [-f1|-f2|-f3]
 
 By default $script_name prints information about configured compiler
  -id            get compiler id
@@ -83,11 +126,11 @@ By default $script_name prints information about configured compiler
 
 
 Config mode. Probe compiler and generate config file
- -cc=CMD        specify compiler command with optional flags
+ -cc CMD        specify compiler command with optional flags
  -cflags=FLAGS  specify compiler flags
 
 Probe mode. Probe compiler and print information to a standard output
- -cc=CMD        specify compiler command with optional flags
+ -cc CMD        specify compiler command with optional flags
  -cflags=FLAGS  specify compiler flags
  -f1            print in format 1> VAR="VALUE"
  -f2            print in format 2> FIELD: VALUE
@@ -839,12 +882,12 @@ perform_probe() {
   fi
 
   if test -z "$probe_cc_cmd"; then
-    if test x$have_pofig = x1; then
-      case `pofig -os` in
+    if test -n "$SYSCAP"; then
+      case `$SYSCAP -os` in
         aix)
           cc_list="xlc++ xlC c++ CC g++"
           ;;
-        sunos)
+        solaris)
           cc_list="CC g++ c++"
           ;;
         irix)
@@ -870,7 +913,7 @@ perform_probe() {
   fi
 
   if test x$cc_is_ok = x1; then
-    if test x$mode_config = x1; then
+    if test x$mode_config = x1 && test -z "$silent_config"; then
       printf "%s\n" "found C++ compiler $cc_cmd" >&2
     fi
     read_cc_props
@@ -896,7 +939,7 @@ perform_probe() {
       eval $config_var=\$config_val
     done
   else
-    if test x$mode_config = x1; then
+    if test x$mode_config = x1 && test -z "$silent_config"; then
       printf "%s\n" "${script_name}: C++ compiler not found" >&2
     fi
     exit 1
@@ -923,13 +966,17 @@ case x"$1" in
 esac
 
 if test x$mode_config$mode_probe = x1; then
+  test -n "$CXX" && probe_cc_cmd=$CXX
+  test -n "$CXXFLAGS" && probe_cc_cmd=$CXXFLAGS
+  current_opt=
   while test $# -gt 0; do
     case "$1" in
-      -cc=*)
-        probe_cc_cmd=`echo -n "$1" | sed 's/^[^=]*=//'`
+      -cc)
+        current_opt=cc
         ;;
       -cflags=*)
         probe_cc_flags=`echo -n "$1" | sed 's/^[^=]*=//'`
+        current_opt=
         ;;
       -f1|-f2|-f3)
         if test x$mode_probe = x; then
@@ -937,10 +984,19 @@ if test x$mode_config$mode_probe = x1; then
           exit 1
         fi
         out_format=`echo -n "$1" | sed 's/^-f//'`
+        current_opt=
         ;;
       *)
-        printf "%s\n" "$script_name: invalid parameter $1" >&2
-        exit 1
+        case "$current_opt" in
+          cc)
+            probe_cc_cmd=$1
+            current_opt=
+            ;;
+          *)
+            printf "%s\n" "$script_name: invalid parameter $1" >&2
+            exit 1
+            ;;
+        esac
         ;;
     esac
     shift
@@ -996,6 +1052,7 @@ fi
 
 if test x$mode_info = x1 && test ! -f $config_file; then
   mode_config=1
+  silent_config=1
 fi
 
 if test x$mode_config$mode_probe = x1; then

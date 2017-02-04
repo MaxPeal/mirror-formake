@@ -1,17 +1,17 @@
 #!/bin/sh
 ################################################################################
 # This script was generated with the following command:
-#  mkconfigure -name my_app -ver 1.0.0 -build-h -iflib -lX11 -lXt X11/Xlib.h X11/X.h X11/Intrinsic.h -cstr 'Widget *w = NULL;' -def __linux__ __unix__ __GNUC__=4 '#ifdef __linux__ && defined __unix__' -type Widget int32_t -func XtCreateWidget fprintf atoi -rval __GNUC__ __linux__ $SRCROOT/test.c '#if (__GNUC__ == 4 && __GNUC_MINOR__ == 7) || __SIZEOF_LONG_LONG__ == 8' -cc -c++ -lib -params=-ldflags -modules -debug -enable-ui -ui-type -xflags -xparam -xxparam -iftool grep ar tclsh -sh test -f /etc/debian_version && echo "CONFIG_DEBIAN=1" >> build.conf -iflib -short -lXm Xm/Xm.h Xm/PushB.h -func XmCreatePushButton -var xmPushButtonWidgetClass -sym xmTextFieldWidgetClass -rval XmSET -enum XmSET XmTOGGLEBUTTON -iflib -lgif gif_lib.h -iflib -cxx -lQtGui -inc QtGui/QtGui
+#  mkconfigure -name my_app -ver 1.0.0 -build-h -syscap -lX11 -lXt X11/Xlib.h X11/X.h X11/Intrinsic.h -cstr 'Widget *w = NULL;' -def __linux__ __unix__ __GNUC__=4 '#ifdef __linux__ && defined __unix__' -type Widget int32_t -func XtCreateWidget fprintf atoi -rval __GNUC__ __linux__ $SRCROOT/test.c '#if (__GNUC__ == 4 && __GNUC_MINOR__ == 7) || __SIZEOF_LONG_LONG__ == 8' -cc -c++ -lib -params=-modules -debug -enable-ui -ui-type -xflags -xparam -xxparam -syscap grep tclsh -sh test -f /etc/debian_version && echo "CONFIG_DEBIAN=1" >> $CONF -syscap -lXm Xm/Xm.h Xm/PushB.h -func XmCreatePushButton -var xmPushButtonWidgetClass -sym xmTextFieldWidgetClass -rval XmSET -enum XmSET XmTOGGLEBUTTON -syscap -lgif gif_lib.h -syscap -with-cxx -lQtGui -inc QtGui/QtGui
 #
 # Important variables to use:
-#   PACKAGE_NAME     - name of package
+#   PACKAGE_NAME     - package (project) name
 #   PACKAGE_VERSION  - package version
 #   CONF             - name of the build config file
 #   CONF_H           - name of the build config header file
-#   CUSTOM_OPTIONS   - custom configure options
-#   TOOLS            - tools used in this package
 #   SRCROOT          - package source root directory (package top dir)
-#   BUILDROOT        - path to the build root directory (current dir)
+#   STD_OPTIONS      - standard configure options
+#   OPTIONS          - custom configure options
+#   VPATH_ON         - set to 1 if configure is run outside of the source root dir
 
 ################################################################################
 # BASE CONFIGURATION
@@ -19,23 +19,39 @@ PACKAGE_NAME="my_app"
 PACKAGE_VERSION="1.0.0"
 CONF="build.conf"
 CONF_H="build.h"
-CUSTOM_OPTIONS="-ldflags -modules -debug -enable-ui -ui-type -xflags -xparam -xxparam"
-TOOLS="rcrq mkbuildroot relpath mkrule pofig libro iflib cstem cstem+ mkdep install ar"
 
 ################################################################################
-# INIT
+# BUILD DIRECTORIES
 SRCROOT=`dirname $0`
-BUILDROOT=`pwd`
-PATH=$FORMAKE:$BUILDROOT/formake:$SRCROOT/formake:$PATH
+PATH=$FORMAKE:`pwd`/formake:$SRCROOT/formake:$PATH
 
 ################################################################################
 # OPTIONS
-std_options=`rcrq -install-options -c-options -cxx-options` || exit 1
-optool validate "$@" - -h -help --help $std_options $CUSTOM_OPTIONS || exit 1
-if optool ifor "$@" - -h -help --help; then
-  confighelp -install -cc -cxx || exit 1
+STD_OPTIONS="-h -help --help -prefix -exec-prefix -bindir -sbindir -libexecdir -libdir -incdir \
+             -etcdir -vardir -sharedir -mandir -docdir -cc -cflags -cxx -cxxflags -ldflags"
+OPTIONS="-modules -debug -enable-ui -ui-type -xflags -xparam -xxparam"
+
+optool validate $STD_OPTIONS $OPTIONS - "$@" || exit 1
+if optool test any -h -help --help - "$@"; then
   cat <<EOF
-  -ldflags
+Usage: configure [options]
+  -prefix PREFIX         path to install architecture-independent files [/usr/local]
+  -exec-prefix EPREFIX   path to install architecture-dependent files [PREFIX]
+  -bindir DIR            bin path [EPREFIX/bin]
+  -sbindir DIR           sbin path [EPREFIX/sbin]
+  -libexecdir DIR        libexec path [EPREFIX/libexec]
+  -libdir DIR            lib path [EPREFIX/lib]
+  -incdir DIR            include path [PREFIX/include]
+  -etcdir DIR            etc path [PREFIX/etc]
+  -vardir DIR            var path [PREFIX/var]
+  -sharedir DIR          share path [PREFIX/share]
+  -mandir DIR            man path [SHAREDIR/man]
+  -docdir DIR            doc path [SHAREDIR/doc]
+  -cc CMD                C compiler command
+  -cflags=FLAGS          C compiler flags
+  -cxx CMD               C++ compiler command
+  -cxxflags=FLAGS        C++ compiler flags
+  -ldflags=FLAGS         LD flags
   -modules
   -debug
   -enable-ui
@@ -46,48 +62,87 @@ if optool ifor "$@" - -h -help --help; then
 EOF
   exit 0
 fi
-optool dump "$@" >$CONF
-. $CONF
+. `optool source "$@"`
 
 ################################################################################
-# DEPENDENCY TOOLS
-iftool $TOOLS || exit 1
-iftool grep ar tclsh || exit 1
+# VPATH
+VPATH_ON=
+test ! -f `basename $0` && VPATH_ON=1
 
 ################################################################################
-# INIT BUILDROOT
-mkbuildroot $SRCROOT $BUILDROOT || exit 1
+# INIT BUILD ROOT
+if test x$VPATH_ON = x1; then
+  if test -f $SRCROOT/formake; then
+    rm -Rf formake
+    cp -Rf $SRCROOT/formake ./
+    rm -f formake/*.conf
+  fi
+fi
 rm -f configure.log
 
 ################################################################################
-# CONFIGURE FORMAKE
-optool dump "$@ -package-name $PACKAGE_NAME -package-version $PACKAGE_VERSION" >formake/config.rc
+# PACKAGE CONSISTENCY
+syscap test relpath mkrule libro cstem cstem+ mkdep || exit 1
 
 ################################################################################
-# PROBE AND CONFIGURE COMPILERS
-cstem config -cc $CC -cflags="$CFLAGS"
-cstem+ config -cc $CXX -cflags="$CXXFLAGS"
+# BASE CONFIG FILES
+optool dump  "$@" -package-name "$PACKAGE_NAME" -package-version "$PACKAGE_VERSION" >$CONF
+optool hdump "$@" -package-name "$PACKAGE_NAME" -package-version "$PACKAGE_VERSION" >$CONF_H
 
 ################################################################################
-# DEPENDENCY LIBRARIES
-iflib -cc -lX11 -lXt X11/Xlib.h X11/X.h X11/Intrinsic.h -cstr 'Widget *w = NULL;' -def __linux__ __unix__ __GNUC__=4 '#ifdef __linux__ && defined __unix__' -type Widget int32_t -func XtCreateWidget fprintf atoi -rval __GNUC__ __linux__ $SRCROOT/test.c '#if (__GNUC__ == 4 && __GNUC_MINOR__ == 7) || __SIZEOF_LONG_LONG__ == 8' -log configure.log || exit 1
-iflib -cc -short -lXm Xm/Xm.h Xm/PushB.h -func XmCreatePushButton -var xmPushButtonWidgetClass -sym xmTextFieldWidgetClass -rval XmSET -enum XmSET XmTOGGLEBUTTON -log configure.log || exit 1
-iflib -cc -lgif gif_lib.h -log configure.log || exit 1
-iflib -cc -cxx -lQtGui -inc QtGui/QtGui -log configure.log || exit 1
+# STANDARD DIRECTORIES
+test -n "$PREFIX"      || PREFIX=/usr/local
+test -n "$EXEC_PREFIX" || EXEC_PREFIX=$PREFIX
+test -n "$BINDIR"      || BINDIR=$EXEC_PREFIX/bin
+test -n "$SBINDIR"     || SBINDIR=$EXEC_PREFIX/sbin
+test -n "$LIBEXECDIR"  || LIBEXECDIR=$EXEC_PREFIX/libexec
+test -n "$ETCDIR"      || ETCDIR=$PREFIX/etc
+test -n "$VARDIR"      || VARDIR=$PREFIX/etc
+test -n "$LIBDIR"      || LIBDIR=$EXEC_PREFIX/lib
+test -n "$INCDIR"      || INCDIR=$PREFIX/include
+test -n "$SHAREDIR"    || SHAREDIR=$PREFIX/share
+test -n "$MANDIR"      || MANDIR=$SHAREDIR/man
+test -n "$DOCDIR"      || DOCDIR=$SHAREDIR/doc
+
+optool dump -prefix $PREFIX -exec-prefix $EXEC_PREFIX -bindir $BINDIR -sbindir $SBINDIR \
+            -libexecdir $LIBEXECDIR -libdir $LIBDIR -incdir $INCDIR -etcdir $ETCDIR \
+            -vardir $VARDIR -sharedir $SHAREDIR -mandir $MANDIR -docdir $DOCDIR >>$CONF
+
+################################################################################
+# FORMAKE CONFIG
+optool dump -prefix $PREFIX -exec-prefix $EXEC_PREFIX -bindir $BINDIR -sbindir $SBINDIR \
+            -libexecdir $LIBEXECDIR -libdir $LIBDIR -incdir $INCDIR -etcdir $ETCDIR \
+            -vardir $VARDIR -sharedir $SHAREDIR -mandir $MANDIR -docdir $DOCDIR \
+            -package-name $PACKAGE_NAME -package-version $PACKAGE_VERSION >formake/formake.conf
+
+################################################################################
+# SYSTEM COMPILERS
+cstem config -cc $CC -cflags="$CFLAGS" || exit 1
+cstem+ config -cc $CXX -cflags="$CXXFLAGS" || exit 1
+
+################################################################################
+# SYSTEM DEPENDENCIES
+syscap test install || exit 1
+
+test -n "$PROG_AR" || PROG_AR=ar
+syscap test $PROG_AR || exit 1
+
+syscap test -cc -ld -log=configure.log || exit 1
+syscap test -with-cc -cflags="$CFLAGS" -ldflags="$LDFLAGS" -log=configure.log || exit 1
+syscap test -cxx -ld -log=configure.log || exit 1
+syscap test -with-cxx -cflags="$CXXFLAGS" -ldflags="$LDFLAGS" -log=configure.log || exit 1
+syscap test -with-cc -with-ldflags="$LDFLAGS" -lX11 -lXt X11/Xlib.h X11/X.h X11/Intrinsic.h -cstr 'Widget *w = NULL;' -def __linux__ __unix__ __GNUC__=4 '#ifdef __linux__ && defined __unix__' -type Widget int32_t -func XtCreateWidget fprintf atoi -rval __GNUC__ __linux__ $SRCROOT/test.c '#if (__GNUC__ == 4 && __GNUC_MINOR__ == 7) || __SIZEOF_LONG_LONG__ == 8' -log=configure.log || exit 1
+syscap test -with-cc -with-ldflags="$LDFLAGS" grep tclsh -log=configure.log || exit 1
+syscap test -with-cc -with-ldflags="$LDFLAGS" -lXm Xm/Xm.h Xm/PushB.h -func XmCreatePushButton -var xmPushButtonWidgetClass -sym xmTextFieldWidgetClass -rval XmSET -enum XmSET XmTOGGLEBUTTON -log=configure.log || exit 1
+syscap test -with-cc -with-ldflags="$LDFLAGS" -lgif gif_lib.h -log=configure.log || exit 1
+syscap test -with-cc -with-ldflags="$LDFLAGS" -with-cxx -lQtGui -inc QtGui/QtGui -log=configure.log || exit 1
 
 ################################################################################
 # CUSTOM CODE
-# put your custom code here
-test -f /etc/debian_version && echo "CONFIG_DEBIAN=1" >> build.conf
-
-################################################################################
-# CONFIG FILES
-optool dump -package-name $PACKAGE_NAME -package-version $PACKAGE_VERSION >>$CONF
-optool hdump "$@" -package-name "$PACKAGE_NAME" -package-version $PACKAGE_VERSION >$CONF_H
+test -f /etc/debian_version && echo "CONFIG_DEBIAN=1" >> $CONF
 
 ################################################################################
 # MKMF
-cd $BUILDROOT
 $SRCROOT/mkmf || exit 1
 
 ################################################################################
