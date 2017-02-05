@@ -9,7 +9,7 @@ script_name=`basename "$0"`
 script_options="$@"
 tmp_help=/tmp/mkconf_help_$$.txt
 rm -f $tmp_help
-op_pkgname=softmodule
+op_pkgname=package
 op_pkgver=
 out_file=configure
 out_file_dir=.

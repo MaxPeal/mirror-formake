@@ -46,7 +46,7 @@ mkrule distclean $MAKEFILE >>$MAKEFILE
 # CUSTOM CODE
 cat <<EOF >>$MAKEFILE
 all: mkpackage
-mkpackage: _mkpackage
+mkpackage: _mkpackage $BUILDROOT/$CONF
 	cat _mkpackage | sed 's#^share_dir=#share_dir=$PACKAGE_SHAREDIR#' > mkpackage
 	chmod +x mkpackage
 
