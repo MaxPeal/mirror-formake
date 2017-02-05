@@ -1,7 +1,7 @@
 #!/bin/sh
 ################################################################################
 # This script was generated with the following command:
-#  mkmkmf -srcroot ../../ -inst-bin mkrule
+#  mkmkmf -srcroot ../../ -inst-bin cfront
 #
 #
 # Important variables to use:
@@ -47,7 +47,7 @@ mkrule distclean $MAKEFILE >>$MAKEFILE
 
 ################################################################################
 # INSTALLATION FILES
-install_bin="mkrule"
+install_bin="cfront"
 mkrule install bin -d $PACKAGE_SHAREDIR $install_bin >>$MAKEFILE
 
 ################################################################################

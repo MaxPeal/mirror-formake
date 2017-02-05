@@ -4,47 +4,87 @@
 #  mkconfigure -name formake -ver 1.0.0
 #
 # Important variables to use:
-#   PACKAGE_NAME     - name of package
+#   PACKAGE_NAME     - package (project) name
 #   PACKAGE_VERSION  - package version
-#   CUSTOM_OPTIONS   - custom configure options
-#   FORMAKE_TOOLS    - list of Formake tools used in this package
+#   CONF             - name of the build config file
+#   CONF_H           - name of the build config header file
 #   SRCROOT          - package source root directory (package top dir)
-#   BUILDROOT        - VPATH build root (package build root dir)
-#   SUBSCRIPT        - path to a subscript - script with custom subroutines
-#   VPATH            - enable/disable vpath
+#   STD_OPTIONS      - standard configure options
+#   OPTIONS          - custom configure options
+#   VPATH_ON         - set to 1 if configure is run outside of the source root dir
 
 ################################################################################
 # BASE CONFIGURATION
 PACKAGE_NAME="formake"
 PACKAGE_VERSION="1.0.0"
-INSTALL_OPTIONS="-prefix -exec-prefix -bindir -sbindir -libexecdir -libdir \
-                 -incdir -etcdir -vardir -sharedir -mandir -docdir"
-CUSTOM_OPTIONS=""
-FORMAKE_TOOLS="mkbuildroot abspath relpath install listed pofig mkrule"
+CONF="build.conf"
+CONF_H="build.h"
+
+################################################################################
+# BUILD DIRECTORIES
 SRCROOT=`dirname $0`
-BUILDROOT=`pwd`
-PATH=$BUILDROOT/formake:$SRCROOT/formake:$PATH
+PATH=$FORMAKE:`pwd`/formake:$SRCROOT/formake:$PATH
 
 ################################################################################
 # OPTIONS
-confighelp -h >/dev/null || exit 1
-optool validate "$@" - -h -help --help $INSTALL_OPTIONS $CUSTOM_OPTIONS || exit 1
-if optool ifor "$@" - -h -help --help; then
-  confighelp -install
+STD_OPTIONS="-h -help --help -prefix -exec-prefix -bindir -sbindir -libexecdir -libdir -incdir \
+             -etcdir -vardir -sharedir -mandir -docdir"
+OPTIONS=""
+
+optool validate $STD_OPTIONS $OPTIONS - "$@" || exit 1
+if optool test any -h -help --help - "$@"; then
+  cat <<EOF
+Usage: configure [options]
+  -prefix PREFIX         path to install architecture-independent files [/usr/local]
+  -exec-prefix EPREFIX   path to install architecture-dependent files [PREFIX]
+  -bindir DIR            bin path [EPREFIX/bin]
+  -sbindir DIR           sbin path [EPREFIX/sbin]
+  -libexecdir DIR        libexec path [EPREFIX/libexec]
+  -libdir DIR            lib path [EPREFIX/lib]
+  -incdir DIR            include path [PREFIX/include]
+  -etcdir DIR            etc path [PREFIX/etc]
+  -vardir DIR            var path [PREFIX/var]
+  -sharedir DIR          share path [PREFIX/share]
+  -mandir DIR            man path [SHAREDIR/man]
+  -docdir DIR            doc path [SHAREDIR/doc]
+EOF
   exit 0
 fi
-optool rc "$@" >build.conf
-. ./build.conf
+. `optool source "$@"`
 
 ################################################################################
-# VERIFY OPTIONS
+# VPATH
+VPATH_ON=
+test ! -f `basename $0` && VPATH_ON=1
+
+################################################################################
+# INIT BUILD ROOT
+if test x$VPATH_ON = x1; then
+  if test -f $SRCROOT/formake; then
+    rm -Rf formake
+    cp -Rf $SRCROOT/formake ./
+    rm -f formake/*.conf
+  fi
+fi
+rm -f configure.log
+
+################################################################################
+# PACKAGE CONSISTENCY
+syscap test relpath mkrule || exit 1
+
+################################################################################
+# BASE CONFIG FILES
+optool dump  "$@" -package-name "$PACKAGE_NAME" -package-version "$PACKAGE_VERSION" >$CONF
+
+################################################################################
+# STANDARD DIRECTORIES
 test -n "$PREFIX"      || PREFIX=/usr/local
 test -n "$EXEC_PREFIX" || EXEC_PREFIX=$PREFIX
 test -n "$BINDIR"      || BINDIR=$EXEC_PREFIX/bin
 test -n "$SBINDIR"     || SBINDIR=$EXEC_PREFIX/sbin
 test -n "$LIBEXECDIR"  || LIBEXECDIR=$EXEC_PREFIX/libexec
-test -n "$VARDIR"      || VARDIR=/var
 test -n "$ETCDIR"      || ETCDIR=$PREFIX/etc
+test -n "$VARDIR"      || VARDIR=$PREFIX/etc
 test -n "$LIBDIR"      || LIBDIR=$EXEC_PREFIX/lib
 test -n "$INCDIR"      || INCDIR=$PREFIX/include
 test -n "$SHAREDIR"    || SHAREDIR=$PREFIX/share
@@ -54,32 +94,29 @@ test -n "$DOCDIR"      || DOCDIR=$SHAREDIR/doc
 PACKAGE_SHAREDIR=$SHAREDIR/$PACKAGE_NAME
 PACKAGE_DOCDIR=$SHAREDIR/doc/$PACKAGE_NAME
 
-################################################################################
-# DEPENDENCY TOOLS
-iftool $FORMAKE_TOOLS || exit 1
+optool dump -prefix $PREFIX -exec-prefix $EXEC_PREFIX -bindir $BINDIR -sbindir $SBINDIR \
+            -libexecdir $LIBEXECDIR -libdir $LIBDIR -incdir $INCDIR -etcdir $ETCDIR \
+            -vardir $VARDIR -sharedir $SHAREDIR -mandir $MANDIR -docdir $DOCDIR \
+            -package-sharedir $PACKAGE_SHAREDIR -package-docdir $PACKAGE_DOCDIR >>$CONF
 
 ################################################################################
-# INIT BUILDROOT
-mkbuildroot $SRCROOT $BUILDROOT || exit 1
-rm -f configure.log
+# FORMAKE CONFIG
+optool dump -prefix $PREFIX -exec-prefix $EXEC_PREFIX -bindir $BINDIR -sbindir $SBINDIR \
+            -libexecdir $LIBEXECDIR -libdir $LIBDIR -incdir $INCDIR -etcdir $ETCDIR \
+            -vardir $VARDIR -sharedir $SHAREDIR -mandir $MANDIR -docdir $DOCDIR \
+            -package-sharedir $PACKAGE_SHAREDIR -package-docdir $PACKAGE_DOCDIR \
+            -package-name $PACKAGE_NAME -package-version $PACKAGE_VERSION >formake/formake.conf
 
 ################################################################################
-# CONFIG FILES
-optool rc -package-name $PACKAGE_NAME -package-ver $PACKAGE_VERSION \
-          -prefix $PREFIX -exec-prefix $EXEC_PREFIX -bindir $BINDIR -sbindir $SBINDIR \
-          -libexecdir $LIBEXECDIR -vardir $VARDIR -etcdir $ETCDIR -libdir $LIBDIR \
-          -incdir $INCDIR -sharedir $SHAREDIR -mandir $MANDIR -docdir $DOCDIR \
-          -package-sharedir $PACKAGE_SHAREDIR -package-docdir $PACKAGE_DOCDIR >build.conf
+# SYSTEM DEPENDENCIES
+syscap test install || exit 1
 
 ################################################################################
-# MKRULE
-mkrule config -prefix=$PREFIX -exec-prefix=$EXEC_PREFIX -bindir=$BINDIR -sbindir=$SBINDIR \
-          -libexecdir=$LIBEXECDIR -libdir=$LIBDIR -incdir=$INCDIR -etcdir=$ETCDIR \
-          -sharedir=$PACKAGE_SHAREDIR -mandir=$MANDIR -docdir=$PACKAGE_DOCDIR
+# CUSTOM CODE
 
 ################################################################################
 # MKMF
-BUILDROOT=$BUILDROOT $SRCROOT/mkmf || exit 1
+$SRCROOT/mkmf || exit 1
 
 ################################################################################
 # FINISH

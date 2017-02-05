@@ -647,7 +647,6 @@ fi
   cat <<TOP_EOF >>$op_out_file
 ################################################################################
 # CUSTOM CODE
-# put your custom code here
 
 TOP_EOF
 
@@ -856,10 +855,10 @@ if test -n "$op_subdirs"; then
 ################################################################################
 # SUBDIRS
 mkrule subdir -all -install -clean -dist -distclean -d $SUBDIRS >>$MAKEFILE
-cd $ABS_BUILDDIR
 for dir in $SUBDIRS; do
+  cd $ABS_BUILDDIR
   test -d $dir || mkdir -p $dir
-  `cd $dir; $ABS_BUILDDIR/$SRCDIR/$dir/mkmf` || exit 1
+  cd $dir; $ABS_BUILDDIR/$SRCDIR/$dir/mkmf || exit 1
 done
 
 TOP_EOF

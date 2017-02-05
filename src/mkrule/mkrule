@@ -26,6 +26,10 @@ INCDIR=
 SHAREDIR=
 MANDIR=
 DOCDIR=
+PACKAGE_NAME=
+PACKAGE_VERSION=
+PACKAGE_SHAREDIR=
+PACKAGE_DOCDIR=
 
 if test -f $script_dir/config.rc; then
   . $script_dir/config.rc
@@ -53,6 +57,11 @@ test -n "$INCDIR"      || INCDIR=$PREFIX/include
 test -n "$SHAREDIR"    || SHAREDIR=$PREFIX/share
 test -n "$MANDIR"      || MANDIR=$SHAREDIR/man
 test -n "$DOCDIR"      || DOCDIR=$SHAREDIR/doc
+
+test -n "$PACKAGE_NAME"        || PACKAGE_NAME=package
+test -n "$PACKAGE_VERSION"     || PACKAGE_VERSION=1.0.0
+test -n "$PACKAGE_SHAREDIR"    || PACKAGE_SHAREDIR=$SHAREDIR/$PACKAGE_NAME$PACKAGE_VERSION
+test -n "$PACKAGE_DOCDIR"      || PACKAGE_DOCDIR=$SHAREDIR/doc/$PACKAGE_NAME$PACKAGE_VERSION
 ################################################################################
 
 cd_param=
@@ -1044,7 +1053,7 @@ EOF
       ;;
     share)
       perm="0444"
-      dir=$SHAREDIR
+      dir=$PACKAGE_SHAREDIR
       ;;
     man[0-9])
       perm="0444"
@@ -1053,7 +1062,7 @@ EOF
       ;;
     doc)
       perm="0444"
-      dir=$DOCDIR
+      dir=$PACKAGE_DOCDIR
       ;;
     etc)
       perm="0444"
