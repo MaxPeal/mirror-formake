@@ -11,7 +11,7 @@ script_dir=`dirname $0`
 
 op_dir=formake
 formake_scripts="abspath cfront cstem cstem+ install libro listed mkdep mkrule optool relpath syscap"
-share_dir=/tmp/opt/share/formake
+share_dir=
 
 print_help() {
   cat <<EOF
