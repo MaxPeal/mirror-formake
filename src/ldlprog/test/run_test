@@ -1,0 +1,4 @@
+#!/bin/sh
+
+./ldlprog -lX11 -lXt -L. -L../ -lXm -g0 -O3 -Wall -L../libs -L../../modules/lib1 -lmod1 -L../../modules/lib2 -lmod2 xcalc
+
