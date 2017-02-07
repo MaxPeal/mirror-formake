@@ -1,6 +1,7 @@
 #!/bin/sh
 #
-# Author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
+# Formake cstem+
+# author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
 #
 
 abs_path() {

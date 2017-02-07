@@ -1,6 +1,7 @@
 #!/bin/sh
 #
-# Author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
+# Formake mkcstem.tcl
+# author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
 #
 #\
 exec tclsh "$0" ${1+"$@"}
@@ -64,7 +65,12 @@ exit 0
 # CC_CONFIG_START
 #!/bin/sh
 #
-# Author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
+########## CC_BLOCK_START
+# Formake cstem
+########## CX_BLOCK_START
+# Formake cstem+
+########## BLOCK_END
+# author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
 #
 
 abs_path() {

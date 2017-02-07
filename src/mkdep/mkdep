@@ -1,6 +1,7 @@
 #!/bin/sh
 #
-# Author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
+# Formake mkdep
+# author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
 #
 
 script_name=`basename $0`

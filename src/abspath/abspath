@@ -1,8 +1,8 @@
 #!/bin/sh
 #
-# Author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
+# Formake abspath
+# author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
 #
-
 
 script_name=`basename $0`
 script_dir=`dirname $0`

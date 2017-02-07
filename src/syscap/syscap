@@ -1,6 +1,7 @@
 #!/bin/sh
 #
-# Author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
+# Formake syscap
+# author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
 #
 
 # syscap info NOTE: if kernel name and OS name are same than config_is_<name> means OS name. If some OSes explore kernel that has

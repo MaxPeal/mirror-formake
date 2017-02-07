@@ -1,6 +1,7 @@
 #!/bin/sh
 #
-# Author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
+# Formake mkpackage
+# author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
 #
 
 version_string="mkpackage 1.0"

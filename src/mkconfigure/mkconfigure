@@ -1,6 +1,7 @@
 #!/bin/sh
 #
-# Author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
+# Formake mkconfigure
+# author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
 #
 
 version_string="mkconfigure 1.0"
@@ -211,7 +212,7 @@ TOP_EOF
 
 cat <<"TOP_EOF" >>$out_file
 ################################################################################
-# BUILD DIRECTORIES
+# PACKAGE PATHES
 SRCROOT=`dirname $0`
 PATH=$FORMAKE:`pwd`/formake:$SRCROOT/formake:$PATH
 
@@ -306,18 +307,6 @@ TOP_EOF
 
 cat <<"TOP_EOF" >>$out_file
 ################################################################################
-# BASE CONFIG FILES
-optool dump  "$@" -package-name "$PACKAGE_NAME" -package-version "$PACKAGE_VERSION" >$CONF
-TOP_EOF
-if test x"$op_build_h" = x1; then
-  cat <<"TOP_EOF" >>$out_file
-optool hdump "$@" -package-name "$PACKAGE_NAME" -package-version "$PACKAGE_VERSION" >$CONF_H
-TOP_EOF
-fi
-
-cat <<"TOP_EOF" >>$out_file
-
-################################################################################
 # STANDARD DIRECTORIES
 test -n "$PREFIX"      || PREFIX=/usr/local
 test -n "$EXEC_PREFIX" || EXEC_PREFIX=$PREFIX
@@ -335,10 +324,21 @@ test -n "$DOCDIR"      || DOCDIR=$SHAREDIR/doc
 PACKAGE_SHAREDIR=$SHAREDIR/$PACKAGE_NAME
 PACKAGE_DOCDIR=$SHAREDIR/doc/$PACKAGE_NAME
 
-optool dump -prefix $PREFIX -exec-prefix $EXEC_PREFIX -bindir $BINDIR -sbindir $SBINDIR \
+################################################################################
+# BUILD CONFIGS
+optool dump "$@" -package-name "$PACKAGE_NAME" -package-version "$PACKAGE_VERSION" \
+            -prefix $PREFIX -exec-prefix $EXEC_PREFIX -bindir $BINDIR -sbindir $SBINDIR \
             -libexecdir $LIBEXECDIR -libdir $LIBDIR -incdir $INCDIR -etcdir $ETCDIR \
             -vardir $VARDIR -sharedir $SHAREDIR -mandir $MANDIR -docdir $DOCDIR \
-            -package-sharedir $PACKAGE_SHAREDIR -package-docdir $PACKAGE_DOCDIR >>$CONF
+            -package-sharedir $PACKAGE_SHAREDIR -package-docdir $PACKAGE_DOCDIR >$CONF
+TOP_EOF
+if test x"$op_build_h" = x1; then
+  cat <<"TOP_EOF" >>$out_file
+optool hdump "$@" -package-name "$PACKAGE_NAME" -package-version "$PACKAGE_VERSION" >$CONF_H
+TOP_EOF
+fi
+
+cat <<"TOP_EOF" >>$out_file
 
 ################################################################################
 # FORMAKE CONFIG
