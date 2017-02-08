@@ -1,24 +1,24 @@
 #!/bin/sh
 #
-# Formake ldlp
+# Formake ldlshell
 # author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
 #
 
 script_name=`basename $0`
 script_dir=`dirname $0`
-tmp_rc=/tmp/ldlp-bash$$.rc
+tmp_rc=/tmp/ldlshell$$-bash.rc
 
 ################################################################################
 # LOAD CONFIG
 PATH=$FORMAKE:$PATH
-LDLP=
+LDLSHELL=
 if test -f $script_dir/config.rc; then
   . $script_dir/config.rc
 fi
-test -n "$FORMAKE_LDLP" && LDLP=$FORMAKE_LDLP
-if test -n "$LDLP" && test -z "$LDLP_REDIRECT"; then
-  export LDLP_REDIRECT=1
-  $LDLP "$@"
+test -n "$FORMAKE_LDLSHELL" && LDLSHELL=$FORMAKE_LDLSHELL
+if test -n "$LDLSHELL" && test -z "$LDLSHELL_REDIRECT"; then
+  export LDLSHELL_REDIRECT=1
+  $LDLSHELL "$@"
   ret=$?
   if test $ret -ne 64; then
     exit $ret
@@ -99,8 +99,8 @@ if test $# -gt 0; then
   esac
 fi
 
-if test -f $script_dir/ldlp.conf; then
-  . $script_dir/ldlp.conf
+if test -f $script_dir/ldlshell.conf; then
+  . $script_dir/ldlshell.conf
 elif test -f $script_dir/formake.conf; then
   . $script_dir/formake.conf
 fi
@@ -180,7 +180,7 @@ if test -n "$bash_cmd"; then
 export LD_LIBRARY_PATH="$ldlp_abs:$LD_LIBRARY_PATH"
 export LIBPATH=$ldlp_abs:$LIBPATH
 export SHLIB_PATH=$ldlp_abs:$SHLIB_PATH
-export PS1="\[\e[1;31m\]${ldlp_id}ldlp\[\e[0;37m\] \\$ "
+export PS1="\[\e[1;31m\]${ldlp_id}ldlshell\[\e[0;37m\] \\$ "
 rm -f $tmp_rc
 EOF
 
