@@ -6,7 +6,7 @@
 
 script_name=`basename $0`
 script_dir=`dirname $0`
-tmp_rc=/tmp/bash$$.rc
+tmp_rc=/tmp/ldlp-bash$$.rc
 
 ################################################################################
 # LOAD CONFIG
@@ -133,13 +133,65 @@ else
   ldlp_id=
 fi
 
-cat <<EOF >>$tmp_rc
+command -v ls >/dev/null 2>&1
+if test $? -ne 127; then
+  have_command_v=1
+fi
+hash ls >/dev/null 2>&1
+if test $? -eq 0; then
+  have_hash=1
+fi
+type -P ls >/dev/null 2>&1
+if test $? -eq 0; then
+  have_type_p=1
+fi
+whence -p ls >/dev/null 2>&1
+if test $? -eq 0; then
+  have_whence_p=1
+fi
+
+bash_cmd=
+if test x$have_command_v = x1; then
+  command -v bash >/dev/null 2>&1
+  bash_cmd=bash
+elif test x$have_hash = x1; then
+  hash bash >/dev/null 2>&1
+  bash_cmd=bash
+elif test x$have_type_p = x1; then
+  type -P bash >/dev/null 2>&1
+  bash_cmd=bash
+elif test x$have_whence_p = x1; then
+  whence -p bash >/dev/null 2>&1
+  bash_cmd=bash
+else
+  IFS_save=$IFS
+  IFS=:
+  for dir in $PATH; do
+    if test -n "$dir" && test -f "$dir/bash" && test -x "$dir/bash" ; then
+      bash_cmd=bash
+      break
+    fi
+  done
+  IFS=$IFS_save
+fi
+
+if test -n "$bash_cmd"; then
+  cat <<EOF >>$tmp_rc
 export LD_LIBRARY_PATH="$ldlp_abs:$LD_LIBRARY_PATH"
 export LIBPATH=$ldlp_abs:$LIBPATH
 export SHLIB_PATH=$ldlp_abs:$SHLIB_PATH
-export PS1="\[$(tput bold)\]\[$(tput setaf 1)\]${ldlp_id}ldlp\[$(tput sgr0)\] \\$ \[$(tput sgr0)\]"
+export PS1="\[\e[1;31m\]${ldlp_id}ldlp\[\e[0;37m\] \\$ "
 rm -f $tmp_rc
 EOF
 
-bash --rcfile $tmp_rc
+  $bash_cmd --rcfile $tmp_rc
+else
+  export LD_LIBRARY_PATH="$ldlp_abs:$LD_LIBRARY_PATH"
+  export LIBPATH=$ldlp_abs:$LIBPATH
+  export SHLIB_PATH=$ldlp_abs:$SHLIB_PATH
+  export PS1="${ldlp_id}ldlp \\$ "
+  /bin/sh
+fi
+
+rm -f $tmp_rc
 
