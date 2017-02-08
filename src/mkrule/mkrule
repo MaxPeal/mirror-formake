@@ -124,6 +124,7 @@ $script_name prog [OPTIONS] -src SRC.. -obj OBJ..
   -c++             C++ mode [autodetect]
   -n NAME          program name
   -ldflags=FLAGS   linker flags
+  -disable-ldlp    do not create ldlp wrapper script for the program
   -d DIR           output directory for generated executable file
   -p PREREQ..      additional prerequisites of a rule
   -all             add to default 'all' rule
@@ -647,7 +648,7 @@ $prog_local: $op_obj $op_prereq
 	$cc_cmd -o $prog_local $op_obj $op_ldflags
 EOF
 
-  if test -n "$LDLPROG"; then
+  if test -n "$LDLPROG" && test x$op_disable_ldlp = x; then
     $LDLPROG $op_ldflags ./$prog_local
   fi
 
@@ -672,7 +673,7 @@ clean-$op_name:
 	rm -f $prog_local
 distclean: clean-$op_name
 EOF
-  if test -n "$LDLPROG"; then
+  if test -n "$LDLPROG" && test x$op_disable_ldlp = 1; then
     echo "	rm -f ${prog_local}-ldlp"
   fi
   
@@ -1501,6 +1502,14 @@ while test $# -gt 0; do
         exit 1
       fi
       op_ldflags=`echo -n "$1" | sed 's/^[^=]*=//'`
+      current_opt=
+      ;;
+    -disable-ldlp)
+      if test $op_mode != prog; then
+        echo "$script_name: error: invalid parameter $1 for current mode" >&2
+        exit 1
+      fi
+      op_disable_ldlp=1
       current_opt=
       ;;
     -all)
