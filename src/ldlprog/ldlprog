@@ -29,7 +29,7 @@ fi
 
 print_help() {
   cat <<EOF
-Create program wrapper script with predefined LD library path variable
+Create program wrapper script with predefined LD library path environment
 
 $script_name [OPTIONS] program
  -L<PATH>       add library path to the LD library search path
@@ -133,12 +133,10 @@ if echo "$op_program" | grep '^/' > /dev/null; then
   program_dir=
 elif echo "$op_program" | grep '/' > /dev/null; then
   program_dir="\`dirname \$0\`/"
-else
-  if test -f "$op_program"; then
+elif test -f "$op_program"; then
     program_dir="\`dirname \$0\`/"
-  else
+else
     program_dir=
-  fi
 fi
 
 rm -f $out_program

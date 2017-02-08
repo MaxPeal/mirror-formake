@@ -317,13 +317,11 @@ get_cstem() {
   $xstem -h >/dev/null 2>&1
   if test $? -ne 127; then
     CSTEM=$xstem
-  else
-    if test -f $script_dir/$xstem; then
+  elif test -f $script_dir/$xstem; then
       CSTEM=$script_dir/$xstem
-    else
-      echo "$script_name: error: $xstem not found" >&2
-      exit 1
-    fi
+  else
+    echo "$script_name: error: $xstem not found" >&2
+    exit 1
   fi
 }
 
@@ -383,6 +381,16 @@ get_random() {
       if test $? -ne 127; then
         RANDOM=`mktemp -u "XXXXXX"`
       fi
+  fi
+}
+
+get_ldlprog() {
+  LDLPROG=
+  ldlprog -help >/dev/null 2>&1
+  if test $? -ne 127; then
+    LDLPROG=ldlprog
+  elif test -f $script_dir/ldlprog; then
+    LDLPROG=$script_dir/ldlprog
   fi
 }
 
@@ -591,6 +599,7 @@ mkprog() {
 
   get_syscap
   get_cstem
+  get_ldlprog
   
   cc_cmd=`$CSTEM -cmd`
   if test -z "$cc_cmd"; then
@@ -638,6 +647,10 @@ $prog_local: $op_obj $op_prereq
 	$cc_cmd -o $prog_local $op_obj $op_ldflags
 EOF
 
+  if test -n "$LDLPROG"; then
+    $LDLPROG $op_ldflags ./$prog_local
+  fi
+
   if test x$op_install = x1; then
     if test -z "$op_install_path"; then
       op_install_path=$BINDIR
@@ -659,6 +672,9 @@ clean-$op_name:
 	rm -f $prog_local
 distclean: clean-$op_name
 EOF
+  if test -n "$LDLPROG"; then
+    echo "	rm -f ${prog_local}-ldlp"
+  fi
   
   if test -n "$op_rc"; then
     echo "PROGRAM=\"$prog_local\"" > $op_rc
