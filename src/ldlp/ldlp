@@ -1,0 +1,145 @@
+#!/bin/sh
+#
+# Formake ldlp
+# author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
+#
+
+script_name=`basename $0`
+script_dir=`dirname $0`
+tmp_rc=/tmp/bash$$.rc
+
+################################################################################
+# LOAD CONFIG
+PATH=$FORMAKE:$PATH
+LDLP=
+if test -f $script_dir/config.rc; then
+  . $script_dir/config.rc
+fi
+test -n "$FORMAKE_LDLP" && LDLP=$FORMAKE_LDLP
+if test -n "$LDLP" && test -z "$LDLP_REDIRECT"; then
+  export LDLP_REDIRECT=1
+  $LDLP "$@"
+  ret=$?
+  if test $ret -ne 64; then
+    exit $ret
+  fi
+fi
+################################################################################
+
+print_help() {
+  cat <<EOF
+Load interactive shell with predefined LD library path environment
+
+Usage: $script_name
+EOF
+}
+
+abs_path() {
+  _sub_orig_dir=`pwd`
+  if test $# = 0; then
+    abs_path_ret=
+    return
+  fi
+  if test $# = 2; then
+    _arg_orig_dir=$1
+    _arg=$2
+    if echo -n "$_arg" | grep "^/" > /dev/null; then
+      :
+    else
+      _arg=`echo -n "$_arg_orig_dir/$_arg" | sed 's!//*!/!g'`
+    fi
+  else
+    _arg=$1
+  fi
+  if test -e "$_arg"; then
+    if test -d $_arg; then
+      _file=
+    else
+      _file=`basename -- $_arg`
+      _arg=`dirname -- $_arg`
+    fi
+
+    cd $_cd_param $_arg
+    abs_path_ret=`pwd`
+    if test x"$_file" != "x"; then
+      abs_path_ret="$abs_path_ret/$_file"
+    fi
+
+    cd $_cd_param $_sub_orig_dir
+  else
+    if echo -n "$_arg" | grep "^/" > /dev/null; then
+      abs_path_ret="$_arg"
+    else
+      abs_path_ret="$_sub_orig_dir/$_arg"
+    fi
+    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#//*#/#g'`
+    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/*$#/#'`
+    string_prev=
+    while test "x$abs_path_ret" != "x$string_prev" ; do
+      string_prev=$abs_path_ret
+      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/[^/][^/][^/][^/]*/\.\./#/#g' | sed 's#/[^/][^/.]/\.\./#/#g' | sed 's#/[^/.][^/]/\.\./#/#g' | sed 's#/[^/.]/\.\./#/#g'`
+      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#^/\.\./#/#' | sed 's#^/\.\.$#/#'`
+      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/\./#/#g' | sed 's#/\.$#/#'`
+    done
+    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/$##' | sed 's#^$#/#'`
+  fi
+}
+
+
+if test $# -gt 0; then
+  case "$1" in
+    -h|-help|--help)
+      print_help
+      exit 0
+      ;;
+    *)
+      echo "$script_name: error: invalid parameter: $1" >&2
+      exit 1
+      ;;
+  esac
+fi
+
+if test -f $script_dir/ldlp.conf; then
+  . $script_dir/ldlp.conf
+elif test -f $script_dir/formake.conf; then
+  . $script_dir/formake.conf
+fi
+
+ldlp_abs=
+if test -n "$LDLP_DIRS"; then
+  IFS_save=$IFS
+  IFS=:
+  for lp in $LDLP_DIRS; do
+    abs_path "$lp"
+    ldlp_abs="$ldlp_abs:$abs_path_ret"
+  done
+  IFS=$IFS_save
+  ldlp_abs=`echo -n "$ldlp_abs" | sed 's/^://'`
+fi
+
+rm -f $tmp_rc
+if test -f /etc/bash.bashrc; then
+  cat /etc/bash.bashrc >>$tmp_rc
+fi
+if test -f $HOME/.bashrc; then
+  cat $HOME/.bashrc >>$tmp_rc
+fi
+
+if test -n "$LDLP_ID"; then
+  ldlp_id="$LDLP_ID "
+elif test -n "$PACKAGE_NAME"; then
+  ldlp_id="$PACKAGE_NAME "
+else
+  ldlp_id=
+fi
+
+cat <<EOF >>$tmp_rc
+export LD_LIBRARY_PATH="$ldlp_abs:$LD_LIBRARY_PATH"
+export LIBPATH=$ldlp_abs:$LIBPATH
+export SHLIB_PATH=$ldlp_abs:$SHLIB_PATH
+export PS1="\[$(tput bold)\]\[$(tput setaf 1)\]${ldlp_id}ldlp\[$(tput sgr0)\] \\$ \[$(tput sgr0)\]"
+rm -f $tmp_rc
+EOF
+
+bash --rcfile $tmp_rc
+
