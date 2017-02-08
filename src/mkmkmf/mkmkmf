@@ -841,7 +841,7 @@ dist_files="$dist_files $src_dist_files"
 
 if test "$op_srcroot" = "."; then
   if test -d formake; then
-    opt_fscripts="abspath cfront cstem cstem+ install ldlp ldlprog libro listed mkdep optool syscap"
+    opt_fscripts="abspath cfront cstem cstem+ install ldlshell ldlprog libro listed mkdep optool syscap"
     formake_dist=
     for script in $opt_fscripts; do
       if test -f formake/$script; then

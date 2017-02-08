@@ -11,7 +11,7 @@ script_name=`basename "$0"`
 script_dir=`dirname $0`
 
 op_dir=formake
-formake_scripts="abspath cfront cstem cstem+ install ldlp ldlprog libro listed mkdep mkrule optool relpath syscap"
+formake_scripts="abspath cfront cstem cstem+ install ldlshell ldlprog libro listed mkdep mkrule optool relpath syscap"
 share_dir=
 
 print_help() {
@@ -34,7 +34,7 @@ Scripts:
   cstem+       configure automation     configure and probe C++ compiler
   cfront       mkmf automation          C/C++ compiler frontend based on cstem/cstem+
   install      general automation       portable version of BSD install
-  ldlp         test automation          load interactive shell with predefined LD library path environment
+  ldlshell     test automation          load interactive shell with predefined LD library path environment
   ldlprog      test automation          create program wrapper script with predefined LD library path
   libro        mkmf automation          build static and dynamic libraries
   listed       general automation       process space separated text lists
@@ -107,8 +107,8 @@ while test $# -gt 0; do
       s_install=1
       have_list=1
       ;;
-    ldlp)
-      s_ldlp=1
+    ldlshell)
+      s_ldlshell=1
       ;;
     ldlprog)
       s_ldlprog=1
@@ -154,7 +154,7 @@ if test -n "$s_mkrule"; then
 fi
 test -n "$s_libro$s_mkdep$s_cfront" && test -z "$s_cstem$s_cstemx" && s_cstem=1
 if test -n "$s_cstem$s_ctemx"; then
-  s_ldlp=1
+  s_ldlshell=1
   s_ldlprog=1
   s_mkdep=1
   s_syscap=1
