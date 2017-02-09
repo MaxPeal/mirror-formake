@@ -30,7 +30,27 @@ print_help() {
   cat <<EOF
 Load interactive shell with predefined LD library path environment
 
-Usage: $script_name
+Usage: ldlshell [PROFILE]
+
+ldlshell starts new interactive shell with predefined variables:
+  LD_LIBRARY_PATH - on Linux and other UNIX-like systems
+  LIBPATH         - on AIX
+  SHLIB_PATH      - on HP-UX
+
+ldlshell receives parameters from invironment variables in the following order of priority:
+  <PROFILE>_LDLP_DIRS   - list of library search directories separated with a colon (:)
+                          used if PROFILE parameter is specified
+  <PROFILE>_LDLP_ID     - name of the shell session used to identify it among different sessions
+                          used if PROFILE parameter is specified
+  LDLP_DIRS             - list of library search directories separated with a colon (:)
+  LDLP_ID               - name of the shell session used to identify it among different sessions
+  PACKAGE_NAME          - name of the shell session used to identify it among different sessions
+
+ldlshell also searches configuration files in it's local directory in the following order of priority:
+  ldlshell.conf
+  formake.conf
+
+Configuration file is loaded when found. It overried environment variables that are set.
 EOF
 }
 
@@ -85,7 +105,12 @@ abs_path() {
   fi
 }
 
+if test $# -gt 1; then
+  echo "$script_name: error: invalid number of parameters" >&2
+  exit 1
+fi
 
+op_profile=
 if test $# -gt 0; then
   case "$1" in
     -h|-help|--help)
@@ -93,8 +118,7 @@ if test $# -gt 0; then
       exit 0
       ;;
     *)
-      echo "$script_name: error: invalid parameter: $1" >&2
-      exit 1
+      op_profile=$1
       ;;
   esac
 fi
@@ -105,11 +129,44 @@ elif test -f $script_dir/formake.conf; then
   . $script_dir/formake.conf
 fi
 
+if test -n "$op_profile"; then
+  profile_check=`echo -n "$op_profile" | sed 's/[^a-zA-Z0-9_]//g'`
+  if test "$profile_check" != "$op_profile"; then
+    echo "$script_name: error: bad profile name: $op_profile"
+    exit 1
+  fi
+  case "$op_profile" in
+    [0-9]*)
+      echo "$script_name: error: bad profile name. Can't start with number: $op_profile"
+      exit 1
+      ;;
+  esac
+      
+  eval ldlp_dirs=\$${op_profile}_LDLP_DIRS
+  eval ldlp_id=\$${op_profile}_LDLP_ID
+  if test -n "$ldlp_id"; then
+    ldlp_id="$ldlp_id "
+  elif test -n "$PACKAGE_NAME"; then
+    ldlp_id="$PACKAGE_NAME "
+  else
+    ldlp_id="$op_profile "
+  fi
+else
+  ldlp_dirs=$LDLP_DIRS
+  if test -n "$LDLP_ID"; then
+    ldlp_id="$LDLP_ID "
+  elif test -n "$PACKAGE_NAME"; then
+    ldlp_id="$PACKAGE_NAME "
+  else
+    ldlp_id=
+  fi
+fi
+
 ldlp_abs=
-if test -n "$LDLP_DIRS"; then
+if test -n "$ldlp_dirs"; then
   IFS_save=$IFS
   IFS=:
-  for lp in $LDLP_DIRS; do
+  for lp in $ldlp_dirs; do
     abs_path "$lp"
     ldlp_abs="$ldlp_abs:$abs_path_ret"
   done
@@ -123,14 +180,6 @@ if test -f /etc/bash.bashrc; then
 fi
 if test -f $HOME/.bashrc; then
   cat $HOME/.bashrc >>$tmp_rc
-fi
-
-if test -n "$LDLP_ID"; then
-  ldlp_id="$LDLP_ID "
-elif test -n "$PACKAGE_NAME"; then
-  ldlp_id="$PACKAGE_NAME "
-else
-  ldlp_id=
 fi
 
 command -v ls >/dev/null 2>&1
@@ -175,12 +224,22 @@ else
   IFS=$IFS_save
 fi
 
+ldlp_abs=`echo -n "$ldlp_abs" | sed 's/^:*//' | sed 's/:*$//'`
+if test -n "$ldlp_abs"; then
+  ldlp_abs="$ldlp_abs:"
+fi
+
 if test -n "$bash_cmd"; then
   cat <<EOF >>$tmp_rc
-export LD_LIBRARY_PATH="$ldlp_abs:$LD_LIBRARY_PATH"
-export LIBPATH=$ldlp_abs:$LIBPATH
-export SHLIB_PATH=$ldlp_abs:$SHLIB_PATH
+export LD_LIBRARY_PATH="${ldlp_abs}$LD_LIBRARY_PATH"
+export LIBPATH=${ldlp_abs}$LIBPATH
+export SHLIB_PATH=${ldlp_abs}$SHLIB_PATH
 export PS1="\[\e[1;31m\]${ldlp_id}ldlshell\[\e[0;37m\] \\$ "
+cat <<SUB_EOF
+
+LD_LIBRARY_PATH: \$LD_LIBRARY_PATH
+
+SUB_EOF
 rm -f $tmp_rc
 EOF
 
@@ -189,7 +248,7 @@ else
   export LD_LIBRARY_PATH="$ldlp_abs:$LD_LIBRARY_PATH"
   export LIBPATH=$ldlp_abs:$LIBPATH
   export SHLIB_PATH=$ldlp_abs:$SHLIB_PATH
-  export PS1="${ldlp_id}ldlp \\$ "
+  export PS1="${ldlp_id}ldlshell \\$ "
   /bin/sh
 fi
 
