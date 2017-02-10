@@ -385,13 +385,13 @@ get_random() {
   fi
 }
 
-get_ldlprog() {
-  LDLPROG=
-  ldlprog -help >/dev/null 2>&1
+get_ldlwrap() {
+  LDLWRAP=
+  ldlwrap -help >/dev/null 2>&1
   if test $? -ne 127; then
-    LDLPROG=ldlprog
-  elif test -f $script_dir/ldlprog; then
-    LDLPROG=$script_dir/ldlprog
+    LDLWRAP=ldlwrap
+  elif test -f $script_dir/ldlwrap; then
+    LDLWRAP=$script_dir/ldlwrap
   fi
 }
 
@@ -600,7 +600,7 @@ mkprog() {
 
   get_syscap
   get_cstem
-  get_ldlprog
+  get_ldlwrap
   
   cc_cmd=`$CSTEM -cmd`
   if test -z "$cc_cmd"; then
@@ -648,8 +648,8 @@ $prog_local: $op_obj $op_prereq
 	$cc_cmd -o $prog_local $op_obj $op_ldflags
 EOF
 
-  if test -n "$LDLPROG" && test x$op_disable_ldlp = x; then
-    $LDLPROG $op_ldflags ./$prog_local
+  if test -n "$LDLWRAP" && test x$op_disable_ldlp = x; then
+    $LDLWRAP $op_ldflags ./$prog_local
   fi
 
   if test x$op_install = x1; then
@@ -673,7 +673,7 @@ clean-$op_name:
 	rm -f $prog_local
 distclean: clean-$op_name
 EOF
-  if test -n "$LDLPROG" && test x$op_disable_ldlp = 1; then
+  if test -n "$LDLWRAP" && test x$op_disable_ldlp = 1; then
     echo "	rm -f ${prog_local}-ldlp"
   fi
   
