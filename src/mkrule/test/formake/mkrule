@@ -862,21 +862,14 @@ EOF
     for file in $lib_symbolic; do
       echo "	/bin/cp $cp_no_deref $file \$(DESTDIR)$op_install_path"
     done
-    case "$op_install_path" in
-      /lib|/lib/*|/usr/lib|/usr/lib/*|/usr/local/lib|/usr/local/lib/*)
-        case "$os_type" in
-          gnulinux)
-            cat <<EOF
-	if test x\$(DESTDIR) = x; then \\
-      ldconfig $op_install_path \\
-    fi
-EOF
-            ;;
-          solaris)
-            :
-            # TODO
-            ;;
-        esac
+
+    case "$os_type" in
+      gnulinux)
+        printf "\t%s\n" "PATH=\$\$PATH:/sbin ldconfig -n $op_install_path"
+        ;;
+      solaris)
+        :
+        # TODO
         ;;
     esac
     cat <<EOF
