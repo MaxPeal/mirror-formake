@@ -28,7 +28,7 @@ if test -n "$LIBRO" && test -z "$LIBRO_REDIRECT"; then
 fi
 test -n "$PROG_AR" && AR=$PROG_AR
 test -n "$AR" || AR=ar
-test -n "$AR_FLAGS" || AR_FLAGS=clq
+test -n "$AR_FLAGS" || AR_FLAGS=rcs
 ################################################################################
 
 print_help() {
@@ -143,7 +143,7 @@ mkshared() {
       fi
 
       run_command rm -f $out_dir$lib_so $out_dir$lib_so_c $out_dir$lib_so_cra
-  	  run_command $cc_cmd $op_ldflags -o $op_dir/$lib_so_cra -shared -Wl,-soname,$lib_so $op_obj
+  	  run_command $cc_cmd $op_ldflags -shared -Wl,-soname,$lib_so_c -o $op_dir/$lib_so_cra $op_obj
   	  run_command ln -s $lib_so_cra $out_dir$lib_so_c
   	  run_command ln -s $lib_so_cra $out_dir$lib_so
     ;;
