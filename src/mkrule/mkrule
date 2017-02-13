@@ -865,11 +865,7 @@ EOF
 
     case "$os_type" in
       gnulinux)
-        printf "\t%s\n" "PATH=\$\$PATH:/sbin ldconfig -n $op_install_path"
-        ;;
-      solaris)
-        :
-        # TODO
+        echo "	PATH=\$\$PATH:/sbin ldconfig -n \$(DESTDIR)$op_install_path"
         ;;
     esac
     cat <<EOF
@@ -880,6 +876,11 @@ EOF
       file_base=`basename $file`
 	  echo "	rm -f \$(DESTDIR)$op_install_path/$file_base"
     done
+    case "$os_type" in
+      gnulinux)
+        echo "	PATH=\$\$PATH:/sbin ldconfig -n \$(DESTDIR)$op_install_path"
+        ;;
+    esac
   fi
 
   cat <<EOF
