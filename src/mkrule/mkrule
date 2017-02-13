@@ -431,7 +431,7 @@ mkobj() {
     cc_id=`$CSTEM -id`
     case x$cc_id in
       xgcc)
-        cc_cmd="$cc_cmd -fPIC -DPIC"
+        cc_cmd="$cc_cmd -fPIC"
         ;;
     esac
   fi
