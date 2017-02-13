@@ -126,12 +126,19 @@ mkshared() {
   else
     out_dir=
   fi
+
+  if test -z "$op_age"; then
+    age_pref=
+  else
+    age_pref=".${op_age}"
+  fi
+
   orig_dir=`pwd`
   case "$cc_id" in
     gcc|*)
       lib_so="lib${op_name}.so"
       lib_so_c="${lib_so}.${op_current}"
-      lib_so_cra="${lib_so_c}.${op_revision}.${op_age}"
+      lib_so_cra="${lib_so_c}.${op_revision}$age_pref"
 
       if test x$op_print4mk = x1; then
         echo "TARGETS $out_dir$lib_so $out_dir$lib_so_c $out_dir$lib_so_cra"
@@ -143,7 +150,7 @@ mkshared() {
       fi
 
       run_command rm -f $out_dir$lib_so $out_dir$lib_so_c $out_dir$lib_so_cra
-  	  run_command $cc_cmd $op_ldflags -shared -Wl,-soname,$lib_so_c -o $op_dir/$lib_so_cra $op_obj
+  	  run_command $cc_cmd -shared -Wl,-soname,$lib_so_c -o $op_dir/$lib_so_cra $op_obj $op_ldflags
   	  run_command ln -s $lib_so_cra $out_dir$lib_so_c
   	  run_command ln -s $lib_so_cra $out_dir$lib_so
     ;;
@@ -182,6 +189,7 @@ if test $# -eq 0; then
   exit 1
 fi
 
+op_ver=
 cxx_mode=
 current_opt=
 while test $# -gt 0; do
@@ -228,11 +236,11 @@ while test $# -gt 0; do
           current_opt=
           ;;
         ver)
-          _current=`echo -n $1 | sed 's/^\([0-9]*\).*/\1/'`
-          rest=`echo -n $1 | sed 's/^[0-9]*\.*//'`
-          _revision=`echo -n $rest | sed 's/^\([0-9]*\).*/\1/'`
-          rest=`echo -n $rest | sed 's/^[0-9]*\.*//'`
-          _age=`echo -n $rest | sed 's/^\([0-9]*\).*/\1/'`
+          _current=`echo -n "$1" | sed 's/\..*//'`
+          rest=`echo -n "$1" | sed 's/^[^.]*\.*//'`
+          _revision=`echo -n "$rest" | sed 's/\..*//'`
+          rest=`echo -n "$rest" | sed 's/^[^.]*\.*//'`
+          _age=`echo -n "$rest" | sed 's/\..*//'`
           op_ver=$1
           op_current=$_current
           op_revision=$_revision
@@ -270,6 +278,8 @@ if test -z "$op_ver"; then
   op_current=1
   op_revision=0
   op_age=0
+elif test -z "$op_revision"; then
+  op_revision=0
 fi
 
 if test -n "$op_dir" && test -z "$op_print"; then

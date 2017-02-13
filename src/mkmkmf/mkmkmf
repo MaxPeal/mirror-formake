@@ -359,15 +359,7 @@ while test $# -gt 0; do
           fi
           ;;
         lib-ver)
-          _current=`echo -n $1 | sed 's/^\([0-9]*\).*/\1/'`
-          rest=`echo -n $1 | sed 's/^[0-9]*\.*//'`
-          _revision=`echo -n $rest | sed 's/^\([0-9]*\).*/\1/'`
-          rest=`echo -n $rest | sed 's/^[0-9]*\.*//'`
-          _age=`echo -n $rest | sed 's/^\([0-9]*\).*/\1/'`
           eval lib_${prefix}_ver=\$1
-          eval lib_${prefix}_current=\$_current
-          eval lib_${prefix}_revision=\$_revision
-          eval lib_${prefix}_age=\$_age
           current_opt=
           ;;
         inst-bin)
@@ -431,9 +423,6 @@ for prefix in $lib_prefix_list; do
   eval op_ver=\$lib_${prefix}_ver
   if test -z "$op_ver"; then
     eval lib_${prefix}_ver=\"0.0.0\"
-    eval lib_${prefix}_current=0
-    eval lib_${prefix}_revision=0
-    eval lib_${prefix}_age=0
   fi
   eval no_install=\$lib_${prefix}_no_install
   if test -z "$no_install"; then

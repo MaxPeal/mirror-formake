@@ -1700,15 +1700,7 @@ while test $# -gt 0; do
           esac
           ;;
         ver)
-          _current=`echo -n $1 | sed 's/^\([0-9]*\).*/\1/'`
-          rest=`echo -n $1 | sed 's/^[0-9]*\.*//'`
-          _revision=`echo -n $rest | sed 's/^\([0-9]*\).*/\1/'`
-          rest=`echo -n $rest | sed 's/^[0-9]*\.*//'`
-          _age=`echo -n $rest | sed 's/^\([0-9]*\).*/\1/'`
           op_ver=$1
-          op_current=$_current
-          op_revision=$_revision
-          op_age=$_age
           current_opt=
           ;;
         rename)
