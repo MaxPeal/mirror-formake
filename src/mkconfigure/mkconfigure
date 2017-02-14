@@ -19,18 +19,18 @@ rm_out_file=0
 print_help() {
   cat <<EOF
 $script_name [options]
- -name NAME     package name (PACKAGE_NAME) [$op_pkgname]
- -ver VERSION   package version (PACKAGE_VERSION)
- -params=".."   list of parameters for parsing
- -cc            probe and configure C compiler
- -c++           probe and configure C++ compiler
- -lib           probe the tools required for building C/C++ libraries
- -syscap ".."   probe a system with syscap test tool
- -sh CODE       insert shell string
- -build-h       generate BUILDROOT/build.h config header
- -mkpackage     create package
- -o FILE        output script file [$out_file]
- -v             print version
+ -name NAME        package name (PACKAGE_NAME) [$op_pkgname]
+ -version VERSION  package version (PACKAGE_VERSION)
+ -params=".."      list of parameters for parsing
+ -cc               probe and configure C compiler
+ -c++              probe and configure C++ compiler
+ -lib              probe the tools required for building C/C++ libraries
+ -syscap ".."      probe a system with syscap test tool
+ -sh CODE          insert shell string
+ -build-h          generate BUILDROOT/build.h config header
+ -mkpackage        create package
+ -o FILE           output script file [$out_file]
+ -v                print version
 EOF
 }
 
@@ -62,8 +62,8 @@ while test $# -gt 0; do
     -name)
       current_opt=name
       ;;
-    -ver)
-      current_opt=ver
+    -version)
+      current_opt=version
       ;;
     -params=*)
       op_params=`echo -n "$1" | sed 's/^[^=]*=//'`
@@ -108,7 +108,7 @@ while test $# -gt 0; do
           op_pkgname=$1
           current_opt=
           ;;
-        ver)
+        version)
           op_pkgver=$1
           current_opt=
           ;;
