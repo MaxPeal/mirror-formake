@@ -236,7 +236,7 @@ cat <<TOP_EOF >>$out_file
 STD_OPTIONS="$std_options"
 OPTIONS="$op_params"
 
-optool validate \$STD_OPTIONS \$OPTIONS - "\$@" || exit 1
+optool validate xh \$STD_OPTIONS \$OPTIONS - "\$@" || exit 1
 if optool test any -h -help --help - "\$@"; then
   cat <<EOF
 Usage: configure [options]

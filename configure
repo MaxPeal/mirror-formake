@@ -31,7 +31,7 @@ STD_OPTIONS="-h -help --help -prefix -exec-prefix -bindir -sbindir -libexecdir -
              -etcdir -vardir -sharedir -mandir -docdir"
 OPTIONS=""
 
-optool validate $STD_OPTIONS $OPTIONS - "$@" || exit 1
+optool validate xh $STD_OPTIONS $OPTIONS - "$@" || exit 1
 if optool test any -h -help --help - "$@"; then
   cat <<EOF
 Usage: configure [options]
