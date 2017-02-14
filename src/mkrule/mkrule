@@ -201,8 +201,8 @@ print_install_help() {
 $script_name install TYPE [OPTIONS] FILE..
   TYPE             files type: bin, sbin, libexec, lib, inc, share, man[0-9], doc, etc
   -t TARGET        specify phony target that start generated rules
-  -rename NAME     set destination file name
-  -d DIR           installation directory
+  -o FILE          destination file path (overrides -d options)
+  -d DIR           destination directory path (overrides -o option)
   -srcdir PATH     path to the source directory [\$SRCDIR]
   FILE..           files to install. RC files are accepted
 EOF
@@ -1049,8 +1049,8 @@ EOF
 
 
   num_files=`echo "$op_files" | wc -w`
-  if test -n "$op_rename" && test $num_files -gt 1; then
-    echo "$script_name: option '-rename' can't be used for multiple installation files" >&2
+  if test -n "$op_ofile" && test $num_files -gt 1; then
+    echo "$script_name: option '-o' can't be used for multiple installation files" >&2
     exit 1
   fi
 
@@ -1105,8 +1105,8 @@ EOF
 install: install-$op_target
 install-$op_target: $op_files
 EOF
-  if test -n "$op_rename"; then
-    printf "\t%s\n" "$INSTALL -m $perm -D $op_files \$(DESTDIR)$dir/$op_rename"
+  if test -n "$op_ofile"; then
+    printf "\t%s\n" "$INSTALL -m $perm -D $op_files \$(DESTDIR)$dir/$op_ofile"
   else
     for file in $op_files; do
       file_base=`basename $file`
@@ -1117,8 +1117,8 @@ EOF
 uninstall: uninstall-$op_target
 uninstall-$op_target:
 EOF
-  if test -n "$op_rename"; then
-    printf "\t%s\n" "rm -Rf \$(DESTDIR)$dir/$op_rename"
+  if test -n "$op_ofile"; then
+    printf "\t%s\n" "rm -Rf \$(DESTDIR)$dir/$op_ofile"
   else
     for file in $op_files; do
       file_base=`basename $file`
@@ -1410,6 +1410,13 @@ while test $# -gt 0; do
       op_pic=1
       current_opt=
       ;;
+    -o)
+      if test $op_mode != install; then
+        echo "$script_name: error: invalid parameter $1 for current mode" >&2
+        exit 1
+      fi
+      current_opt=ofile
+      ;;
     -d)
       case $op_mode in
         obj|prog|lib|subdir|install)
@@ -1608,13 +1615,6 @@ while test $# -gt 0; do
       op_dist=1
       current_opt=
       ;;
-    -rename)
-      if test $op_mode != install; then
-        echo "$script_name: error: invalid parameter $1 for current mode" >&2
-        exit 1
-      fi
-      current_opt=rename
-      ;;
     *)
       case "$current_opt" in
         buildroot)
@@ -1704,8 +1704,8 @@ while test $# -gt 0; do
           op_ver=$1
           current_opt=
           ;;
-        rename)
-          op_rename=$1
+        ofile)
+          op_ofile=$1
           current_opt=
           ;;
         *)
