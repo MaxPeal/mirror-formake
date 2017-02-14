@@ -14,8 +14,8 @@ PATH=$FORMAKE:$PATH
 LIBRO=
 AR=
 AR_FLAGS=
-if test -f $script_dir/config.rc; then
-  . $script_dir/config.rc
+if test -f $script_dir/formake.conf; then
+  . $script_dir/formake.conf
 fi
 test -n "$FORMAKE_LIBRO" && LIBRO=$FORMAKE_LIBRO
 if test -n "$LIBRO" && test -z "$LIBRO_REDIRECT"; then

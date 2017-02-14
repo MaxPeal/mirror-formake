@@ -144,8 +144,8 @@ CSTEM=
 ########## CX_BLOCK_START
 CSTEMX=
 ########## BLOCK_END
-if test -f $script_dir/config.rc; then
-  . $script_dir/config.rc
+if test -f $script_dir/formake.conf; then
+  . $script_dir/formake.conf
 fi
 ########## CC_BLOCK_START
 test -n "$FORMAKE_CSTEM" && CSTEM=$FORMAKE_CSTEM

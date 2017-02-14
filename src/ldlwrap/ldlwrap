@@ -13,8 +13,8 @@ orig_dir=`pwd`
 # LOAD CONFIG
 PATH=$FORMAKE:$PATH
 LDLWRAP=
-if test -f $script_dir/config.rc; then
-  . $script_dir/config.rc
+if test -f $script_dir/formake.conf; then
+  . $script_dir/formake.conf
 fi
 test -n "$FORMAKE_LDLWRAP" && LDLWRAP=$FORMAKE_LDLWRAP
 if test -n "$LDLWRAP" && test -z "$LDLWRAP_REDIRECT"; then

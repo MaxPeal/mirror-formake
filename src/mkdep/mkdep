@@ -15,8 +15,8 @@ tmp_file3=/tmp/dep$$.t3
 # LOAD CONFIG
 PATH=$FORMAKE:$PATH
 MKDEP=
-if test -f $script_dir/config.rc; then
-  . $script_dir/config.rc
+if test -f $script_dir/formake.conf; then
+  . $script_dir/formake.conf
 fi
 test -n "$FORMAKE_MKDEP" && MKDEP=$FORMAKE_MKDEP
 if test -n "$MKDEP" && test -z "$MKDEP_REDIRECT"; then

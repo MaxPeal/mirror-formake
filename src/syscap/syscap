@@ -20,8 +20,8 @@ script_dir=`dirname $0`
 # LOAD CONFIG
 PATH=$FORMAKE:$PATH
 SYSCAP=
-if test -f $script_dir/config.rc; then
-  . $script_dir/config.rc
+if test -f $script_dir/formake.conf; then
+  . $script_dir/formake.conf
 fi
 test -n "$FORMAKE_SYSCAP" && SYSCAP=$FORMAKE_SYSCAP
 if test -n "$SYSCAP" && test -z "$SYSCAP_REDIRECT"; then

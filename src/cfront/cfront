@@ -11,8 +11,8 @@ script_dir=`dirname $0`
 # LOAD CONFIG
 PATH=$FORMAKE:$PATH
 CFRONT=
-if test -f $script_dir/config.rc; then
-  . $script_dir/config.rc
+if test -f $script_dir/formake.conf; then
+  . $script_dir/formake.conf
 fi
 test -n "$FORMAKE_CFRONT" && CFRONT=$FORMAKE_CFRONT
 if test -n "$CFRONT" && test -z "$CFRONT_REDIRECT"; then

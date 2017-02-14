@@ -11,8 +11,8 @@ script_dir=`dirname $0`
 # LOAD CONFIG
 PATH=$FORMAKE:$PATH
 OPTOOL=
-if test -f $script_dir/config.rc; then
-  . $script_dir/config.rc
+if test -f $script_dir/formake.conf; then
+  . $script_dir/formake.conf
 fi
 test -n "$FORMAKE_OPTOOL" && OPTOOL=$FORMAKE_OPTOOL
 if test -n "$OPTOOL" && test -z "$OPTOOL_REDIRECT"; then
