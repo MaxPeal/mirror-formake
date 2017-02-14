@@ -240,34 +240,34 @@ optool validate xh \$STD_OPTIONS \$OPTIONS - "\$@" || exit 1
 if optool test any -h -help --help - "\$@"; then
   cat <<EOF
 Usage: configure [options]
-  -prefix PREFIX         path to install architecture-independent files [/usr/local]
-  -exec-prefix EPREFIX   path to install architecture-dependent files [PREFIX]
-  -bindir DIR            bin path [EPREFIX/bin]
-  -sbindir DIR           sbin path [EPREFIX/sbin]
-  -libexecdir DIR        libexec path [EPREFIX/libexec]
-  -libdir DIR            lib path [EPREFIX/lib]
-  -incdir DIR            include path [PREFIX/include]
-  -etcdir DIR            etc path [PREFIX/etc]
-  -vardir DIR            var path [PREFIX/var]
-  -sharedir DIR          share path [PREFIX/share]
-  -mandir DIR            man path [SHAREDIR/man]
-  -docdir DIR            doc path [SHAREDIR/doc]
+  --prefix=PREFIX         path to install architecture-independent files [/usr/local]
+  --exec-prefix=EPREFIX   path to install architecture-dependent files [PREFIX]
+  --bindir=DIR            bin path [EPREFIX/bin]
+  --sbindir=DIR           sbin path [EPREFIX/sbin]
+  --libexecdir=DIR        libexec path [EPREFIX/libexec]
+  --libdir=DIR            lib path [EPREFIX/lib]
+  --incdir=DIR            include path [PREFIX/include]
+  --etcdir=DIR            etc path [PREFIX/etc]
+  --vardir=DIR            var path [PREFIX/var]
+  --sharedir=DIR          share path [PREFIX/share]
+  --mandir=DIR            man path [SHAREDIR/man]
+  --docdir=DIR            doc path [SHAREDIR/doc]
 TOP_EOF
 if test x$op_cc = x1; then
   cat <<TOP_EOF >>$out_file
-  -cc CMD                C compiler command
-  -cflags=FLAGS          C compiler flags
+  --cc=CMD                C compiler command
+  --cflags=FLAGS          C compiler flags
 TOP_EOF
 fi
 if test x$op_cxx = x1; then
   cat <<TOP_EOF >>$out_file
-  -cxx CMD               C++ compiler command
-  -cxxflags=FLAGS        C++ compiler flags
+  --cxx=CMD               C++ compiler command
+  --cxxflags=FLAGS        C++ compiler flags
 TOP_EOF
 fi
 if test -n "$op_cc$op_cxx"; then
   cat <<TOP_EOF >>$out_file
-  -ldflags=FLAGS         LD flags
+  --ldflags=FLAGS         LD flags
 TOP_EOF
 fi
 if test -f $tmp_help; then
