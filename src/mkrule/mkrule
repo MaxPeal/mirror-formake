@@ -1125,11 +1125,11 @@ uninstall: uninstall-$op_target
 uninstall-$op_target:
 EOF
   if test -n "$op_ofile"; then
-    printf "\t%s\n" "rm -Rf \$(DESTDIR)$op_ofile"
+    printf "\t%s\n" "rm -f \$(DESTDIR)$op_ofile"
   else
     for file in $op_files; do
       file_base=`basename $file`
-      printf "\t%s\n" "rm -Rf \$(DESTDIR)$dir/$file_base"
+      printf "\t%s\n" "rm -f \$(DESTDIR)$dir/$file_base"
     done
   fi
   if test $op_type = doc || test $op_type = data; then
