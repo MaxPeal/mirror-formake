@@ -1100,6 +1100,9 @@ EOF
   esac
 
   test -z "$op_dir" || dir=$op_dir
+  if test "$dir" != '/'; then
+    dir=`echo -n "$dir" | sed 's#/*$##'`
+  fi
 
   cat <<EOF
 install: install-$op_target
@@ -1124,6 +1127,14 @@ EOF
       file_base=`basename $file`
       printf "\t%s\n" "rm -Rf \$(DESTDIR)$dir/$file_base"
     done
+  fi
+  if test $op_type = doc || test $op_type = share; then
+    printf "\t%s\n" "if find \$(DESTDIR)$dir ! -type d > /dev/null; then : ; else rm -Rf \$(DESTDIR)$dir; fi"
+  elif test $op_type = inc; then
+    dir_base=`basename $dir`
+    if test "$dir_base" != include; then
+      printf "\t%s\n" "if find \$(DESTDIR)$dir ! -type d > /dev/null; then : ; else rm -Rf \$(DESTDIR)$dir; fi"
+    fi
   fi
   echo ""
 }

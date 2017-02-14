@@ -1,6 +1,7 @@
 #!/bin/sh
 #
-# Author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
+# Formake mkrule
+# author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
 #
 
 version_string="mkrule 1.0"
@@ -26,6 +27,10 @@ INCDIR=
 SHAREDIR=
 MANDIR=
 DOCDIR=
+PACKAGE_NAME=
+PACKAGE_VERSION=
+PACKAGE_SHAREDIR=
+PACKAGE_DOCDIR=
 
 if test -f $script_dir/config.rc; then
   . $script_dir/config.rc
@@ -53,6 +58,11 @@ test -n "$INCDIR"      || INCDIR=$PREFIX/include
 test -n "$SHAREDIR"    || SHAREDIR=$PREFIX/share
 test -n "$MANDIR"      || MANDIR=$SHAREDIR/man
 test -n "$DOCDIR"      || DOCDIR=$SHAREDIR/doc
+
+test -n "$PACKAGE_NAME"        || PACKAGE_NAME=package
+test -n "$PACKAGE_VERSION"     || PACKAGE_VERSION=1.0.0
+test -n "$PACKAGE_SHAREDIR"    || PACKAGE_SHAREDIR=$SHAREDIR/$PACKAGE_NAME$PACKAGE_VERSION
+test -n "$PACKAGE_DOCDIR"      || PACKAGE_DOCDIR=$SHAREDIR/doc/$PACKAGE_NAME$PACKAGE_VERSION
 ################################################################################
 
 cd_param=
@@ -114,6 +124,7 @@ $script_name prog [OPTIONS] -src SRC.. -obj OBJ..
   -c++             C++ mode [autodetect]
   -n NAME          program name
   -ldflags=FLAGS   linker flags
+  -disable-ldlp    do not create ldlp wrapper script for the program
   -d DIR           output directory for generated executable file
   -p PREREQ..      additional prerequisites of a rule
   -all             add to default 'all' rule
@@ -190,8 +201,8 @@ print_install_help() {
 $script_name install TYPE [OPTIONS] FILE..
   TYPE             files type: bin, sbin, libexec, lib, inc, share, man[0-9], doc, etc
   -t TARGET        specify phony target that start generated rules
-  -rename NAME     set destination file name
-  -d DIR           installation directory
+  -o FILE          destination file path (overrides -d options)
+  -d DIR           destination directory path (overrides -o option)
   -srcdir PATH     path to the source directory [\$SRCDIR]
   FILE..           files to install. RC files are accepted
 EOF
@@ -307,13 +318,11 @@ get_cstem() {
   $xstem -h >/dev/null 2>&1
   if test $? -ne 127; then
     CSTEM=$xstem
-  else
-    if test -f $script_dir/$xstem; then
+  elif test -f $script_dir/$xstem; then
       CSTEM=$script_dir/$xstem
-    else
-      echo "$script_name: error: $xstem not found" >&2
-      exit 1
-    fi
+  else
+    echo "$script_name: error: $xstem not found" >&2
+    exit 1
   fi
 }
 
@@ -376,6 +385,16 @@ get_random() {
   fi
 }
 
+get_ldlwrap() {
+  LDLWRAP=
+  ldlwrap -help >/dev/null 2>&1
+  if test $? -ne 127; then
+    LDLWRAP=ldlwrap
+  elif test -f $script_dir/ldlwrap; then
+    LDLWRAP=$script_dir/ldlwrap
+  fi
+}
+
 mkobj() {
   if test -z "$op_src"; then
     echo "$script_name: missing parameter -src" >&2
@@ -412,7 +431,7 @@ mkobj() {
     cc_id=`$CSTEM -id`
     case x$cc_id in
       xgcc)
-        cc_cmd="$cc_cmd -fPIC -DPIC"
+        cc_cmd="$cc_cmd -fPIC"
         ;;
     esac
   fi
@@ -581,6 +600,7 @@ mkprog() {
 
   get_syscap
   get_cstem
+  get_ldlwrap
   
   cc_cmd=`$CSTEM -cmd`
   if test -z "$cc_cmd"; then
@@ -628,6 +648,10 @@ $prog_local: $op_obj $op_prereq
 	$cc_cmd -o $prog_local $op_obj $op_ldflags
 EOF
 
+  if test -n "$LDLWRAP" && test x$op_disable_ldlp = x; then
+    $LDLWRAP $op_ldflags ./$prog_local
+  fi
+
   if test x$op_install = x1; then
     if test -z "$op_install_path"; then
       op_install_path=$BINDIR
@@ -649,6 +673,9 @@ clean-$op_name:
 	rm -f $prog_local
 distclean: clean-$op_name
 EOF
+  if test -n "$LDLWRAP" && test x$op_disable_ldlp = 1; then
+    echo "	rm -f ${prog_local}-ldlp"
+  fi
   
   if test -n "$op_rc"; then
     echo "PROGRAM=\"$prog_local\"" > $op_rc
@@ -835,6 +862,12 @@ EOF
     for file in $lib_symbolic; do
       echo "	/bin/cp $cp_no_deref $file \$(DESTDIR)$op_install_path"
     done
+
+    case "$os_type" in
+      gnulinux)
+        echo "	PATH=\$\$PATH:/sbin ldconfig -n \$(DESTDIR)$op_install_path"
+        ;;
+    esac
     cat <<EOF
 uninstall: uninstall-$op_name
 uninstall-$op_name:
@@ -843,6 +876,11 @@ EOF
       file_base=`basename $file`
 	  echo "	rm -f \$(DESTDIR)$op_install_path/$file_base"
     done
+    case "$os_type" in
+      gnulinux)
+        echo "	PATH=\$\$PATH:/sbin ldconfig -n \$(DESTDIR)$op_install_path"
+        ;;
+    esac
   fi
 
   cat <<EOF
@@ -1011,8 +1049,8 @@ EOF
 
 
   num_files=`echo "$op_files" | wc -w`
-  if test -n "$op_rename" && test $num_files -gt 1; then
-    echo "$script_name: option '-rename' can't be used for multiple installation files" >&2
+  if test -n "$op_ofile" && test $num_files -gt 1; then
+    echo "$script_name: option '-o' can't be used for multiple installation files" >&2
     exit 1
   fi
 
@@ -1044,7 +1082,7 @@ EOF
       ;;
     share)
       perm="0444"
-      dir=$SHAREDIR
+      dir=$PACKAGE_SHAREDIR
       ;;
     man[0-9])
       perm="0444"
@@ -1053,7 +1091,7 @@ EOF
       ;;
     doc)
       perm="0444"
-      dir=$DOCDIR
+      dir=$PACKAGE_DOCDIR
       ;;
     etc)
       perm="0444"
@@ -1062,13 +1100,16 @@ EOF
   esac
 
   test -z "$op_dir" || dir=$op_dir
+  if test "$dir" != '/'; then
+    dir=`echo -n "$dir" | sed 's#/*$##'`
+  fi
 
   cat <<EOF
 install: install-$op_target
 install-$op_target: $op_files
 EOF
-  if test -n "$op_rename"; then
-    printf "\t%s\n" "$INSTALL -m $perm -D $op_files \$(DESTDIR)$dir/$op_rename"
+  if test -n "$op_ofile"; then
+    printf "\t%s\n" "$INSTALL -m $perm -D $op_files \$(DESTDIR)$dir/$op_ofile"
   else
     for file in $op_files; do
       file_base=`basename $file`
@@ -1079,13 +1120,21 @@ EOF
 uninstall: uninstall-$op_target
 uninstall-$op_target:
 EOF
-  if test -n "$op_rename"; then
-    printf "\t%s\n" "rm -Rf \$(DESTDIR)$dir/$op_rename"
+  if test -n "$op_ofile"; then
+    printf "\t%s\n" "rm -Rf \$(DESTDIR)$dir/$op_ofile"
   else
     for file in $op_files; do
       file_base=`basename $file`
       printf "\t%s\n" "rm -Rf \$(DESTDIR)$dir/$file_base"
     done
+  fi
+  if test $op_type = doc || test $op_type = share; then
+    printf "\t%s\n" "if find \$(DESTDIR)$dir ! -type d > /dev/null; then : ; else rm -Rf \$(DESTDIR)$dir; fi"
+  elif test $op_type = inc; then
+    dir_base=`basename $dir`
+    if test "$dir_base" != include; then
+      printf "\t%s\n" "if find \$(DESTDIR)$dir ! -type d > /dev/null; then : ; else rm -Rf \$(DESTDIR)$dir; fi"
+    fi
   fi
   echo ""
 }
@@ -1372,6 +1421,13 @@ while test $# -gt 0; do
       op_pic=1
       current_opt=
       ;;
+    -o)
+      if test $op_mode != install; then
+        echo "$script_name: error: invalid parameter $1 for current mode" >&2
+        exit 1
+      fi
+      current_opt=ofile
+      ;;
     -d)
       case $op_mode in
         obj|prog|lib|subdir|install)
@@ -1477,6 +1533,14 @@ while test $# -gt 0; do
       op_ldflags=`echo -n "$1" | sed 's/^[^=]*=//'`
       current_opt=
       ;;
+    -disable-ldlp)
+      if test $op_mode != prog; then
+        echo "$script_name: error: invalid parameter $1 for current mode" >&2
+        exit 1
+      fi
+      op_disable_ldlp=1
+      current_opt=
+      ;;
     -all)
       case $op_mode in
         prog|lib|subdir)
@@ -1561,13 +1625,6 @@ while test $# -gt 0; do
       fi
       op_dist=1
       current_opt=
-      ;;
-    -rename)
-      if test $op_mode != install; then
-        echo "$script_name: error: invalid parameter $1 for current mode" >&2
-        exit 1
-      fi
-      current_opt=rename
       ;;
     *)
       case "$current_opt" in
@@ -1655,19 +1712,11 @@ while test $# -gt 0; do
           esac
           ;;
         ver)
-          _current=`echo -n $1 | sed 's/^\([0-9]*\).*/\1/'`
-          rest=`echo -n $1 | sed 's/^[0-9]*\.*//'`
-          _revision=`echo -n $rest | sed 's/^\([0-9]*\).*/\1/'`
-          rest=`echo -n $rest | sed 's/^[0-9]*\.*//'`
-          _age=`echo -n $rest | sed 's/^\([0-9]*\).*/\1/'`
           op_ver=$1
-          op_current=$_current
-          op_revision=$_revision
-          op_age=$_age
           current_opt=
           ;;
-        rename)
-          op_rename=$1
+        ofile)
+          op_ofile=$1
           current_opt=
           ;;
         *)
