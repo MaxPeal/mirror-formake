@@ -786,7 +786,7 @@ TOP_EOF
     echo "mkrule install doc \$install_doc >>\$MAKEFILE" >>$op_out_file
   fi
   if test -n "$op_inst_share"; then
-    echo "mkrule install share \$install_share >>\$MAKEFILE" >>$op_out_file
+    echo "mkrule install data \$install_share >>\$MAKEFILE" >>$op_out_file
   fi
   if test -n "$op_inst_etc"; then
     echo "mkrule install etc \$install_etc >>\$MAKEFILE" >>$op_out_file
