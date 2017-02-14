@@ -29,7 +29,7 @@ MANDIR=
 DOCDIR=
 PACKAGE_NAME=
 PACKAGE_VERSION=
-PACKAGE_SHAREDIR=
+DATADIR=
 PACKAGE_DOCDIR=
 
 if test -f $script_dir/config.rc; then
@@ -61,7 +61,7 @@ test -n "$DOCDIR"      || DOCDIR=$SHAREDIR/doc
 
 test -n "$PACKAGE_NAME"        || PACKAGE_NAME=package
 test -n "$PACKAGE_VERSION"     || PACKAGE_VERSION=1.0.0
-test -n "$PACKAGE_SHAREDIR"    || PACKAGE_SHAREDIR=$SHAREDIR/$PACKAGE_NAME$PACKAGE_VERSION
+test -n "$DATADIR"    || DATADIR=$SHAREDIR/$PACKAGE_NAME$PACKAGE_VERSION
 test -n "$PACKAGE_DOCDIR"      || PACKAGE_DOCDIR=$SHAREDIR/doc/$PACKAGE_NAME$PACKAGE_VERSION
 ################################################################################
 
@@ -1082,7 +1082,7 @@ EOF
       ;;
     share)
       perm="0444"
-      dir=$PACKAGE_SHAREDIR
+      dir=$DATADIR
       ;;
     man[0-9])
       perm="0444"

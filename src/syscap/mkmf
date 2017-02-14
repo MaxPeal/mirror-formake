@@ -48,7 +48,7 @@ mkrule distclean $MAKEFILE >>$MAKEFILE
 ################################################################################
 # INSTALLATION FILES
 install_bin="syscap"
-mkrule install bin -d $PACKAGE_SHAREDIR $install_bin >>$MAKEFILE
+mkrule install bin -d $DATADIR $install_bin >>$MAKEFILE
 
 ################################################################################
 # DIST

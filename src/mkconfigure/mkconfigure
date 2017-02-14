@@ -321,8 +321,8 @@ test -n "$SHAREDIR"    || SHAREDIR=$PREFIX/share
 test -n "$MANDIR"      || MANDIR=$SHAREDIR/man
 test -n "$DOCDIR"      || DOCDIR=$SHAREDIR/doc
 
-PACKAGE_SHAREDIR=$SHAREDIR/$PACKAGE_NAME
-PACKAGE_DOCDIR=$SHAREDIR/doc/$PACKAGE_NAME
+DOCDIR=$DOCDIR/$PACKAGE_NAME
+DATADIR=$SHAREDIR/$PACKAGE_NAME
 
 ################################################################################
 # BUILD CONFIGS
@@ -330,7 +330,7 @@ optool dump "$@" -package-name "$PACKAGE_NAME" -package-version "$PACKAGE_VERSIO
             -prefix $PREFIX -exec-prefix $EXEC_PREFIX -bindir $BINDIR -sbindir $SBINDIR \
             -libexecdir $LIBEXECDIR -libdir $LIBDIR -incdir $INCDIR -etcdir $ETCDIR \
             -vardir $VARDIR -sharedir $SHAREDIR -mandir $MANDIR -docdir $DOCDIR \
-            -package-sharedir $PACKAGE_SHAREDIR -package-docdir $PACKAGE_DOCDIR >$CONF
+            -datadir $DATADIR >$CONF
 TOP_EOF
 if test x"$op_build_h" = x1; then
   cat <<"TOP_EOF" >>$out_file
@@ -345,7 +345,7 @@ cat <<"TOP_EOF" >>$out_file
 optool dump -prefix $PREFIX -exec-prefix $EXEC_PREFIX -bindir $BINDIR -sbindir $SBINDIR \
             -libexecdir $LIBEXECDIR -libdir $LIBDIR -incdir $INCDIR -etcdir $ETCDIR \
             -vardir $VARDIR -sharedir $SHAREDIR -mandir $MANDIR -docdir $DOCDIR \
-            -package-sharedir $PACKAGE_SHAREDIR -package-docdir $PACKAGE_DOCDIR \
+            -datadir $DATADIR \
             -package-name $PACKAGE_NAME -package-version $PACKAGE_VERSION >formake/formake.conf
 
 TOP_EOF
