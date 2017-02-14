@@ -562,12 +562,12 @@ TOP_EOF
   if test -n "$pic_cxx_src"; then
     echo "mkrule obj -c++ -pic -cflags=\"\$CXXFLAGS\" -src $pic_cxx_src -d $cxx_pic_dir >>\$MAKEFILE" >>$op_out_file
   fi
+  echo "" >>$op_out_file
 fi
 
 
 if test -n "$prog_prefix_list"; then
   cat <<TOP_EOF >>$op_out_file
-
 ################################################################################
 # APPLICATIONS
 TOP_EOF
@@ -635,7 +635,7 @@ TOP_EOF
   done
 fi
 
-  cat <<TOP_EOF >>$op_out_file
+cat <<TOP_EOF >>$op_out_file
 ################################################################################
 # CUSTOM CODE
 
