@@ -444,20 +444,7 @@ if test $? -eq 0; then
 fi
 
 cat <<TOP_EOF >>$op_out_file
-#
 # $script_name $script_options
-#
-# Important variables to use:
-#   BUILDROOT        - relative path to the build root directory
-#   CONF             - name of the build config file
-#   MAKEFILE         - name of output Make file
-#   TOOLS            - tools used in this script
-#   SUBDIRS          - subdirectories to run mkmf in
-#   SCRIPT           - name of this script
-#   SRCDIR           - relative path to the source directory (mkmf location)
-#   SRCROOT          - relative path to the source root directory (package top dir)
-#   ASB_BUILDDIR     - absolute path to the build directory (current dir)
-#   SUBDIR           - current directory path from BUILDROOT
 TOP_EOF
 
 cat <<TOP_EOF >>$op_out_file

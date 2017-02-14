@@ -1,6 +1,7 @@
 #!/bin/sh
 #
-# Author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
+# Formake mkmkmf
+# author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
 #
 
 version_string="mkmkmf 1.0"
@@ -25,10 +26,8 @@ print_help() {
   cat <<EOF
 $script_name [options]
  -v                    print version
- -o FILE               output script file [$op_out_file]
  -srcroot PATH         specify source root dir relative path (SRCROOT) [.]
  -subdirs ..           run mkmf scripts in subdirs in specified order
- -omk FILE             output Make script [$op_out_mkfile]
  -cflags=FLAGS         C compiler flags
  -cxxflags=FLAGS       C++ compiler flags
  -prog*-name NAME      program name
@@ -49,6 +48,8 @@ $script_name [options]
  -inst-doc ..          documentation files and directories for install into doc
  -inst-share ..        files and directories for install into share directory
  -inst-etc ..          files and directories for install into etc directory
+ -o FILE               output script file [$op_out_file]
+ -omk FILE             output Make script [$op_out_mkfile]
 EOF
 }
 
@@ -131,6 +132,13 @@ reg_prefix() {
   esac
 }
 
+clean_exit() {
+  ecode=$1
+  rm -f $src_db
+  exit $ecode
+}
+
+
 prefix=
 current_opt=
 src_db="/tmp/mkmkmf$$_src.txt"
@@ -139,11 +147,11 @@ while test $# -gt 0; do
   case $1 in
     -h|-help|--help)
       print_help
-      exit 0
+      clean_exit 0
       ;;
     -v)
       print_version
-      exit 0
+      clean_exit 0
       ;;
     -o)
       current_opt=o
@@ -289,7 +297,7 @@ while test $# -gt 0; do
         subdirs)
           if echo -n "$1" | grep "^/" > /dev/null; then
             echo "$script_name: error: parameter -subdirs: absolute path not allowed: $1" >&2
-            exit 1
+            clean_exit 1
           fi
           subdir=`echo -n "$1" | sed 's/\/*$//'`
           op_subdirs="$op_subdirs $subdir"
@@ -319,7 +327,7 @@ while test $# -gt 0; do
                 ;;
               *)
                 echo "$script_name: error: bad source type $1" >&2
-                exit 1
+                clean_exit 1
                 ;;
             esac
           fi
@@ -345,21 +353,13 @@ while test $# -gt 0; do
                 ;;
               *)
                 echo "$script_name: error: bad source type $1" >&2
-                exit 1
+                clean_exit 1
                 ;;
             esac
           fi
           ;;
         lib-ver)
-          _current=`echo -n $1 | sed 's/^\([0-9]*\).*/\1/'`
-          rest=`echo -n $1 | sed 's/^[0-9]*\.*//'`
-          _revision=`echo -n $rest | sed 's/^\([0-9]*\).*/\1/'`
-          rest=`echo -n $rest | sed 's/^[0-9]*\.*//'`
-          _age=`echo -n $rest | sed 's/^\([0-9]*\).*/\1/'`
           eval lib_${prefix}_ver=\$1
-          eval lib_${prefix}_current=\$_current
-          eval lib_${prefix}_revision=\$_revision
-          eval lib_${prefix}_age=\$_age
           current_opt=
           ;;
         inst-bin)
@@ -391,7 +391,7 @@ while test $# -gt 0; do
           ;;
         *)
           echo "$script_name: error: bad option $1" >&2
-          exit 1
+          clean_exit 1
           ;;
       esac
       ;;
@@ -423,9 +423,6 @@ for prefix in $lib_prefix_list; do
   eval op_ver=\$lib_${prefix}_ver
   if test -z "$op_ver"; then
     eval lib_${prefix}_ver=\"0.0.0\"
-    eval lib_${prefix}_current=0
-    eval lib_${prefix}_revision=0
-    eval lib_${prefix}_age=0
   fi
   eval no_install=\$lib_${prefix}_no_install
   if test -z "$no_install"; then
@@ -447,20 +444,7 @@ if test $? -eq 0; then
 fi
 
 cat <<TOP_EOF >>$op_out_file
-#
 # $script_name $script_options
-#
-# Important variables to use:
-#   BUILDROOT        - relative path to the build root directory
-#   CONF             - name of the build config file
-#   MAKEFILE         - name of output Make file
-#   TOOLS            - tools used in this script
-#   SUBDIRS          - subdirectories to run mkmf in
-#   SCRIPT           - name of this script
-#   SRCDIR           - relative path to the source directory (mkmf location)
-#   SRCROOT          - relative path to the source root directory (package top dir)
-#   ASB_BUILDDIR     - absolute path to the build directory (current dir)
-#   SUBDIR           - current directory path from BUILDROOT
 TOP_EOF
 
 cat <<TOP_EOF >>$op_out_file
@@ -833,7 +817,7 @@ dist_files="$dist_files $src_dist_files"
 
 if test "$op_srcroot" = "."; then
   if test -d formake; then
-    opt_fscripts="abspath cfront cstem cstem+ install libro listed mkdep optool syscap"
+    opt_fscripts="abspath cfront cstem cstem+ install ldlshell ldlwrap libro listed mkdep optool syscap"
     formake_dist=
     for script in $opt_fscripts; do
       if test -f formake/$script; then
