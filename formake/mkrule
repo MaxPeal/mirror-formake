@@ -32,8 +32,8 @@ PACKAGE_VERSION=
 DATADIR=
 PACKAGE_DOCDIR=
 
-if test -f $script_dir/config.rc; then
-  . $script_dir/config.rc
+if test -f $script_dir/formake.conf; then
+  . $script_dir/formake.conf
 fi
 test -n "$FORMAKE_MKRULE" && MKRULE=$FORMAKE_MKRULE
 if test -n "$MKRULE" && test -z "$MKRULE_REDIRECT"; then
@@ -1133,11 +1133,11 @@ EOF
     done
   fi
   if test $op_type = doc || test $op_type = data; then
-    printf "\t%s\n" "if find \$(DESTDIR)$dir ! -type d > /dev/null; then : ; else rm -Rf \$(DESTDIR)$dir; fi"
+    printf "\t%s\n" "-test \`find \$(DESTDIR)$dir ! -type d -print | wc -l\` -eq 0 && rm -Rf \$(DESTDIR)$dir"
   elif test $op_type = inc; then
     dir_base=`basename $dir`
     if test "$dir_base" != include; then
-      printf "\t%s\n" "if find \$(DESTDIR)$dir ! -type d > /dev/null; then : ; else rm -Rf \$(DESTDIR)$dir; fi"
+      printf "\t%s\n" "-test \`find \$(DESTDIR)$dir ! -type d -print | wc -l\` -eq 0 && rm -Rf \$(DESTDIR)$dir"
     fi
   fi
   echo ""
