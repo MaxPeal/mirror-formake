@@ -1109,7 +1109,7 @@ install: install-$op_target
 install-$op_target: $op_files
 EOF
   if test -n "$op_ofile"; then
-    printf "\t%s\n" "$INSTALL -m $perm -D $op_files \$(DESTDIR)$dir/$op_ofile"
+    printf "\t%s\n" "$INSTALL -m $perm -D $op_files \$(DESTDIR)$op_ofile"
   else
     for file in $op_files; do
       file_base=`basename $file`
@@ -1121,7 +1121,7 @@ uninstall: uninstall-$op_target
 uninstall-$op_target:
 EOF
   if test -n "$op_ofile"; then
-    printf "\t%s\n" "rm -Rf \$(DESTDIR)$dir/$op_ofile"
+    printf "\t%s\n" "rm -Rf \$(DESTDIR)$op_ofile"
   else
     for file in $op_files; do
       file_base=`basename $file`
@@ -1426,6 +1426,7 @@ while test $# -gt 0; do
         echo "$script_name: error: invalid parameter $1 for current mode" >&2
         exit 1
       fi
+      op_dir=
       current_opt=ofile
       ;;
     -d)
@@ -1440,6 +1441,9 @@ while test $# -gt 0; do
       if test $op_mode = subdir; then
         op_dirs=
         current_opt=dirs
+      elif test $op_mode = install; then
+        op_ofile=
+        current_opt=dir
       else
         current_opt=dir
       fi

@@ -199,7 +199,7 @@ EOF
 print_install_help() {
   cat <<EOF
 $script_name install TYPE [OPTIONS] FILE..
-  TYPE             files type: bin, sbin, libexec, lib, inc, share, man[0-9], doc, etc
+  TYPE             files type: bin, sbin, libexec, lib, inc, data, man[0-9], doc, etc
   -t TARGET        specify phony target that start generated rules
   -o FILE          destination file path (overrides -d options)
   -d DIR           destination directory path (overrides -o option)
@@ -1080,7 +1080,7 @@ EOF
       perm="0444"
       dir=$INCDIR
       ;;
-    share)
+    data)
       perm="0444"
       dir=$DATADIR
       ;;
@@ -1109,7 +1109,7 @@ install: install-$op_target
 install-$op_target: $op_files
 EOF
   if test -n "$op_ofile"; then
-    printf "\t%s\n" "$INSTALL -m $perm -D $op_files \$(DESTDIR)$dir/$op_ofile"
+    printf "\t%s\n" "$INSTALL -m $perm -D $op_files \$(DESTDIR)$op_ofile"
   else
     for file in $op_files; do
       file_base=`basename $file`
@@ -1121,14 +1121,14 @@ uninstall: uninstall-$op_target
 uninstall-$op_target:
 EOF
   if test -n "$op_ofile"; then
-    printf "\t%s\n" "rm -Rf \$(DESTDIR)$dir/$op_ofile"
+    printf "\t%s\n" "rm -Rf \$(DESTDIR)$op_ofile"
   else
     for file in $op_files; do
       file_base=`basename $file`
       printf "\t%s\n" "rm -Rf \$(DESTDIR)$dir/$file_base"
     done
   fi
-  if test $op_type = doc || test $op_type = share; then
+  if test $op_type = doc || test $op_type = data; then
     printf "\t%s\n" "if find \$(DESTDIR)$dir ! -type d > /dev/null; then : ; else rm -Rf \$(DESTDIR)$dir; fi"
   elif test $op_type = inc; then
     dir_base=`basename $dir`
@@ -1287,7 +1287,7 @@ if test $op_mode = install; then
     exit 1
   fi
   case $1 in
-    bin|sbin|libexec|lib|inc|share|man[0-9]|doc|etc)
+    bin|sbin|libexec|lib|inc|data|man[0-9]|doc|etc)
       op_type=$1
       ;;
     -h|-help|--help)
@@ -1426,6 +1426,7 @@ while test $# -gt 0; do
         echo "$script_name: error: invalid parameter $1 for current mode" >&2
         exit 1
       fi
+      op_dir=
       current_opt=ofile
       ;;
     -d)
@@ -1440,6 +1441,9 @@ while test $# -gt 0; do
       if test $op_mode = subdir; then
         op_dirs=
         current_opt=dirs
+      elif test $op_mode = install; then
+        op_ofile=
+        current_opt=dir
       else
         current_opt=dir
       fi
