@@ -1099,9 +1099,13 @@ EOF
       ;;
   esac
 
-  test -z "$op_dir" || dir=$op_dir
-  if test "$dir" != '/'; then
-    dir=`echo -n "$dir" | sed 's#/*$##'`
+  if test -n "$op_ofile"; then
+    dir=`dirname $op_ofile`
+  else
+    test -z "$op_dir" || dir=$op_dir
+    if test "$dir" != '/'; then
+      dir=`echo -n "$dir" | sed 's#/*$##'`
+    fi
   fi
 
   cat <<EOF
