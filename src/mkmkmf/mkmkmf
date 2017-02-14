@@ -25,7 +25,6 @@ cd "$orig_dir"
 print_help() {
   cat <<EOF
 $script_name [options]
- -v                    print version
  -srcroot PATH         specify source root dir relative path (SRCROOT) [.]
  -subdirs ..           run mkmf scripts in subdirs in specified order
  -cflags=FLAGS         C compiler flags
@@ -50,6 +49,7 @@ $script_name [options]
  -inst-etc ..          files and directories for install into etc directory
  -o FILE               output script file [$op_out_file]
  -omk FILE             output Make script [$op_out_mkfile]
+ -v                    print version
 EOF
 }
 
