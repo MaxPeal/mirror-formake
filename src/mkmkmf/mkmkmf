@@ -26,10 +26,8 @@ print_help() {
   cat <<EOF
 $script_name [options]
  -v                    print version
- -o FILE               output script file [$op_out_file]
  -srcroot PATH         specify source root dir relative path (SRCROOT) [.]
  -subdirs ..           run mkmf scripts in subdirs in specified order
- -omk FILE             output Make script [$op_out_mkfile]
  -cflags=FLAGS         C compiler flags
  -cxxflags=FLAGS       C++ compiler flags
  -prog*-name NAME      program name
@@ -50,6 +48,8 @@ $script_name [options]
  -inst-doc ..          documentation files and directories for install into doc
  -inst-share ..        files and directories for install into share directory
  -inst-etc ..          files and directories for install into etc directory
+ -o FILE               output script file [$op_out_file]
+ -omk FILE             output Make script [$op_out_mkfile]
 EOF
 }
 
