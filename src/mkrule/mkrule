@@ -1195,22 +1195,25 @@ EOF
     fi
 
     cat <<EOF
-DIST_MAIN = dist-$RANDOM
-dist: \$(DIST_MAIN)
-EOF
-    cat <<EOF
-dist-$RANDOM:
+dist\$(DIST_ID):
 	rm -Rf dist_tree
 	\$(MAKE) dist-tree
 	mv dist_tree $dist_package
 	$TAR -czvf ${dist_package}.tar.gz $dist_package
 	rm -Rf $dist_package
 
+distclean\$(DIST_ID): distclean-$RANDROM
+distclean-$RANDOM:
+	rm -f ${dist_package}.tar.gz
+
+DIST_ID = $RANDOM
+
 EOF
   else
     cat <<EOF
-dist-$RANDOM:
+dist\$(DIST_ID):
 	\$(MAKE) -C $op_buildroot dist
+DIST_ID = $RANDOM
 
 EOF
   fi
