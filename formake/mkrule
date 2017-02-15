@@ -9,6 +9,8 @@ version_string="mkrule 1.0"
 script_name=`basename "$0"`
 script_options="$@"
 script_dir=`dirname $0`
+op_srcdir=
+op_buildroot=
 
 ################################################################################
 # LOAD CONFIG
@@ -112,7 +114,7 @@ $script_name obj [OPTIONS] -src SRC..
   -builddir PATH   path to a build directory where makefile is placed
   -rc FILE         create RC file
   -var [PREFIX]    create a Make variable [PREFIX_]OBJECTS containing a list of generated objects
-  -srcdir PATH     path to the source directory [\$SRCDIR]
+  -srcdir PATH     path to the source directory
   -src SRC..       list of source files
 EOF
 }
@@ -133,7 +135,7 @@ $script_name prog [OPTIONS] -src SRC.. -obj OBJ..
   -var [PREFIX]    create a Make variable [PREFIX_]PROGRAM containing a generated executable file
   -objdir PATH     path to the object directory
   -obj OBJ..       list of object files. RC files are accepted
-  -sobj SRC..      convert list of source files into a list of object files
+  -src SRC..       list of source files (will be converted to the list of object files)
 EOF
 }
 
@@ -162,7 +164,7 @@ $script_name lib [OPTIONS] -src SRC.. -obj OBJ..
                      [PREFIX_]LIB_SO_CRA    - shared library file with '.so.X.X.X' extension
   -objdir PATH     path to the object directory
   -obj OBJ..       list of object files. RC files are accepted
-  -sobj SRC..      convert list of source files into a list of object files
+  -src SRC..       list of source files (will be converted to the list of object files)
 EOF
 }
 
@@ -203,7 +205,7 @@ $script_name install TYPE [OPTIONS] FILE..
   -t TARGET        specify phony target that start generated rules
   -o FILE          destination file path (overrides -d options)
   -d DIR           destination directory path (overrides -o option)
-  -srcdir PATH     path to the source directory [\$SRCDIR]
+  -srcdir PATH     path to the source directory
   FILE..           files to install. RC files are accepted
 EOF
 }
@@ -211,8 +213,8 @@ EOF
 print_dist_help() {
   cat <<EOF
 $script_name dist [OPTIONS]
-  -buildroot PATH  path to the build root directory [\$BUILDROOT]
-  -srcdir PATH     path to the source directory [\$SRCDIR]
+  -buildroot PATH  path to the build root directory
+  -srcdir PATH     path to the source directory
   -n NAME          package name
   -ver VERSION     package version
   -f FILE..        files to put in distribution tarball
@@ -413,16 +415,12 @@ mkobj() {
     exit 1
   fi
 
-  test -n "$op_srcdir" || op_srcdir=$SRCDIR
   test -z "$op_srcdir" || op_srcdir=`echo -n "$op_srcdir" | sed 's#/*$#/#' | sed 's#^\./$##'`
   if test -n "$op_srcdir"; then
     sources=
     for file in $op_src; do
-      if echo -n "$file" | grep "^/" > /dev/null; then
-        sources="$sources $file"
-      else
-        sources="$sources $op_srcdir$file"
-      fi
+      file=`echo -n "$file" | sed 's#^/*##' | sed 's#^\./##'`
+      sources="$sources $op_srcdir$file"
     done
     op_src=$sources
   fi
@@ -576,8 +574,8 @@ EOF
 
 
 mkprog() {
-  if test -n "$op_sobj"; then
-    for file in $op_sobj; do
+  if test -n "$op_src"; then
+    for file in $op_src; do
       obj=`echo -n "$file" | sed 's/\.[^.]*/.o/'`
       op_obj="$op_obj $obj"
     done
@@ -684,8 +682,8 @@ EOF
 }
 
 mklib() {
-  if test -n "$op_sobj"; then
-    for file in $op_sobj; do
+  if test -n "$op_src"; then
+    for file in $op_src; do
       obj=`echo -n "$file" | sed 's/\.[^.]*/.o/'`
       op_obj="$op_obj $obj"
     done
@@ -1033,20 +1031,15 @@ EOF
     exit 0
   fi
 
-  test -n "$op_srcdir" || op_srcdir=$SRCDIR
   test -z "$op_srcdir" || op_srcdir=`echo -n "$op_srcdir" | sed 's#/*$#/#' | sed 's#^\./$##'`
   if test -n "$op_srcdir"; then
     files=
     for file in $op_files; do
-      if echo -n "$file" | grep "^/" > /dev/null; then
-        files="$files $file"
-      else
-        files="$files $op_srcdir$file"
-      fi
+      file=`echo -n "$file" | sed 's#^/*##' | sed 's#^\./##'`
+      files="$files $op_srcdir$file"
     done
     op_files=$files
   fi
-
 
   num_files=`echo "$op_files" | wc -w`
   if test -n "$op_ofile" && test $num_files -gt 1; then
@@ -1125,11 +1118,11 @@ uninstall: uninstall-$op_target
 uninstall-$op_target:
 EOF
   if test -n "$op_ofile"; then
-    printf "\t%s\n" "rm -Rf \$(DESTDIR)$op_ofile"
+    printf "\t%s\n" "rm -f \$(DESTDIR)$op_ofile"
   else
     for file in $op_files; do
       file_base=`basename $file`
-      printf "\t%s\n" "rm -Rf \$(DESTDIR)$dir/$file_base"
+      printf "\t%s\n" "rm -f \$(DESTDIR)$dir/$file_base"
     done
   fi
   if test $op_type = doc || test $op_type = data; then
@@ -1150,8 +1143,6 @@ mkdist() {
 # $script_name $script_options
 EOF
 
-  test -n "$op_buildroot" || op_buildroot=$BUILDROOT
-  test -n "$op_srcdir" || op_srcdir=$SRCDIR
   test -z "$op_srcdir" || op_srcdir=`echo -n "$op_srcdir" | sed 's#/*$#/#' | sed 's#^\./$##'`
   test -n "$op_name" || op_name=package
 
@@ -1170,6 +1161,7 @@ EOF
   dist_dirs=
   dist_files=
   for file in $op_files; do
+    file=`echo -n "$file" | sed 's#^\./##'`
     if echo -n "$file" | grep "^/" > /dev/null; then
       echo "$script_name: error: invalid dist file path: $file" >&2
       exit 1
@@ -1193,15 +1185,21 @@ EOF
   dist_dirs=`echo -n "$dist_dirs" | tr ' ' '\n' | sort | uniq | grep -v '\.' | tr '\n' ' ' | sed 's/^ *//'`
   dist_files=`echo -n "$dist_files" | sed 's/^ *//'`
 
-  if test -n "$op_ver"; then
-    dist_package="$op_name-$op_ver"
-  else
-    dist_package=$op_name
-  fi
+  get_random
 
   if test "$op_buildroot" = "./" || test "$op_buildroot" = "."; then
+    if test -n "$op_ver"; then
+      dist_package="$op_name-$op_ver"
+    else
+      dist_package=$op_name
+    fi
+
     cat <<EOF
-dist:
+DIST_MAIN = dist-$RANDOM
+dist: \$(DIST_MAIN)
+EOF
+    cat <<EOF
+dist-$RANDOM:
 	rm -Rf dist_tree
 	\$(MAKE) dist-tree
 	mv dist_tree $dist_package
@@ -1211,7 +1209,7 @@ dist:
 EOF
   else
     cat <<EOF
-dist:
+dist-$RANDOM:
 	\$(MAKE) -C $op_buildroot dist
 
 EOF
@@ -1219,7 +1217,8 @@ EOF
   if test -n "$op_buildroot"; then
     buildroot=`echo -n "$op_buildroot" | sed 's#/*$#/#' | sed 's#^\./$##'`
     cat <<EOF
-dist-tree:
+dist-tree: dist-tree-$RANDOM
+dist-tree-$RANDOM:
 	mkdir -p ${buildroot}dist_tree/$subdir
 EOF
     for dir in $dist_dirs; do
@@ -1230,7 +1229,7 @@ EOF
     done
   else
     cat <<EOF
-# WARNING: build root not specified via -buildroot parameter or BUILDROOT environment variable
+# WARNING: build root not specified via -buildroot parameter
 dist-tree:
 EOF
   fi
@@ -1503,24 +1502,16 @@ while test $# -gt 0; do
       current_opt=var
       ;;
     -src)
-      if test $op_mode != obj; then
-        echo "$script_name: error: invalid parameter $1 for current mode" >&2
-        exit 1
-      fi
-      op_src=
-      current_opt=src
-      ;;
-    -sobj)
       case $op_mode in
-        prog|lib)
+        obj|prog|lib)
           : ;;
         *)
           echo "$script_name: error: invalid parameter $1 for current mode" >&2
           exit 1
           ;;
       esac
-      op_sobj=
-      current_opt=sobj
+      op_src=
+      current_opt=src
       ;;
     -n)
       case $op_mode in
@@ -1688,9 +1679,6 @@ while test $# -gt 0; do
               ;;
           esac
           op_src="$op_src $1"
-          ;;
-        sobj)
-          op_sobj="$op_sobj $1"
           ;;
         n)
           op_name=$1
