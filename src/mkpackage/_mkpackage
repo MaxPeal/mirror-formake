@@ -141,6 +141,10 @@ while test $# -gt 0; do
       s_relpath=1
       have_list=1
       ;;
+    *)
+      echo "$script_name: invalid option: $1" >&2
+      exit 1
+      ;;
   esac
   shift
 done
