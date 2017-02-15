@@ -1202,7 +1202,7 @@ dist\$(DIST_ID):
 	$TAR -czvf ${dist_package}.tar.gz $dist_package
 	rm -Rf $dist_package
 
-distclean\$(DIST_ID): distclean-$RANDROM
+distclean\$(DIST_ID): distclean-$RANDOM
 distclean-$RANDOM:
 	rm -f ${dist_package}.tar.gz
 
