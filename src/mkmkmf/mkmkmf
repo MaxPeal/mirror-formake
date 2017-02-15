@@ -451,7 +451,7 @@ cat <<TOP_EOF >>$op_out_file
 
 ################################################################################
 # BASE CONFIGURATION
-export BUILDROOT=$op_srcroot
+BUILDROOT=$op_srcroot
 CONF="build.conf"
 MAKEFILE="$op_out_mkfile"
 TOOLS="$formake_scripts"
@@ -468,7 +468,7 @@ cat <<"TOP_EOF" >>$op_out_file
 SCRIPT=`basename $0`
 PATH=$FORMAKE:$PWD/$BUILDROOT/formake:$PATH
 syscap test -f $TOOLS || exit 1
-export SRCDIR=`dirname $0 | xargs relpath ./`
+SRCDIR=`dirname $0 | xargs relpath ./`
 SRCROOT=`relpath ./ $SRCDIR/$BUILDROOT`
 ABS_BUILDDIR=`pwd`
 SUBDIR=`relpath $BUILDROOT ./`
@@ -551,16 +551,16 @@ TOP_EOF
 
 # GENERATE COMPILATION RULES
   if test -n "$static_c_src"; then
-    echo "mkrule obj -cflags=\"\$CFLAGS\" -src $static_c_src -d $c_static_dir >>\$MAKEFILE" >>$op_out_file
+    echo "mkrule obj -cflags=\"\$CFLAGS\" -srcdir \$SRCDIR -src $static_c_src -d $c_static_dir >>\$MAKEFILE" >>$op_out_file
   fi
   if test -n "$pic_c_src"; then
-    echo "mkrule obj -pic -cflags=\"\$CFLAGS\" -src $pic_c_src -d $c_pic_dir >>\$MAKEFILE" >>$op_out_file
+    echo "mkrule obj -pic -cflags=\"\$CFLAGS\" -srcdir \$SRCDIR -src $pic_c_src -d $c_pic_dir >>\$MAKEFILE" >>$op_out_file
   fi
   if test -n "$static_cxx_src"; then
-    echo "mkrule obj -c++ -cflags=\"\$CXXFLAGS\" -src $static_cxx_src -d $cxx_static_dir >>\$MAKEFILE" >>$op_out_file
+    echo "mkrule obj -c++ -cflags=\"\$CXXFLAGS\" -srcdir \$SRCDIR -src $static_cxx_src -d $cxx_static_dir >>\$MAKEFILE" >>$op_out_file
   fi
   if test -n "$pic_cxx_src"; then
-    echo "mkrule obj -c++ -pic -cflags=\"\$CXXFLAGS\" -src $pic_cxx_src -d $cxx_pic_dir >>\$MAKEFILE" >>$op_out_file
+    echo "mkrule obj -c++ -pic -cflags=\"\$CXXFLAGS\" -srcdir \$SRCDIR -src $pic_cxx_src -d $cxx_pic_dir >>\$MAKEFILE" >>$op_out_file
   fi
   echo "" >>$op_out_file
 fi
@@ -593,7 +593,7 @@ TOP_EOF
     else
       objdir=$c_static_dir
     fi
-    echo "mkrule prog $add_params -ldflags=\"\$${prefix}_ldflags\" -n \$${prefix}_name -objdir $objdir -sobj \$${prefix}_sources >>\$MAKEFILE" >>$op_out_file
+    echo "mkrule prog $add_params -ldflags=\"\$${prefix}_ldflags\" -n \$${prefix}_name -objdir $objdir -src \$${prefix}_sources >>\$MAKEFILE" >>$op_out_file
     echo "" >>$op_out_file
   done
 fi
@@ -629,8 +629,8 @@ TOP_EOF
       static_objdir=$c_static_dir
       pic_objdir=$c_pic_dir
     fi
-    echo "mkrule lib $add_params -static -ldflags=\"\$${prefix}_ldflags\" -n \$${prefix}_name -ver \$${prefix}_version -objdir $static_objdir -sobj \$${prefix}_sources >>\$MAKEFILE" >>$op_out_file
-    echo "mkrule lib $add_params -shared -ldflags=\"\$${prefix}_ldflags\" -n \$${prefix}_name -ver \$${prefix}_version -objdir $pic_objdir -sobj \$${prefix}_sources >>\$MAKEFILE" >>$op_out_file
+    echo "mkrule lib $add_params -static -ldflags=\"\$${prefix}_ldflags\" -n \$${prefix}_name -ver \$${prefix}_version -objdir $static_objdir -src \$${prefix}_sources >>\$MAKEFILE" >>$op_out_file
+    echo "mkrule lib $add_params -shared -ldflags=\"\$${prefix}_ldflags\" -n \$${prefix}_name -ver \$${prefix}_version -objdir $pic_objdir -src \$${prefix}_sources >>\$MAKEFILE" >>$op_out_file
     echo "" >>$op_out_file
   done
 fi
@@ -833,9 +833,9 @@ fi
 echo "dist_files=\"$dist_files\"" >>$op_out_file
 
 if test "$op_srcroot" = "."; then
-  echo "mkrule dist -n \$PACKAGE_NAME -ver \$PACKAGE_VERSION -f \$dist_files >>\$MAKEFILE || exit 1" >>$op_out_file
+  echo "mkrule dist -n \$PACKAGE_NAME -ver \$PACKAGE_VERSION -srcdir \$SRCDIR -f \$dist_files >>\$MAKEFILE || exit 1" >>$op_out_file
 else
-  echo "mkrule dist -f \$dist_files >>\$MAKEFILE || exit 1" >>$op_out_file
+  echo "mkrule dist -srcdir \$SRCDIR -f \$dist_files >>\$MAKEFILE || exit 1" >>$op_out_file
 fi
 echo "" >>$op_out_file
 
