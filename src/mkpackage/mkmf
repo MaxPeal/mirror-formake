@@ -44,8 +44,8 @@ mkrule clean mkpackage >>$MAKEFILE
 ################################################################################
 # INSTALLATION FILES
 install_bin="mkpackage"
-mkrule install bin -d $BINDIR $install_bin >>$MAKEFILE
-mkrule install bin -d $DATADIR $install_bin >>$MAKEFILE
+mkrule install bin -srcdir $SRCDIR -d $BINDIR $install_bin >>$MAKEFILE
+mkrule install bin -srcdir $SRCDIR -d $DATADIR $install_bin >>$MAKEFILE
 
 ################################################################################
 # DIST

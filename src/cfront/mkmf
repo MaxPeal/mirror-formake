@@ -36,7 +36,7 @@ mkrule distclean $MAKEFILE >>$MAKEFILE
 ################################################################################
 # INSTALLATION FILES
 install_bin="cfront"
-mkrule install bin -d $DATADIR $install_bin >>$MAKEFILE
+mkrule install bin -srcdir $SRCDIR -d $DATADIR $install_bin >>$MAKEFILE
 
 ################################################################################
 # DIST
