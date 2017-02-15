@@ -50,7 +50,7 @@ mkrule install bin -d $DATADIR $install_bin >>$MAKEFILE
 ################################################################################
 # DIST
 dist_files="mkmf _mkpackage"
-mkrule dist -srcdir $SRCDIR -f $dist_files >>$MAKEFILE || exit 1
+mkrule dist -buildroot $BUILDROOT -srcdir $SRCDIR -f $dist_files >>$MAKEFILE || exit 1
 
 ################################################################################
 # DONE

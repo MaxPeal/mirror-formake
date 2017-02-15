@@ -37,7 +37,7 @@ mkrule distclean $MAKEFILE >>$MAKEFILE
 ################################################################################
 # DIST
 dist_files="mkmf "
-mkrule dist -srcdir $SRCDIR -f $dist_files >>$MAKEFILE || exit 1
+mkrule dist -buildroot $BUILDROOT -srcdir $SRCDIR -f $dist_files >>$MAKEFILE || exit 1
 
 ################################################################################
 # SUBDIRS

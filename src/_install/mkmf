@@ -41,7 +41,7 @@ mkrule install bin -o $DATADIR/install $install_bin >>$MAKEFILE
 ################################################################################
 # DIST
 dist_files="mkmf $install_bin "
-mkrule dist -srcdir $SRCDIR -f $dist_files >>$MAKEFILE || exit 1
+mkrule dist -buildroot $BUILDROOT -srcdir $SRCDIR -f $dist_files >>$MAKEFILE || exit 1
 
 ################################################################################
 # DONE

@@ -833,9 +833,9 @@ fi
 echo "dist_files=\"$dist_files\"" >>$op_out_file
 
 if test "$op_srcroot" = "."; then
-  echo "mkrule dist -n \$PACKAGE_NAME -ver \$PACKAGE_VERSION -srcdir \$SRCDIR -f \$dist_files >>\$MAKEFILE || exit 1" >>$op_out_file
+  echo "mkrule dist -n \$PACKAGE_NAME -ver \$PACKAGE_VERSION -buildroot \$BUILDROOT -srcdir \$SRCDIR -f \$dist_files >>\$MAKEFILE || exit 1" >>$op_out_file
 else
-  echo "mkrule dist -srcdir \$SRCDIR -f \$dist_files >>\$MAKEFILE || exit 1" >>$op_out_file
+  echo "mkrule dist -buildroot \$BUILDROOT -srcdir \$SRCDIR -f \$dist_files >>\$MAKEFILE || exit 1" >>$op_out_file
 fi
 echo "" >>$op_out_file
 
