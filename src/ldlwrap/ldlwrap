@@ -125,7 +125,7 @@ if test -z "$op_program"; then
 fi
 
 op_program_base=`basename "$op_program"`
-out_program="$op_program_base-ldlp"
+out_program="$op_program_base-ldlw"
 
 if echo "$op_program" | grep '^/' > /dev/null; then
   abs_path "$op_program"
