@@ -28,7 +28,7 @@ $script_name [options]
  -syscap ".."      probe a system with syscap test tool
  -sh CODE          insert shell string
  -build-h          generate BUILDROOT/build.h config header
- -mkpackage        create package
+ -fmkinstall       install Formake scripts into package formake directory
  -o FILE           output script file [$out_file]
  -v                print version
 EOF
@@ -98,8 +98,8 @@ while test $# -gt 0; do
     -o)
       current_opt=o
       ;;
-    -mkpackage)
-      op_mkpackage=1
+    -fmkinstall)
+      op_fmkinstall=1
       current_opt=
       ;;
     *)
@@ -161,11 +161,11 @@ if test -n "$op_cc$op_cxx"; then
 fi
 formake_scripts=`echo -n "$formake_scripts" | sed 's/^ *//'`
 
-if test x$op_mkpackage = x1; then
-  if mkpackage -h >/dev/null; then
+if test x$op_fmkinstall = x1; then
+  if fmkinstall -h >/dev/null; then
     :
   else
-    echo "$script_name: mkpackage script not found" >&2
+    echo "$script_name: fmkinstall script not found" >&2
     clean_exit 1
   fi
   test -d $out_file_dir/formake || mkdir -p $out_file_dir/formake
@@ -173,7 +173,7 @@ if test x$op_mkpackage = x1; then
     echo "$script_name: could not create Formake directory $out_file_dir/formake" >&2
     clean_exit 1
   fi
-  mkpackage -d $out_file_dir/formake -std $formake_scripts || clean_exit 1
+  fmkinstall -d $out_file_dir/formake -std $formake_scripts || clean_exit 1
 fi
 
 rm_out_file=1

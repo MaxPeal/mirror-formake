@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# Formake mkpackage
+# Formake fmkinstall
 # author: Oleksiy Chernyavskyy <ochern@rocketmail.com>
 #
 
-version_string="mkpackage 1.0"
+version_string="fmkinstall 1.0"
 
 orig_dir=`pwd`
 script_name=`basename "$0"`
