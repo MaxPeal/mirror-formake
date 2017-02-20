@@ -16,7 +16,7 @@ share_dir=
 
 print_help() {
   cat <<EOF
-Initialize new package
+Install Formake scripts into package
 
 $script_name -v
 $script_name [OPTIONS] [SCRIPTS]
@@ -56,6 +56,23 @@ select_standard() {
   s_relpath=1
   s_syscap=1
   have_list=1
+}
+
+select_standard() {
+  abspath=1
+  cfront=1
+  cstem=1
+  cstemx=1
+  install=1
+  ldlshell=1
+  ldlwrap=1
+  libro=1
+  listed=1
+  mkdep=1
+  mkrule=1
+  optool=1
+  relpath=1
+  syscap=1
 }
 
 while test $# -gt 0; do
@@ -149,7 +166,7 @@ while test $# -gt 0; do
   shift
 done
 
-test -z "$have_list" && select_standard
+test -z "$have_list" && select_all
 
 if test -n "$s_mkrule"; then
   test -z "$s_cstem$s_cstemx" && s_cstem=1
