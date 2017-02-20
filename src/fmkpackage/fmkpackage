@@ -1,0 +1,71 @@
+#!/bin/sh
+
+script_name=`basename $0`
+script_dir=`dirname $0`
+orig_dir=`pwd`
+cd $script_dir
+script_dir=`pwd`
+cd $orig_dir
+
+print_help() {
+  cat <<EOF
+Create build automation package
+
+Usage: $script_name
+EOF
+}
+
+while test $# -gt 0; do
+  case "$1" in
+    -h|-help|--help)
+      print_help
+      exit 0
+      ;;
+    *)
+      echo "$script_name: error: invalid options: $1" >&2
+      exit 1
+      ;;
+  esac
+  shift
+done
+
+fmkinstall -help >/dev/null 2>&1
+if test $? -ne 0; then
+  if test -f $script_dir/fmkinstall; then
+    FMKINSTALL=$script_dir/fmkinstall
+  else
+    echo "$script_name: error: fmkinstall not found"
+    exit 1
+  fi
+else
+  FMKINSTALL=fmkinstall
+fi
+
+fmkconfigure -help >/dev/null 2>&1
+if test $? -ne 0; then
+  if test -f $script_dir/fmkconfigure; then
+    FMKCONFIGURE=$script_dir/fmkconfigure
+  else
+    echo "$script_name: error: fmkconfigure not found"
+    exit 1
+  fi
+else
+  FMKCONFIGURE=fmkconfigure
+fi
+
+fmkmf -help >/dev/null 2>&1
+if test $? -ne 0; then
+  if test -f $script_dir/fmkmf; then
+    FMKMF=$script_dir/fmkmf
+  else
+    echo "$script_name: error: fmkmf not found"
+    exit 1
+  fi
+else
+  FMKMF=fmkmf
+fi
+
+$FMKINSTALL
+$FMKCONFIGURE
+$FMKMF
+
