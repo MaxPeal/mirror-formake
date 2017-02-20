@@ -1,0 +1,4 @@
+#!/bin/sh
+
+./fmkmf -prog1-src file1.c file2.c app1.c common.c net.c db.c -prog1-name app1 -lib1-src common.c net.c www.c tty.c ghf.c rx.c -lib1-name fxx -lib1-ldflags='-lX11 -lXt -lXm' -lib1-ver 1.0.1 -inst-bin script1 -inst-lib libvga.a -inst-inc common.h vga.h fxx.h ui.h tty.h con.h -subdirs mod1 mod2 tests libeee libeee2
+
