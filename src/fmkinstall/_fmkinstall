@@ -58,7 +58,7 @@ select_standard() {
   have_list=1
 }
 
-select_standard() {
+select_all() {
   abspath=1
   cfront=1
   cstem=1
