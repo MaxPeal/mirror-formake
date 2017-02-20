@@ -36,6 +36,7 @@ mkrule distclean $MAKEFILE >>$MAKEFILE
 ################################################################################
 # INSTALLATION FILES
 install_bin="fmkpackage"
+mkrule install bin -srcdir $SRCDIR -d $BINDIR $install_bin >>$MAKEFILE
 mkrule install bin -srcdir $SRCDIR -d $DATADIR $install_bin >>$MAKEFILE
 
 ################################################################################
