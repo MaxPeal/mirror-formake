@@ -59,20 +59,21 @@ select_standard() {
 }
 
 select_all() {
-  abspath=1
-  cfront=1
-  cstem=1
-  cstemx=1
-  install=1
-  ldlshell=1
-  ldlwrap=1
-  libro=1
-  listed=1
-  mkdep=1
-  mkrule=1
-  optool=1
-  relpath=1
-  syscap=1
+  s_abspath=1
+  s_cfront=1
+  s_cstem=1
+  s_cstemx=1
+  s_install=1
+  s_ldlshell=1
+  s_ldlwrap=1
+  s_libro=1
+  s_listed=1
+  s_mkdep=1
+  s_mkrule=1
+  s_optool=1
+  s_relpath=1
+  s_syscap=1
+  have_list=1
 }
 
 while test $# -gt 0; do
