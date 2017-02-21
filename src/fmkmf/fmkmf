@@ -12,6 +12,7 @@ op_out_file=mkmf
 op_out_mkfile=Makefile
 op_srcroot="."
 dist_files="mkmf"
+op_force=
 
 cd_param=
 orig_dir=`pwd`
@@ -20,10 +21,6 @@ if test $? -eq 0; then
   cd_param="-P"
 fi
 cd "$orig_dir"
-
-if test -f $op_out_file; then
-  op_out_file="${op_out_file}.new"
-fi
 
 print_help() {
   cat <<EOF
@@ -50,6 +47,7 @@ $script_name [options]
  -inst-doc ..          documentation files and directories for install into doc
  -inst-share ..        files and directories for install into share directory
  -inst-etc ..          files and directories for install into etc directory
+  -f                   force to overwrite existing mkmf script if found
  -o FILE               output script file [$op_out_file]
  -omk FILE             output Make script [$op_out_mkfile]
  -v                    print version
@@ -281,6 +279,9 @@ while test $# -gt 0; do
       have_custom_inst_stuff=1
       current_opt=inst-etc
       ;;
+    -f)
+      op_force=1
+      ;;
     *)
       case "$current_opt" in
         o)
@@ -288,6 +289,7 @@ while test $# -gt 0; do
           if test -d "$op_out_file"; then
             op_out_file="$op_out_file/mkmf"
           fi
+          op_force=1
           current_opt=
           ;;
         srcroot)
@@ -401,6 +403,10 @@ while test $# -gt 0; do
   esac
   shift
 done
+
+if test -f $op_out_file && test x$op_force = x; then
+  op_out_file="${op_out_file}.new"
+fi
 
 rm -f $src_db
 

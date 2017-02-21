@@ -15,10 +15,7 @@ op_pkgver=
 out_file=configure
 out_file_dir=.
 rm_out_file=0
-
-if test -f $out_file; then
-  out_file="${out_file}.new"
-fi
+op_force=
 
 print_help() {
   cat <<EOF
@@ -33,6 +30,7 @@ $script_name OPTIONS
   -sh CODE           insert shell string
   -build-h           generate BUILDROOT/build.h config header
   -fmkinstall        install Formake scripts into package formake directory
+  -f                 force to overwrite existing configure script if found
   -o FILE            output script file [$out_file]
   -v                 print version
 EOF
@@ -106,6 +104,9 @@ while test $# -gt 0; do
       op_fmkinstall=1
       current_opt=
       ;;
+    -f)
+      op_force=1
+      ;;
     *)
       case "$current_opt" in
         name)
@@ -137,6 +138,7 @@ while test $# -gt 0; do
             echo "$script_name: error. Directory not found: $out_file_dir" >&2
             clean_exit 1
           fi
+          op_force=1
           current_opt=
           ;;
         *)
@@ -148,6 +150,11 @@ while test $# -gt 0; do
   esac
   shift
 done
+
+if test -f $out_file && test x$op_force = x; then
+  out_file="${out_file}.new"
+fi
+
 
 formake_scripts="relpath mkrule"
 test -n "$op_syscap$op_lib" && test -z "$op_cc$op_cxx" && op_cc=1
