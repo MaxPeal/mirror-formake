@@ -19,6 +19,8 @@ op_force=
 
 print_help() {
   cat <<EOF
+Generate configure script
+
 $script_name OPTIONS
   -name NAME         package name (PACKAGE_NAME) [$op_pkgname]
   -version VERSION   package version (PACKAGE_VERSION)
