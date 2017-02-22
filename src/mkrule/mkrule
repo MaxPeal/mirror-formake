@@ -1244,7 +1244,7 @@ if test $# -eq 0; then
   exit 1
 fi
 
-case $1 in
+case "$1" in
   -h|-help|--help)
     print_help
     exit 0
@@ -1292,7 +1292,7 @@ if test $op_mode = install; then
     echo "$script_name: error: additional parameters missing" >&2
     exit 1
   fi
-  case $1 in
+  case "$1" in
     bin|sbin|libexec|lib|inc|data|man[0-9]|doc|etc)
       op_type=$1
       ;;
@@ -1311,7 +1311,7 @@ cxx_mode=
 op_files=
 current_opt=
 while test $# -gt 0; do
-  case $1 in
+  case "$1" in
     -h|-help|--help)
       case $op_mode in
         init)
@@ -1676,7 +1676,7 @@ while test $# -gt 0; do
           current_opt=
           ;;
         src)
-          case $1 in
+          case "$1" in
             *.C|*.[Cc][Cc]|*.[Cc][Pp][Pp]|*.[Cc][Xx][Xx])
               cxx_mode=1
               ;;
@@ -1692,7 +1692,7 @@ while test $# -gt 0; do
           current_opt=
           ;;
         obj)
-          case $1 in
+          case "$1" in
             *.rc)
               if test ! -f $1; then
                 echo "$script_name: RC file not found: $1" >&2

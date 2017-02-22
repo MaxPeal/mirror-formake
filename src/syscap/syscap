@@ -171,7 +171,7 @@ perform_probe() {
   case "$uname_s_lc" in
     netbsd)
       config_os=netbsd
-      case $uname_p in
+      case "$uname_p" in
         alpha)
           config_arch=alpha
           ;;
@@ -304,7 +304,7 @@ perform_probe() {
     hp-ux)
       config_os=hpux
 
-      case "${uname_m}" in
+      case "$uname_m" in
         ia64)
           config_arch=ia64
           ;;
@@ -312,7 +312,7 @@ perform_probe() {
       ;;
     freebsd)
       config_os=freebsd
-      case ${uname_p} in
+      case "$uname_p" in
         amd64)
           config_arch=x86_64
           ;;
@@ -379,7 +379,7 @@ perform_probe() {
     linux)
       config_kernel=linux
       uname_o=`uname -o 2>/dev/null`
-      case $uname_o in
+      case "$uname_o" in
         GNU/Linux)
           config_os=gnulinux
           ;;
@@ -391,7 +391,7 @@ perform_probe() {
       config_kernel_vminor=`echo $kernel_version | sed 's/^.*\.\([0-9]*\)\.[0-9]*.*/\1/'`
       config_kernel_vrevision=`echo $kernel_version | sed 's/^.*\.[0-9]*\.\([0-9]*\).*/\1/'`
 
-      case $uname_m in
+      case "$uname_m" in
         aarch64 | aarch64_be)
           config_arch=arm64
           ;;
@@ -788,7 +788,7 @@ if test "$op_mode" = info; then
   
   op_verbose=
   for arg in "$@"; do
-    case $arg in
+    case "$arg" in
       -v)
         op_verbose=1
         ;;
@@ -800,7 +800,7 @@ if test "$op_mode" = info; then
   fi
 
   while test $# -gt 0; do
-    case $1 in
+    case "$1" in
       -os)
         print_string="$print_string $config_os"
         op_os=1
