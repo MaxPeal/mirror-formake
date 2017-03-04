@@ -518,7 +518,7 @@ test -f $BUILDROOT/$CONF && . $BUILDROOT/$CONF
 mkrule init >$MAKEFILE
 TOP_EOF
 if test "$op_srcroot" = "."; then
-  echo "mkrule distclean \$CONF configure.log \$MAKEFILE >>\$MAKEFILE" >>$op_out_file
+  echo "mkrule distclean \$CONF configure.log formake/*.conf \$MAKEFILE >>\$MAKEFILE" >>$op_out_file
 else
   echo "mkrule distclean \$MAKEFILE >>\$MAKEFILE" >>$op_out_file
 fi
