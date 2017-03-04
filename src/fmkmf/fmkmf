@@ -33,9 +33,13 @@ $script_name [options]
  -subdirs ..        run mkmf scripts in subdirs in specified order
  -*src ..           source files
  -*type TYPE        output target type:
-                      prog     - compile program
-                      lib      - compile library
-                      obj      - compile objects only (default)
+                      prog       - compile program
+                      lib|tlib   - compile static library
+                      dlib       - compile dynamic library
+                      xlib       - compile static and dynamic libraries
+                      obj|tobj   - compile objects for static linking (default)
+                      dobj       - compile objects for dynamic linking
+                      xobj       - compile objects for static and dynamic linking
  -*name NAME        program/library name. Changes default target type on 'prog'
  -*cflags=FLAGS     C compiler flags
  -*cxxflags=FLAGS   C++ compiler flags
@@ -305,8 +309,18 @@ while test $# -gt 0; do
           ;;
         target-type)
           case "$1" in
-            prog|obj) : ;;
+            obj)
+              ttype=tobj
+              ;;
+            prog|tobj|dobj|xobj)
+              ttype=$1
+              ;;
             lib)
+              ttype=tlib
+              use_libro=1
+              ;;
+            tlib|dlib|xlib)
+              ttype=$1
               use_libro=1
               ;;
             *)
@@ -314,7 +328,7 @@ while test $# -gt 0; do
               exit 1
               ;;
           esac
-          eval target_${prefix}_type=\$1
+          eval target_${prefix}_type=\$ttype
           current_opt=
           ;;
         target-name)
@@ -402,7 +416,7 @@ for prefix in $prefix_list; do
 
   if test -z "$target_type"; then
     if test -n "$target_ver"; then
-      target_type=lib
+      target_type=xlib
     elif test -n "$target_name" || test -n "$target_ldflags"; then
       target_type=prog
     else
@@ -415,11 +429,14 @@ for prefix in $prefix_list; do
     if test $prefix != "_"; then
       eval target_${prefix}_name=\$prefix
     else
-      if test $target_type = lib; then
-        eval target_${prefix}_name="mod"
-      elif test $target_type = prog; then
-        eval target_${prefix}_name="prog"
-      fi
+      case $target_type in
+        tlib|dlib|xlib)
+          eval target_${prefix}_name="mod"
+          ;;
+        prog)
+          eval target_${prefix}_name="prog"
+          ;;
+      esac
     fi
   fi
 
@@ -431,10 +448,16 @@ for prefix in $prefix_list; do
     target_objdir_pic="${target_objdir}_pic"
     eval target_${prefix}_objdir_pic=\$target_objdir_pic
   else
-    common_static_dir=$default_static_dir
-    if test $target_type = lib; then
-      common_pic_dir=$default_pic_dir
-    fi
+    case $target_type in
+      prog|tlib|xlib|tobj|xobj)
+        common_static_dir=$default_static_dir
+        ;;
+    esac
+    case $target_type in
+      dlib|xlib|dobj|xobj)
+        common_pic_dir=$default_pic_dir
+        ;;
+    esac
   fi
 
   if test -z "$target_no_install"; then
@@ -565,18 +588,24 @@ for prefix in $prefix_list; do
     echo "${prefix_}cflags=\"$target_cflags\"" >>$op_out_file
   fi
 
-  if test -n "$target_objdir"; then
-    echo "${prefix_}static_dir=\"$target_objdir\"" >>$op_out_file
-  else
-    echo "${prefix_}static_dir=\$COMMON_STATIC_DIR" >>$op_out_file
-  fi
-  if test $target_type = lib; then
-    if test -n "$target_objdir_pic"; then
-      echo "${prefix_}pic_dir=\"$target_objdir_pic\"" >>$op_out_file
-    else
-      echo "${prefix_}pic_dir=\$COMMON_PIC_DIR" >>$op_out_file
-    fi
-  fi
+  case $target_type in
+    prog|tlib|xlib|tobj|xobj)
+      if test -n "$target_objdir"; then
+        echo "${prefix_}static_dir=\"$target_objdir\"" >>$op_out_file
+      else
+        echo "${prefix_}static_dir=\$COMMON_STATIC_DIR" >>$op_out_file
+      fi
+      ;;
+  esac
+  case $target_type in
+    dlib|xlib|dobj|xobj)
+      if test -n "$target_objdir_pic"; then
+        echo "${prefix_}pic_dir=\"$target_objdir_pic\"" >>$op_out_file
+      else
+        echo "${prefix_}pic_dir=\$COMMON_PIC_DIR" >>$op_out_file
+      fi
+      ;;
+  esac
 
   target_src=`echo -n "$target_src" | sed 's/^ *//' | sed 's/ *$//' | sed 's/  */ /g'`
   echo "${prefix_}sources=\"$target_src\"" >>$op_out_file
@@ -585,18 +614,24 @@ for prefix in $prefix_list; do
   else
     comment_out=
   fi
-  if test -z "$target_have_cxx"; then
-    echo "${comment_out}mkrule obj -cflags=\"\$${prefix_}cflags\" -srcdir \$SRCDIR -src \$${prefix_}sources -d \$${prefix_}static_dir >>\$MAKEFILE" >>$op_out_file
-  else
-    echo "${comment_out}mkrule obj -c++ -cflags=\"\$${prefix_}cxxflags\" -srcdir \$SRCDIR -src \$${prefix_}sources -d \$${prefix_}static_dir >>\$MAKEFILE" >>$op_out_file
-  fi
-  if test $target_type = lib; then
-    if test -z "$target_have_cxx"; then
-      echo "${comment_out}mkrule obj -pic -cflags=\"\$${prefix_}cflags\" -srcdir \$SRCDIR -src \$${prefix_}sources -d \$${prefix_}pic_dir >>\$MAKEFILE" >>$op_out_file
-    else
-      echo "${comment_out}mkrule obj -c++ -pic -cflags=\"\$${prefix_}cxxflags\" -srcdir \$SRCDIR -src \$${prefix_}sources -d \$${prefix_}pic_dir >>\$MAKEFILE" >>$op_out_file
-    fi
-  fi
+  case $target_type in
+    prog|tlib|xlib|tobj|xobj)
+      if test -z "$target_have_cxx"; then
+        echo "${comment_out}mkrule obj -cflags=\"\$${prefix_}cflags\" -srcdir \$SRCDIR -src \$${prefix_}sources -d \$${prefix_}static_dir >>\$MAKEFILE" >>$op_out_file
+      else
+        echo "${comment_out}mkrule obj -c++ -cflags=\"\$${prefix_}cxxflags\" -srcdir \$SRCDIR -src \$${prefix_}sources -d \$${prefix_}static_dir >>\$MAKEFILE" >>$op_out_file
+      fi
+      ;;
+  esac
+  case $target_type in
+    dlib|xlib|dobj|xobj)
+      if test -z "$target_have_cxx"; then
+        echo "${comment_out}mkrule obj -pic -cflags=\"\$${prefix_}cflags\" -srcdir \$SRCDIR -src \$${prefix_}sources -d \$${prefix_}pic_dir >>\$MAKEFILE" >>$op_out_file
+      else
+        echo "${comment_out}mkrule obj -c++ -pic -cflags=\"\$${prefix_}cxxflags\" -srcdir \$SRCDIR -src \$${prefix_}sources -d \$${prefix_}pic_dir >>\$MAKEFILE" >>$op_out_file
+      fi
+      ;;
+  esac
   echo "" >>$op_out_file
 done
 
@@ -688,7 +723,7 @@ for prefix in $prefix_list; do
   eval target_have_cxx=\$target_${prefix}_have_cxx
   eval target_version=\$target_${prefix}_ver
 
-  if test $target_type = lib; then
+  if test $target_type = tlib || test $target_type = dlib || test $target_type = xlib; then
     if test $prefix = "_"; then
       prefix_=
     else
@@ -713,8 +748,12 @@ TOP_EOF
     else
       comment_out=
     fi
-    echo "${comment_out}mkrule lib $add_params -static -ldflags=\"\$${prefix_}ldflags\" -n \$${prefix_}name -ver \$${prefix_}version -objdir \$${prefix_}static_dir -src \$${prefix_}sources >>\$MAKEFILE" >>$op_out_file
-    echo "${comment_out}mkrule lib $add_params -shared -ldflags=\"\$${prefix_}ldflags\" -n \$${prefix_}name -ver \$${prefix_}version -objdir \$${prefix_}pic_dir  -src \$${prefix_}sources >>\$MAKEFILE" >>$op_out_file
+    if test $target_type = tlib || test $target_type = xlib; then
+      echo "${comment_out}mkrule lib $add_params -static -ldflags=\"\$${prefix_}ldflags\" -n \$${prefix_}name -ver \$${prefix_}version -objdir \$${prefix_}static_dir -src \$${prefix_}sources >>\$MAKEFILE" >>$op_out_file
+    fi
+    if test $target_type = dlib || test $target_type = xlib; then
+      echo "${comment_out}mkrule lib $add_params -shared -ldflags=\"\$${prefix_}ldflags\" -n \$${prefix_}name -ver \$${prefix_}version -objdir \$${prefix_}pic_dir  -src \$${prefix_}sources >>\$MAKEFILE" >>$op_out_file
+    fi
     echo "" >>$op_out_file
   fi
 done
