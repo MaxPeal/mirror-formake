@@ -27,6 +27,7 @@ Options:
  -p DIR  create package directory
  -d DIR  package script directory name [formake]
  -std    install standard minimum set of scripts
+ -all    install all scripts
 
 Scripts:
   abspath      general automation       calculate absolute path
@@ -104,6 +105,9 @@ while test $# -gt 0; do
       ;;
     -std)
       select_standard
+      ;;
+    -all)
+      select_all
       ;;
     abspath)
       s_abspath=1
