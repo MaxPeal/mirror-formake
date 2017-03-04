@@ -671,7 +671,7 @@ clean-$op_name:
 	rm -f $prog_local
 distclean: clean-$op_name
 EOF
-  if test -n "$LDLWRAP" && test x$op_disable_ldlw = 1; then
+  if test -n "$LDLWRAP" && test x$op_disable_ldlw = x; then
     echo "	rm -f ${prog_local}-ldlw"
   fi
   
