@@ -488,7 +488,7 @@ SUBDIR=`relpath $BUILDROOT ./`
 
 ################################################################################
 # READ CONFIG
-#. $BUILDROOT/$CONF
+test -f $BUILDROOT/$CONF && . $BUILDROOT/$CONF
 
 ################################################################################
 # INIT MAKEFILE
