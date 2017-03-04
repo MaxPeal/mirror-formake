@@ -452,9 +452,9 @@ for prefix in $prefix_list; do
 
   target_src=`echo "$target_src" | tr ' ' '\n' | sort | uniq | tr '\n' ' ' | sed 's/^ *//'`
   eval target_${prefix}_src=\$target_src
-  target_obj=`echo "$target_obj" | tr ' ' '\n' | sort | uniq | tr '\n' ' ' | sed 's/^ *//'`
+  target_obj=`echo "$target_obj" | sed 's/^ *//'`
   eval target_${prefix}_obj=\$target_obj
-  target_dobj=`echo "$target_dobj" | tr ' ' '\n' | sort | uniq | tr '\n' ' ' | sed 's/^ *//'`
+  target_dobj=`echo "$target_dobj" | sed 's/^ *//'`
   eval target_${prefix}_dobj=\$target_dobj
 
 
