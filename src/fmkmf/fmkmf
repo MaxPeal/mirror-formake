@@ -145,15 +145,6 @@ while test $# -gt 0; do
       eval target_${prefix}_src=
       current_opt=target-src
       ;;
-    -*obj)
-      prefix=`echo -n "$1" | sed 's/obj$//' | sed 's/^-*//' | sed 's/-*$//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g'`
-      if test -z "$prefix"; then
-        prefix="_"
-      fi
-      prefix_list="$prefix_list $prefix"
-      eval target_${prefix}_obj=
-      current_opt=target-obj
-      ;;
     -*dobj)
       prefix=`echo -n "$1" | sed 's/dobj$//' | sed 's/^-*//' | sed 's/-*$//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g'`
       if test -z "$prefix"; then
@@ -162,6 +153,15 @@ while test $# -gt 0; do
       prefix_list="$prefix_list $prefix"
       eval target_${prefix}_dobj=
       current_opt=target-dobj
+      ;;
+    -*obj)
+      prefix=`echo -n "$1" | sed 's/obj$//' | sed 's/^-*//' | sed 's/-*$//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g'`
+      if test -z "$prefix"; then
+        prefix="_"
+      fi
+      prefix_list="$prefix_list $prefix"
+      eval target_${prefix}_obj=
+      current_opt=target-obj
       ;;
     -*type)
       prefix=`echo -n "$1" | sed 's/type$//' | sed 's/^-*//' | sed 's/-*$//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g'`
