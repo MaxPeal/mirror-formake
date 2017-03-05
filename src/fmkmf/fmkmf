@@ -39,15 +39,15 @@ $script_name [options]
                         lib|tlib   - compile static library
                         dlib       - compile dynamic library
                         xlib       - compile static and dynamic libraries
-                        obj|tobj   - compile objects for static linking (default)
+                        obj|tobj   - compile objects for static linking
                         dobj       - compile objects for dynamic linking
                         xobj       - compile objects for static and dynamic linking
- -*name NAME          program/library name. Changes default target type on 'prog'
+ -*name NAME          program/library name
  -*cflags=FLAGS       C compiler flags
  -*cxxflags=FLAGS     C++ compiler flags
- -*ldflags=FLAGS      linker flags. Changes default target type on 'prog'
+ -*ldflags=FLAGS      linker flags
  -*no-install         do not add target to the install rule
- -*ver X[.Y[.Z]]      library version. Changes default target type on 'lib'
+ -*ver X[.Y[.Z]]      library version
  -*objdir DIR         specify output directory for compiled objects
  -*common             make objects common for other targets (only for *obj types)
  -*lang c|c++         specify compiler/linker type [autodetect]
