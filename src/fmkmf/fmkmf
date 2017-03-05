@@ -905,10 +905,11 @@ for prefix in $prefix_list; do
       else
         echo "${comment_out}mkrule obj -c++ -cflags=\"\$${prefix_}cxxflags\" -srcdir \$SRCDIR -src \$${prefix_}sources -d \$$objdir_var >>\$MAKEFILE" >>$op_out_file
       fi
-      echo "${prefix_}objects=\`src2obj -o \$$objdir_var \$${prefix_}sources\`" >>$op_out_file
       if test -n "$target_obj"; then
         echo "${prefix_}ext_objects=\"$target_obj\"" >>$op_out_file
-        echo "${prefix_}objects=\"\$${prefix_}objects \$${prefix_}ext_objects\"" >>$op_out_file
+        echo "${prefix_}objects=\`src2obj -o \$$objdir_var \$${prefix_}sources\`\"\$${prefix_}ext_objects\"" >>$op_out_file
+      else
+        echo "${prefix_}objects=\`src2obj -o \$$objdir_var \$${prefix_}sources\`" >>$op_out_file
       fi
       if test x$target_obj_common = x1; then
         common_static_objects="$common_static_objects \$${prefix_}objects $target_obj"
@@ -922,10 +923,11 @@ for prefix in $prefix_list; do
       else
         echo "${comment_out}mkrule obj -c++ -pic -cflags=\"\$${prefix_}cxxflags\" -srcdir \$SRCDIR -src \$${prefix_}sources -d \$$objdir_pic_var >>\$MAKEFILE" >>$op_out_file
       fi
-      echo "${prefix_}pic_objects=\`src2obj -o \$$objdir_pic_var \$${prefix_}sources\`" >>$op_out_file
       if test -n "$target_dobj"; then
         echo "${prefix_}ext_pic_objects=\"$target_dobj\"" >>$op_out_file
-        echo "${prefix_}pic_objects=\"\$${prefix_}pic_objects \$${prefix_}ext_pic_objects\"" >>$op_out_file
+        echo "${prefix_}pic_objects=\`src2obj -o \$$objdir_pic_var \$${prefix_}sources\`\"\$${prefix_}ext_pic_objects\"" >>$op_out_file
+      else
+        echo "${prefix_}pic_objects=\`src2obj -o \$$objdir_pic_var \$${prefix_}sources\`" >>$op_out_file
       fi
       if test x$target_obj_common = x1; then
         common_pic_objects="$common_pic_objects \$${prefix_}pic_objects $target_dobj"
