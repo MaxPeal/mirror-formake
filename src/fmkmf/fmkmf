@@ -29,7 +29,7 @@ print_help() {
 Generate mkmf script
 
 $script_name [options]
- -srcroot PATH        specify source root dir relative path (SRCROOT) [./]
+ -srcroot PATH        source root dir relative path (SRCROOT) [./]
  -subdirs ..          run mkmf scripts in subdirs in specified order
  -*src ..             source files
  -*obj ..             object files
@@ -48,9 +48,9 @@ $script_name [options]
  -*ldflags=FLAGS      linker flags
  -*no-install         do not add target to the install rule
  -*ver X[.Y[.Z]]      library version
- -*objdir DIR         specify output directory for compiled objects
+ -*objdir DIR         output directory for compiled objects
  -*common             make objects common for other targets (option is valid only for *obj target)
- -*lang c|c++         specify compiler/linker type [autodetect]
+ -*lang c|c++         compiler/linker type [autodetect]
  -add-src ..          add sources for all targets
  -add-obj ..          add objects for all targets
  -add-dobj ..         add PIC objects for all targets
@@ -62,15 +62,15 @@ $script_name [options]
  -def-no-install      no-install for all targets
  -def-objdir DIR      default object output directory
  -def-lang c|c++      default compiler/linker type
- -inst-bin ..         executables for install into bin directory
- -inst-sbin ..        executables for install into sbin directory
- -inst-lib ..         files and directories for install into lib directory
- -inst-libexec ..     files and directories for install into libexec directory
- -inst-inc ..         header files and directories for install into include dir
- -inst-man[0-9] ..    man files and directories for install into man directory
- -inst-doc ..         documentation files and directories for install into doc
- -inst-share ..       files and directories for install into share directory
- -inst-etc ..         files and directories for install into etc directory
+ -inst-bin ..         executables to be installed into bin directory
+ -inst-sbin ..        executables to be installed into sbin directory
+ -inst-lib ..         files and directories to be installed into lib directory
+ -inst-libexec ..     files and directories to be installed into libexec directory
+ -inst-inc ..         header files and directories to be installed into include dir
+ -inst-man[0-9] ..    man files and directories to be installed into man directory
+ -inst-doc ..         documentation files and directories to be installed into doc
+ -inst-share ..       files and directories to be installed into share directory
+ -inst-etc ..         files and directories to be installed into etc directory
  -f                   force to overwrite existing mkmf script if found
  -o FILE              output script file [$op_out_file]
  -omk FILE            output Make script [$op_out_mkfile]
