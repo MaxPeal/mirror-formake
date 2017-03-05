@@ -907,7 +907,7 @@ for prefix in $prefix_list; do
       fi
       if test -n "$target_obj"; then
         echo "${prefix_}ext_objects=\"$target_obj\"" >>$op_out_file
-        echo "${prefix_}objects=\`src2obj -o \$$objdir_var \$${prefix_}sources\`\"\$${prefix_}ext_objects\"" >>$op_out_file
+        echo "${prefix_}objects=\`src2obj -o \$$objdir_var \$${prefix_}sources\`\" \$${prefix_}ext_objects\"" >>$op_out_file
       else
         echo "${prefix_}objects=\`src2obj -o \$$objdir_var \$${prefix_}sources\`" >>$op_out_file
       fi
@@ -925,7 +925,7 @@ for prefix in $prefix_list; do
       fi
       if test -n "$target_dobj"; then
         echo "${prefix_}ext_pic_objects=\"$target_dobj\"" >>$op_out_file
-        echo "${prefix_}pic_objects=\`src2obj -o \$$objdir_pic_var \$${prefix_}sources\`\"\$${prefix_}ext_pic_objects\"" >>$op_out_file
+        echo "${prefix_}pic_objects=\`src2obj -o \$$objdir_pic_var \$${prefix_}sources\`\" \$${prefix_}ext_pic_objects\"" >>$op_out_file
       else
         echo "${prefix_}pic_objects=\`src2obj -o \$$objdir_pic_var \$${prefix_}sources\`" >>$op_out_file
       fi
@@ -992,7 +992,7 @@ for prefix in $prefix_list; do
     fi
 
     echo "${prefix_}name="$target_name"" >>$op_out_file
-    if test -n "$add_ldflags"; then
+    if test -n "$op_add_ldflags"; then
       echo "${prefix_}ldflags=\"\$ADD_LDFLAGS $target_ldflags\"" >>$op_out_file
     else
       echo "${prefix_}ldflags=\"$target_ldflags\"" >>$op_out_file
@@ -1009,7 +1009,7 @@ for prefix in $prefix_list; do
     obj_params=
     if test -n "$common_static_objects$op_add_obj"; then
       if test -n "$common_static_objects"; then
-        obj_params="\$common_static_objects"
+        obj_params="\$COMMON_STATIC_OBJECTS"
       fi
       if test -n "$op_add_obj"; then
         obj_params="$obj_params \$ADD_OBJ"
@@ -1072,7 +1072,7 @@ for prefix in $prefix_list; do
 ${prefix_}name="$target_name"
 ${prefix_}version="$target_version"
 TOP_EOF
-    if test -n "$add_ldflags"; then
+    if test -n "$op_add_ldflags"; then
       echo "${prefix_}ldflags=\"\$ADD_LDFLAGS $target_ldflags\"" >>$op_out_file
     else
       echo "${prefix_}ldflags=\"$target_ldflags\"" >>$op_out_file
@@ -1088,9 +1088,8 @@ TOP_EOF
 
     tobj_params=
     if test -n "$common_static_objects$op_add_obj"; then
-      tobj_params="-obj"
       if test -n "$common_static_objects"; then
-        tobj_params="$tobj_params \$common_static_objects"
+        tobj_params="$tobj_params \$COMMON_STATIC_OBJECTS"
       fi
       if test -n "$op_add_obj"; then
         tobj_params="$tobj_params \$ADD_OBJ"
@@ -1098,9 +1097,8 @@ TOP_EOF
     fi
     dobj_params=
     if test -n "$common_pic_objects$op_add_dobj"; then
-      dobj_params="-obj"
       if test -n "$common_pic_objects"; then
-        dobj_params="$dobj_params \$common_pic_objects"
+        dobj_params="$dobj_params \$COMMON_PIC_OBJECTS"
       fi
       if test -n "$op_add_dobj"; then
         dobj_params="$dobj_params \$ADD_DOBJ"
