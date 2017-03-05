@@ -61,7 +61,7 @@ $script_name [options]
  -def-ver VER         default library version
  -def-no-install      no-install for all targets
  -def-objdir DIR      default object output directory
- -def-lang c|c++      specify default compiler/linker type
+ -def-lang c|c++      default compiler/linker type
  -inst-bin ..         executables for install into bin directory
  -inst-sbin ..        executables for install into sbin directory
  -inst-lib ..         files and directories for install into lib directory
