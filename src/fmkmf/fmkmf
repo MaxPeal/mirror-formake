@@ -35,10 +35,10 @@ $script_name [options]
  -*obj ..             object files
  -*dobj ..            PIC object files
  -*type TYPE          output target type:
-                        prog       - compile program
-                        lib|tlib   - compile static library
-                        dlib       - compile dynamic library
-                        xlib       - compile static and dynamic libraries
+                        prog       - build program
+                        lib|tlib   - build static library
+                        dlib       - build dynamic library
+                        xlib       - build static and dynamic libraries
                         obj|tobj   - compile objects for static linking
                         dobj       - compile objects for dynamic linking
                         xobj       - compile objects for static and dynamic linking
