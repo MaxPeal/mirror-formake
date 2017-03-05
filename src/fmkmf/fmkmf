@@ -295,7 +295,7 @@ while test $# -gt 0; do
       prefix_list="$prefix_list $prefix"
       current_opt=target-objdir
       ;;
-    -*objdir)
+    -*lang)
       prefix=`echo -n "$1" | sed 's/lang$//' | sed 's/^-*//' | sed 's/-*$//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g'`
       if test -z "$prefix"; then
         prefix="_"
