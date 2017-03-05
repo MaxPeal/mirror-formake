@@ -11,7 +11,7 @@ script_name=`basename "$0"`
 script_dir=`dirname $0`
 
 op_dir=formake
-formake_scripts="abspath cfront cstem cstem+ install ldlshell ldlwrap libro listed mkdep mkrule optool relpath syscap"
+formake_scripts="abspath cfront cstem cstem+ install ldlshell ldlwrap libro src2obj mkdep mkrule optool relpath syscap"
 share_dir=
 
 print_help() {
@@ -38,7 +38,7 @@ Scripts:
   ldlshell     test automation          load interactive shell with predefined LD library path environment
   ldlwrap      test automation          create program wrapper script with predefined LD library path
   libro        mkmf automation          build static and dynamic libraries
-  listed       general automation       process space separated text lists
+  src2obj      general automation       convert source list to object list
   mkdep        mkmf automation          generate dependencies of C/C++ source files for Makefile
   mkrule       mkmf automation          generate Make rules
   optool       general automation       options processing tool
@@ -55,6 +55,7 @@ select_standard() {
   s_mkrule=1
   s_optool=1
   s_relpath=1
+  s_src2obj=1
   s_syscap=1
   have_list=1
 }
@@ -68,7 +69,7 @@ select_all() {
   s_ldlshell=1
   s_ldlwrap=1
   s_libro=1
-  s_listed=1
+  s_src2obj=1
   s_mkdep=1
   s_mkrule=1
   s_optool=1
@@ -139,8 +140,8 @@ while test $# -gt 0; do
       s_libro=1
       have_list=1
       ;;
-    listed)
-      s_listed=1
+    src2obj)
+      s_src2obj=1
       have_list=1
       ;;
     mkdep)
