@@ -49,7 +49,7 @@ $script_name [options]
  -*no-install         do not add target to the install rule
  -*ver X[.Y[.Z]]      library version
  -*objdir DIR         specify output directory for compiled objects
- -*common             make objects common for other targets (only for *obj types)
+ -*common             make objects common for other targets (option is valid only for *obj target)
  -*lang c|c++         specify compiler/linker type [autodetect]
  -add-src ..          add sources for all targets
  -add-obj ..          add objects for all targets
