@@ -763,7 +763,6 @@ cat <<"TOP_EOF" >>$op_out_file
 #
 # Common settings for compilation and linking
 #
-
 TOP_EOF
 if test -n "$have_src"; then
   print_nl=
@@ -799,6 +798,7 @@ fi
 
 
 cat <<"TOP_EOF" >>$op_out_file
+
 ################################################################################
 # OBJECTS
 #
