@@ -32,11 +32,10 @@ fi
 
 print_help() {
   cat <<EOF
+Text list editing tool
+
 $script_name OPTIONS list..
 $script_name -v
-
-Fileter/edit options may be specified multiple times and are applied in the same
-order.
 
 Filter/edit options:
   -grep=ARGS          pass list thourgh a grep tool
@@ -49,6 +48,9 @@ Filter/edit options:
 
 Global options:
   -ifs=IFS            specify list items delimiter [space]
+
+Fileter/edit options may be specified multiple times and are applied in the same
+order.
 EOF
 }
 
