@@ -170,7 +170,7 @@ if test x$op_cxx = x1; then
   formake_scripts="$formake_scripts cstem+"
 fi
 if test -n "$op_cc$op_cxx"; then
-  formake_scripts="$formake_scripts mkdep"
+  formake_scripts="$formake_scripts mkdep src2obj"
 fi
 formake_scripts=`echo -n "$formake_scripts" | sed 's/^ *//'`
 
