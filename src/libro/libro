@@ -54,6 +54,8 @@ test -n "$AR_FLAGS" || AR_FLAGS=rcs
 
 print_help() {
   cat <<EOF
+Build static and dynamic libraries
+
 $script_name [static] -name NAME [-ver VERSION] -obj OBJECTS [-o dir] [-p] [-s]
 $script_name shared [-ldflags=FLAGS] -name NAME [-ver VERSION] [-c++] -obj OBJECTS [-o DIR] [-p] [-s]
 $script_name -v

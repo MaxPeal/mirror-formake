@@ -184,6 +184,19 @@ rel_path2() {
   rel_path_ret=`echo -n "$dir_up/$dir_down" | sed 's:^/*$:.:' | sed 's:^/*::' | sed 's:/*$::'`
 }
 
+script_name=`basename $0`
+
+case x"$1" in
+  x-help|x--help)
+    cat <<EOF
+Calculate relative path between two directories
+
+Usage: $script_name FROM [TO]
+EOF
+    exit 0
+    ;;
+esac
+
 cd_param=
 orig_dir=`pwd`
 cd -P / >/dev/null 2>&1
@@ -197,7 +210,7 @@ if test $# -eq 1; then
 elif test $# -eq 2; then
   rel_path2 $1 $2
 else
-  echo "Usage: $0 FROM [TO]" >&2
+  echo "Usage: $script_name FROM [TO]" >&2
   exit 1
 fi
 

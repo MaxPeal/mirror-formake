@@ -98,6 +98,8 @@ cd "$orig_dir"
 
 print_help() {
   cat <<EOF
+Generate Make rules
+
 $script_name init|obj|prog|lib|subdir|clean|distclean|install OPTIONS
 $script_name -v
   init        generate standard init macros and rules
