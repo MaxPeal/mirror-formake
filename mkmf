@@ -36,7 +36,7 @@ mkrule distclean $MAKEFILE $CONF formake/'*.conf' >>$MAKEFILE
 
 ################################################################################
 # DIST
-dist_files="configure formake/relpath formake/mkrule formake/optool formake/syscap mkmf "
+dist_files="configure formake/relpath formake/mkrule formake/optool formake/syscap mkmf COPYING README"
 mkrule dist -n $PACKAGE_NAME -ver $PACKAGE_VERSION -buildroot $BUILDROOT -srcdir $SRCDIR -f $dist_files >>$MAKEFILE || exit 1
 
 ################################################################################
