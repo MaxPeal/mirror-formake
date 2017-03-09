@@ -1,2 +1,67 @@
-Formake - extention toolkit for standard Make and Shell for managing software configuration and build automation.
+General description
 
+Formake is a toolkit for constructing software configuration and build automation systems. Also It can be useful in sysadmin tasks.
+
+Formake declares the following key principles for portable software configuration or build automation solutions:
+
+    distributable scripts must be implemented solely with Shell
+    distributable scripts must be portable, with no dependencies except standard Shell
+    developer must know Shell and automate tasks in Shell
+    simple things must be implemented simply
+    complex things must be as hard as ordinary programming in Shell
+    generated scripts must be readable
+    it must be modular
+    it must be easily extensible
+
+The above principles are put in the design of Formake.
+
+Formake provides the following set of scripts:
+
+* abspath         Calculate absolute path
+* cfront          C/C++ compiler frontend
+* cstem           Configure and probe C compiler
+* cstem+          Configure and probe C++ compiler
+* ldlshell        Load interactive shell with predefined LD library path environment
+* ldlwrap         Create program wrapper script with predefined LD library path
+* libro           Build static and dynamic libraries
+* mkdep           Generate dependencies of C/C++ source files for Makefile
+* mkrule          Generate Make rules
+* optool          Command-line options processing tool
+* relpath         Calculate relative path between two directories
+* src2obj         Convert source list to object list
+* syscap          System capabilities query and test tool
+
+* fmkconfigure    Generate configure script
+* fmkinstall      Install Formake scripts into package
+* fmkmf           Generate mkmf script
+* fmkpackage      Create build automation package
+
+Basically formake just provides a number of scripts that can be used separately in any tasks that they happen to be useful. Major scripts provide automation of the following tasks:
+
+    find compiler, probe it's parameters, probe target system configuration (cstem, cstem+)
+    test built programs locally before installation (ldlshell, ldlwrap)
+    build static and dynamic libraries on different systems (libro)
+    generate source dependencies for constructing correct Makefiles (mkdep)
+    generate simple and complex Make rules (mkrule)
+    parse command-line options (optool)
+    probe system parameters, probe any dependencies (syscap)
+    generate configure script (fmkconfigure)
+    generate Makefile generation script (fmkmf)
+
+Besides the scripts Formake offers a general architecture of a conventional software build system. It is very simple and consist of only 2 key components:
+
+    configure. It is a well-known Shell script that performs common system probe and build configuration. Developer can generate parameterized configure script using fmkconfigure. Generated script works out of the box and it is also easily readable for the following editing. Generated script is split on logical sections with comments and examples. Formake provides a set of tools that do the automation tasks that are common for configure scripts. As far as many automation code is already implemented and placed in separate scripts, the configure script remains short and easily editable. All that is needed is to know Shell.
+    mkmf. In every directory that must have a Makefile developer places mkmf script that generate a final Makefile. The main idea behind this approach is that Make is not a full-fledged programming language. Some Make versions, like GNU Make, implement different extensions to the standard Make langiage that allow to do some simple operations. Yet such Make extensions give a little and look perverted and obscure. In addition you bind to a specific Make implementation. The recommended solution is rather evident - use Shell script to generate Makefile. And the recommended name of such script is mkmf. Formake provides a tool fmkmf that generates parameterized mkmf scripts. Such script can work out of box. It is expected that developer will edit it when he needs more than fmkmf can give. Formake provides tools that automate tasks that are common in mkmf scripts. The generated mkmf script is well formatted with predefined structure splitted on sections with comments and examples. All that is needed is to know Shell and sometimes Make.
+
+When configure is run, at the end it runs the root mkmf script that runs other mkmf scripts in subdirectories in order. Every mkmf script runs mkmf in every subdirectory that contains such script.
+
+Formake provides tools and 'architecture'. The 'architecture' provided is not something specific, for many developers it would be rather ordinary and evident. And the evidence is a qualification of simplicity, that comes to be an advantage.
+
+There is one important feature of the above architecture. A distributable software package contains general package-wide configure script that performs probe and configuration common for the whole package build. At the same time every subdirectory contains it's own mkmf script that performs only configuration specific for only that subdirectory. It looks rather evident here. But there exist some build automation systems that do not allow parameterized configuring of subdirectories in that subdirectories. The only solution they give is to write configuration of all subdirectories in single root configure script (or whatever it can be named). It looks rather odd.
+
+It must be noted that Formake only provides tools and recommended approach of developing the final build system. It's up to developer to use recommended way or go with his own. Developer can decide to write configure and mkmf scripts manually from start to end without using Formake generation tools. Or developer can edit Formake scripts or write his own implementations. Or use any of the Formake scripts in different build automation system. Any of these decisions are correct.
+
+As it was already mentioned Formake scripts can be used in any solutions and configurations where they can be useful. There is no special binding to a job of software build automation. Every script can be used on its own. But a few scripts have dependencies on other scripts. Yet the dependency graph is very short.
+
+This is a simple description of the Formake. Yet there is much more interesting in details.
+Key principles in detail
