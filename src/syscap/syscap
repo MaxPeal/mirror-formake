@@ -927,6 +927,7 @@ elif test "$op_mode" = test; then
 
   current_opt=
   def_num=0
+  have_cc_tests=
   while test $# -gt 0; do
     param=`echo -n "$1" | sed 's/^ *//' | sed 's/^# */#/'`
     case "$param" in
@@ -942,91 +943,114 @@ elif test "$op_mode" = test; then
         ;;
       -with-cc)
         with_cc_type=cc
+        have_cc_tests=1
         current_opt=
         ;;
       -with-cc=*)
         with_cc_type=cc
         op_with_cmd=`echo -n "$param" | sed 's/^[^=]*=//'`
+        have_cc_tests=1
         current_opt=
         ;;
       -with-cxx)
         with_cc_type=cxx
+        have_cc_tests=1
         current_opt=
         ;;
       -with-cxx=*)
         with_cc_type=cxx
         op_with_cmd=`echo -n "$param" | sed 's/^[^=]*=//'`
+        have_cc_tests=1
         current_opt=
         ;;
       -with-cflags=*)
         op_with_cflags=`echo -n "$param" | sed 's/^[^=]*=//'`
+        have_cc_tests=1
         current_opt=
         ;;
       -with-ldflags=*)
         op_with_ldflags=`echo -n "$param" | sed 's/^[^=]*=//'`
+        have_cc_tests=1
         current_opt=
         ;;
       -disable-ld)
         op_disable_ld=1
+        have_cc_tests=1
         current_opt=
         ;;
       -with-inc=*)
         op_with_inc=`echo -n "$param" | sed 's/^[^=]*=//'`
+        have_cc_tests=1
         current_opt=
         ;;
       -cc)
         cc_type=cc
         op_test_cc=1
+        have_cc_tests=1
         current_opt=cc
         ;;
       -cxx)
         cc_type=cxx
         op_test_cc=1
+        have_cc_tests=1
         current_opt=cxx
         ;;
       -cflags=*|-cxxflags=*)
         op_cflags=`echo -n "$param" | sed 's/^[^=]*=//'`
+        have_cc_tests=1
         current_opt=
         ;;
       -ld)
         op_test_ld=1
+        have_cc_tests=1
         current_opt=
         ;;
       -ldflags=*)
         op_ldflags=`echo -n "$param" | sed 's/^[^=]*=//'`
+        have_cc_tests=1
         current_opt=
         ;;
       -prog)
         current_opt=prog
         ;;
       -lib)
+        have_cc_tests=1
         current_opt=lib
         ;;
       -inc)
+        have_cc_tests=1
         current_opt=inc
         ;;
       -def)
+        have_cc_tests=1
         current_opt=def
         ;;
       -type)
+        have_cc_tests=1
         current_opt='type'
         ;;
       -enum)
+        have_cc_tests=1
         current_opt=enum
         ;;
       -var)
+        have_cc_tests=1
         current_opt=var
         ;;
       -func)
+        have_cc_tests=1
         current_opt=func
         ;;
       -sym)
+        have_cc_tests=1
         current_opt=sym
         ;;
       -rval)
+        have_cc_tests=1
         current_opt=rval
         ;;
       -cstr)
+        have_cc_tests=1
         current_opt=cstr
         ;;
       -log)
@@ -1038,18 +1062,22 @@ elif test "$op_mode" = test; then
         current_opt=
         ;;
       -l*)
+        have_cc_tests=1
         op_libs="$op_libs $param"
         current_opt=
         ;;
       -[ID]*)
+        have_cc_tests=1
         op_with_cflags_add="$op_with_cflags_add $param"
         current_opt=
         ;;
       -L*)
+        have_cc_tests=1
         op_with_ldflags_add="$op_with_ldflags_add $param"
         current_opt=
         ;;
       \#if*)
+        have_cc_tests=1
         eval def$def_num=\$param
         def_num=`expr $def_num + 1`
         if test x$current_opt != xdef; then
@@ -1057,10 +1085,12 @@ elif test "$op_mode" = test; then
         fi
         ;;
       *.h)
+        have_cc_tests=1
         op_inc="$op_inc $param"
         current_opt=
         ;;
       *.H|*.[Hh]++|*.[Hh][Hh]|*.[Hh][Xx][Xx]|*.[Hh][Pp][Pp])
+        have_cc_tests=1
         op_inc="$op_inc $param"
         if test -z "$cc_type"; then
           cc_type=cxx
@@ -1068,10 +1098,12 @@ elif test "$op_mode" = test; then
         current_opt=
         ;;
       *.c)
+        have_cc_tests=1
         op_src="$op_src $param"
         current_opt=
         ;;
       *.C|*.[Cc][Cc]|*.[Cc][Pp][Pp]|*.[Cc][Xx][Xx]|*.[Cc]++)
+        have_cc_tests=1
         op_src="$op_src $param"
         if test -z "$cc_type"; then
           cc_type=cxx
@@ -1079,12 +1111,14 @@ elif test "$op_mode" = test; then
         current_opt=
         ;;
       *.so|*.so.*)
+        have_cc_tests=1
         op_libs="$op_libs $param"
         if test x$current_opt != xlib; then
           current_opt=
         fi
         ;;
       *.a)
+        have_cc_tests=1
         op_libs="$op_libs $param"
         if test x$current_opt != xlib; then
           current_opt=
@@ -1205,6 +1239,10 @@ elif test "$op_mode" = test; then
     fi
     echo_status "%s\n" "OK"
   done
+
+  if test x$have_cc_tests = x; then
+    exit 0
+  fi
 
 ################################################################################
 # SET UP COMPILER AND LINKER

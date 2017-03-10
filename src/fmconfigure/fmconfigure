@@ -52,7 +52,7 @@ $script_name OPTIONS
   -syscap ".."       probe a system with syscap test tool
   -sh CODE           insert shell string
   -build-h           generate BUILDROOT/build.h config header
-  -fminstall        install Formake scripts into package formake directory
+  -fminstall         install Formake scripts into package formake directory
   -f                 force to overwrite existing configure script if found
   -o FILE            output script file [$out_file]
   -v                 print version
