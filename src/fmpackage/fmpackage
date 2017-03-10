@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Formake fmkpackage
+# Formake fmpackage
 #
 # Copyright (c) 2015-2017, Oleksiy Chernyavskyy
 # All rights reserved.
@@ -54,28 +54,28 @@ while test $# -gt 0; do
   shift
 done
 
-fmkinstall -help >/dev/null 2>&1
+fminstall -help >/dev/null 2>&1
 if test $? -ne 0; then
-  if test -f $script_dir/fmkinstall; then
-    FMKINSTALL=$script_dir/fmkinstall
+  if test -f $script_dir/fminstall; then
+    FMKINSTALL=$script_dir/fminstall
   else
-    echo "$script_name: error: fmkinstall not found"
+    echo "$script_name: error: fminstall not found"
     exit 1
   fi
 else
-  FMKINSTALL=fmkinstall
+  FMKINSTALL=fminstall
 fi
 
-fmkconfigure -help >/dev/null 2>&1
+fmconfigure -help >/dev/null 2>&1
 if test $? -ne 0; then
-  if test -f $script_dir/fmkconfigure; then
-    FMKCONFIGURE=$script_dir/fmkconfigure
+  if test -f $script_dir/fmconfigure; then
+    FMKCONFIGURE=$script_dir/fmconfigure
   else
-    echo "$script_name: error: fmkconfigure not found"
+    echo "$script_name: error: fmconfigure not found"
     exit 1
   fi
 else
-  FMKCONFIGURE=fmkconfigure
+  FMKCONFIGURE=fmconfigure
 fi
 
 fmkmf -help >/dev/null 2>&1
