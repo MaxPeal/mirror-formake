@@ -778,48 +778,25 @@ else
 fi
 echo "" >>$op_out_file
 
-cat <<"TOP_EOF" >>$op_out_file
+cat <<TOP_EOF >>$op_out_file
 ################################################################################
 # COMMON BUILD VARIABLES
 #
 # Common settings for compilation and linking
-#
+COMMON_STATIC_DIR="$common_static_dir"
+COMMON_PIC_DIR="$common_pic_dir"
+
+ADD_CFLAGS="$op_add_cflags"
+ADD_CXXFLAGS="$op_add_cxxflags"
+ADD_LDFLAGS="$op_add_ldflags"
+ADD_SRC="$op_add_src"
+ADD_OBJ="$op_add_obj"
+ADD_DOBJ="$op_add_dobj"
+
+
 TOP_EOF
-if test -n "$have_src"; then
-  print_nl=
-  if test -n "$common_static_dir"; then
-    echo "COMMON_STATIC_DIR=\"$common_static_dir\"" >>$op_out_file
-    print_nl=1
-  fi
-  if test -n "$common_pic_dir"; then
-    echo "COMMON_PIC_DIR=\"$common_pic_dir\"" >>$op_out_file
-    print_nl=1
-  fi
-  test x$print_nl = x1 && echo "" >>$op_out_file
-fi
-
-if test -n "$op_add_cflags"; then
-  echo "ADD_CFLAGS=\"$op_add_cflags\"" >>$op_out_file
-fi
-if test -n "$op_add_cxxflags"; then
-  echo "ADD_CXXFLAGS=\"$op_add_cxxflags\"" >>$op_out_file
-fi
-if test -n "$op_add_ldflags"; then
-  echo "ADD_LDFLAGS=\"$op_add_ldflags\"" >>$op_out_file
-fi
-if test -n "$op_add_src"; then
-  echo "ADD_SRC=\"$op_add_src\"" >>$op_out_file
-fi
-if test -n "$op_add_obj"; then
-  echo "ADD_OBJ=\"$op_add_obj\"" >>$op_out_file
-fi
-if test -n "$op_add_dobj"; then
-  echo "ADD_DOBJ=\"$op_add_dobj\"" >>$op_out_file
-fi
-
 
 cat <<"TOP_EOF" >>$op_out_file
-
 ################################################################################
 # OBJECTS
 #
@@ -870,17 +847,9 @@ for prefix in $prefix_list; do
   fi
 
   if test x$target_have_cxx = x1; then
-    if test -n "$op_add_cxxflags"; then
-      echo "${prefix_}cxxflags=\"\$ADD_CXXFLAGS $target_cxxflags\"" >>$op_out_file
-    else
-      echo "${prefix_}cxxflags=\"$target_cxxflags\"" >>$op_out_file
-    fi
+    echo "${prefix_}cxxflags=\"\$ADD_CXXFLAGS $target_cxxflags\"" >>$op_out_file
   else
-    if test -n "$op_add_cflags"; then
-      echo "${prefix_}cflags=\"\$ADD_CFLAGS $target_cflags\"" >>$op_out_file
-    else
-      echo "${prefix_}cflags=\"$target_cflags\"" >>$op_out_file
-    fi
+    echo "${prefix_}cflags=\"\$ADD_CFLAGS $target_cflags\"" >>$op_out_file
   fi
 
   case $target_type in
@@ -909,11 +878,7 @@ for prefix in $prefix_list; do
   esac
 
   target_src=`echo -n "$target_src" | sed 's/^ *//' | sed 's/ *$//' | sed 's/  */ /g'`
-  if test -n "$op_add_src"; then
-    echo "${prefix_}sources=\"\$ADD_SRC $target_src\"" >>$op_out_file
-  else
-    echo "${prefix_}sources=\"$target_src\"" >>$op_out_file
-  fi
+  echo "${prefix_}sources=\"\$ADD_SRC $target_src\"" >>$op_out_file
   if test -z "$target_src$op_add_src"; then
     comment_out="# "
   else
@@ -961,20 +926,13 @@ done
 common_static_objects=`echo -n "$common_static_objects" | sed 's/^ *//' | sed 's/ *$//'`
 common_pic_objects=`echo -n "$common_pic_objects" | sed 's/^ *//' | sed 's/ *$//'`
 
-print_nl=
-if test -n "$common_static_objects"; then
-  cat <<TOP_EOF >>$op_out_file
+cat <<TOP_EOF >>$op_out_file
+
 COMMON_STATIC_OBJECTS="$common_static_objects"
-TOP_EOF
-  print_nl=1
-fi
-if test -n "$common_pic_objects"; then
-  cat <<TOP_EOF >>$op_out_file
 COMMON_PIC_OBJECTS="$common_pic_objects"
+
+
 TOP_EOF
-  print_nl=1
-fi
-test x$print_nl = x1 && echo "" >>$op_out_file
 
 
 cat <<"TOP_EOF" >>$op_out_file
@@ -1013,11 +971,7 @@ for prefix in $prefix_list; do
     fi
 
     echo "${prefix_}name="$target_name"" >>$op_out_file
-    if test -n "$op_add_ldflags"; then
-      echo "${prefix_}ldflags=\"\$ADD_LDFLAGS $target_ldflags\"" >>$op_out_file
-    else
-      echo "${prefix_}ldflags=\"$target_ldflags\"" >>$op_out_file
-    fi
+    echo "${prefix_}ldflags=\"\$ADD_LDFLAGS $target_ldflags\"" >>$op_out_file
 
     add_params="-all"
     if test x$target_no_install = x; then
@@ -1027,22 +981,12 @@ for prefix in $prefix_list; do
       add_params="$add_params -c++"
     fi
 
-    obj_params=
-    if test -n "$common_static_objects$op_add_obj"; then
-      if test -n "$common_static_objects"; then
-        obj_params="\$COMMON_STATIC_OBJECTS"
-      fi
-      if test -n "$op_add_obj"; then
-        obj_params="$obj_params \$ADD_OBJ"
-      fi
-    fi
-
     if test -z "$target_src$op_add_src$target_obj$op_add_obj$common_static_obj"; then
       comment_out="# "
     else
       comment_out=
     fi
-    echo "${comment_out}mkrule prog $add_params -ldflags=\"\$${prefix_}ldflags\" -n \$${prefix_}name -obj \$${prefix_}objects $obj_params >>\$MAKEFILE" >>$op_out_file
+    echo "${comment_out}mkrule prog $add_params -ldflags=\"\$${prefix_}ldflags\" -n \$${prefix_}name -obj \$${prefix_}objects \$COMMON_STATIC_OBJECTS \$ADD_OBJ >>\$MAKEFILE" >>$op_out_file
     echo "" >>$op_out_file
   fi
 done
@@ -1093,11 +1037,7 @@ for prefix in $prefix_list; do
 ${prefix_}name="$target_name"
 ${prefix_}version="$target_version"
 TOP_EOF
-    if test -n "$op_add_ldflags"; then
-      echo "${prefix_}ldflags=\"\$ADD_LDFLAGS $target_ldflags\"" >>$op_out_file
-    else
-      echo "${prefix_}ldflags=\"$target_ldflags\"" >>$op_out_file
-    fi
+    echo "${prefix_}ldflags=\"\$ADD_LDFLAGS $target_ldflags\"" >>$op_out_file
 
     add_params="-all"
     if test x$target_no_install = x; then
@@ -1107,32 +1047,13 @@ TOP_EOF
       add_params="$add_params -c++"
     fi
 
-    tobj_params=
-    if test -n "$common_static_objects$op_add_obj"; then
-      if test -n "$common_static_objects"; then
-        tobj_params="$tobj_params \$COMMON_STATIC_OBJECTS"
-      fi
-      if test -n "$op_add_obj"; then
-        tobj_params="$tobj_params \$ADD_OBJ"
-      fi
-    fi
-    dobj_params=
-    if test -n "$common_pic_objects$op_add_dobj"; then
-      if test -n "$common_pic_objects"; then
-        dobj_params="$dobj_params \$COMMON_PIC_OBJECTS"
-      fi
-      if test -n "$op_add_dobj"; then
-        dobj_params="$dobj_params \$ADD_DOBJ"
-      fi
-    fi
-
     if test -z "$target_src$op_add_src$target_obj$op_add_obj$common_static_obj"; then
       comment_out="# "
     else
       comment_out=
     fi
     if test $target_type = tlib || test $target_type = xlib; then
-      echo "${comment_out}mkrule lib $add_params -static -ldflags=\"\$${prefix_}ldflags\" -n \$${prefix_}name -ver \$${prefix_}version -obj \$${prefix_}objects $tobj_params >>\$MAKEFILE" >>$op_out_file
+      echo "${comment_out}mkrule lib $add_params -static -ldflags=\"\$${prefix_}ldflags\" -n \$${prefix_}name -ver \$${prefix_}version -obj \$${prefix_}objects \$COMMON_STATIC_OBJECTS \$ADD_OBJ >>\$MAKEFILE" >>$op_out_file
     fi
 
     if test -z "$target_src$op_add_src$target_dobj$op_add_dobj$common_pic_obj"; then
@@ -1141,7 +1062,7 @@ TOP_EOF
       comment_out=
     fi
     if test $target_type = dlib || test $target_type = xlib; then
-      echo "${comment_out}mkrule lib $add_params -shared -ldflags=\"\$${prefix_}ldflags\" -n \$${prefix_}name -ver \$${prefix_}version -obj \$${prefix_}pic_objects $dobj_params >>\$MAKEFILE" >>$op_out_file
+      echo "${comment_out}mkrule lib $add_params -shared -ldflags=\"\$${prefix_}ldflags\" -n \$${prefix_}name -ver \$${prefix_}version -obj \$${prefix_}pic_objects \$COMMON_PIC_OBJECTS \$ADD_DOBJ >>\$MAKEFILE" >>$op_out_file
     fi
     echo "" >>$op_out_file
   fi
