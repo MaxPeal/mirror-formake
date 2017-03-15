@@ -854,7 +854,11 @@ EOF
   if test -n "$op_target"; then
     echo "$op_target: $lib_targets"
   else
-    op_target=$op_name
+    if test x$op_shared = x1; then
+      op_target="${op_name}-shared"
+    else
+      op_target="${op_name}-static"
+    fi
   fi
 
   echo "$lib_targets: $op_obj $op_prereq"
