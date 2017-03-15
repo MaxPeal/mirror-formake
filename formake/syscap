@@ -1334,8 +1334,8 @@ EOF
     echo "$CC_CMD $op_with_cflags $op_cflags -c -o test.o test.$ext" >> $syscap_log
     $CC_CMD $op_with_cflags $op_cflags -c -o test.o test.$ext>> $syscap_log 2>&1
     
-    echo "$LD_CMD $op_with_ldflags -o app test.o" >> $syscap_log
-    $LD_CMD $op_with_ldflags -o app test.o>> $syscap_log 2>&1
+    echo "$LD_CMD -o app test.o $op_with_ldflags" >> $syscap_log
+    $LD_CMD -o app test.o $op_with_ldflags >> $syscap_log 2>&1
     ret=$?
     if test $ret -ne 0; then
       echo_status "%s\n" "Failed"
@@ -1362,8 +1362,8 @@ EOF
     echo "$CC_CMD $op_with_cflags $op_cflags -c -o test.o test.$ext" >> $syscap_log
     $CC_CMD $op_with_cflags $op_cflags -c -o test.o test.$ext>> $syscap_log 2>&1
 
-    echo "$LD_CMD $op_with_ldflags $op_ldflags -o app test.o" >> $syscap_log
-    $LD_CMD $op_with_ldflags $op_ldflags -o app test.o>> $syscap_log 2>&1
+    echo "$LD_CMD -o app test.o $op_with_ldflags $op_ldflags" >> $syscap_log
+    $LD_CMD -o app test.o $op_with_ldflags $op_ldflags >> $syscap_log 2>&1
     ret=$?
     if test $ret -ne 0; then
       echo_status "%s\n" "Failed"
@@ -1371,8 +1371,8 @@ EOF
       for flag in $op_ldflags; do
        echo_status "%s" "  $flag ... "
        flags="$flags $flag"
-       echo "$LD_CMD $op_with_ldflags $flags -o app test.o" >> $syscap_log
-       $LD_CMD $op_with_ldflags $flags -o app test.o>> $syscap_log 2>&1
+       echo "$LD_CMD -o app test.o $op_with_ldflags $flags" >> $syscap_log
+       $LD_CMD -o app test.o $op_with_ldflags $flags >> $syscap_log 2>&1
        _ret=$?
        if test $_ret -ne 0; then
          echo_status "%s\n" "Failed"
@@ -1566,8 +1566,8 @@ EOF
     echo "$CC_CMD $op_with_cflags $op_cflags -c -o test.o test.$ext" >> $syscap_log
     $CC_CMD $op_with_cflags $op_cflags -c -o test.o test.$ext>> $syscap_log 2>&1
 
-    echo "$LD_CMD $op_with_ldflags $op_ldflags $op_libs -o app test.o" >> $syscap_log
-    $LD_CMD $op_with_ldflags $op_ldflags $op_libs -o app test.o>> $syscap_log 2>&1
+    echo "$LD_CMD -o app test.o $op_with_ldflags $op_ldflags $op_libs" >> $syscap_log
+    $LD_CMD -o app test.o $op_with_ldflags $op_ldflags $op_libs >> $syscap_log 2>&1
     ret=$?
     if test $ret -ne 0; then
       echo_status "%s\n" "Failed"
@@ -1575,8 +1575,8 @@ EOF
       for lib in $op_libs; do
        echo_status "%s" "  $lib ... "
        libs="$libs $lib"
-       echo "$LD_CMD $op_with_ldflags $op_ldflags $libs -o app test.o" >> $syscap_log
-       $LD_CMD $op_with_ldflags $op_ldflags $libs -o app test.o>> $syscap_log 2>&1
+       echo "$LD_CMD -o app test.o $op_with_ldflags $op_ldflags $libs" >> $syscap_log
+       $LD_CMD -o app test.o $op_with_ldflags $op_ldflags $libs >> $syscap_log 2>&1
        _ret=$?
        if test $_ret -ne 0; then
          echo_status "%s\n" "Failed"
@@ -1613,8 +1613,8 @@ EOF
       clean_exit $ret
     else
       if test x$op_disable_ld = x; then
-        echo "$LD_CMD $op_with_ldflags $op_ldflags $op_libs -o app test.o" >> $syscap_log
-        $LD_CMD $op_with_ldflags $op_ldflags $op_libs -o app test.o >> $syscap_log 2>&1
+        echo "$LD_CMD -o app test.o $op_with_ldflags $op_ldflags $op_libs" >> $syscap_log
+        $LD_CMD -o app test.o $op_with_ldflags $op_ldflags $op_libs >> $syscap_log 2>&1
         ret=$?
         if test $ret -ne 0; then
           rm -f test.o
@@ -1628,8 +1628,8 @@ EOF
             echo_status "%s\n" "Failed"
             clean_exit $ret
           else
-            echo "$LD_CMD $op_with_ldflags $op_ldflags $op_libs -o app test.o" >> $syscap_log
-            $LD_CMD $op_with_ldflags $op_ldflags $op_libs -o app test.o >> $syscap_log 2>&1
+            echo "$LD_CMD -o app test.o $op_with_ldflags $op_ldflags $op_libs" >> $syscap_log
+            $LD_CMD -o app test.o $op_with_ldflags $op_ldflags $op_libs >> $syscap_log 2>&1
             ret=$?
             if test $ret -ne 0; then
               echo_status "%s\n" "Failed"
@@ -1667,8 +1667,8 @@ EOF
       fi
     
       if test x$op_disable_ld = x; then
-        echo "$LD_CMD $op_with_ldflags $op_ldflags $op_libs -o app test.o" >> $syscap_log
-        $LD_CMD $op_with_ldflags $op_ldflags $op_libs -o app test.o >> $syscap_log 2>&1
+        echo "$LD_CMD -o app test.o $op_with_ldflags $op_ldflags $op_libs" >> $syscap_log
+        $LD_CMD -o app test.o $op_with_ldflags $op_ldflags $op_libs >> $syscap_log 2>&1
         ret=$?
         if test $ret -ne 0; then
           echo_status "%s\n" "Failed"
@@ -1700,8 +1700,8 @@ EOF
       fi
     
       if test x$op_disable_ld = x; then
-        echo "$LD_CMD $op_with_ldflags $op_ldflags $op_libs -o app test.o" >> $syscap_log
-        $LD_CMD $op_with_ldflags $op_ldflags $op_libs -o app test.o >> $syscap_log 2>&1
+        echo "$LD_CMD -o app test.o $op_with_ldflags $op_ldflags $op_libs" >> $syscap_log
+        $LD_CMD -o app test.o $op_with_ldflags $op_ldflags $op_libs >> $syscap_log 2>&1
         ret=$?
         if test $ret -ne 0; then
           echo_status "%s\n" "Failed"
@@ -1737,8 +1737,8 @@ EOF
       fi
     
       if test x$op_disable_ld = x; then
-        echo "$LD_CMD $op_with_ldflags $op_ldflags $op_libs -o app test.o" >> $syscap_log
-        $LD_CMD $op_with_ldflags $op_ldflags $op_libs -o app test.o >> $syscap_log 2>&1
+        echo "$LD_CMD -o app test.o $op_with_ldflags $op_ldflags $op_libs" >> $syscap_log
+        $LD_CMD -o app test.o $op_with_ldflags $op_ldflags $op_libs >> $syscap_log 2>&1
         ret=$?
         if test $ret -ne 0; then
           echo_status "%s\n" "Failed"
@@ -1772,8 +1772,8 @@ EOF
       fi
     
       if test x$op_disable_ld = x; then
-        echo "$LD_CMD $op_with_ldflags $op_ldflags $op_libs -o app test.o" >> $syscap_log
-        $LD_CMD $op_with_ldflags $op_ldflags $op_libs -o app test.o >> $syscap_log 2>&1
+        echo "$LD_CMD -o app test.o $op_with_ldflags $op_ldflags $op_libs" >> $syscap_log
+        $LD_CMD -o app test.o $op_with_ldflags $op_ldflags $op_libs >> $syscap_log 2>&1
         ret=$?
         if test $ret -ne 0; then
           echo_status "%s\n" "Failed"
@@ -1816,8 +1816,8 @@ EOF
       fi
     
       if test x$op_disable_ld = x; then
-        echo "$LD_CMD $op_with_ldflags $op_ldflags $op_libs -o app test.o" >> $syscap_log
-        $LD_CMD $op_with_ldflags $op_ldflags $op_libs -o app test.o >> $syscap_log 2>&1
+        echo "$LD_CMD -o app test.o $op_with_ldflags $op_ldflags $op_libs" >> $syscap_log
+        $LD_CMD -o app test.o $op_with_ldflags $op_ldflags $op_libs >> $syscap_log 2>&1
         ret=$?
         if test $ret -ne 0; then
           echo_status "%s\n" "Failed"
