@@ -186,7 +186,7 @@ else
   if test -z "$cc_cmd"; then
     cc_cmd=`$cstem_cmd -cmd`
   fi
-  $cstem_cmd probe -cc="$cc_cmd" -cflags="$cc_flags" > $cc_cfg
+  $cstem_cmd probe -cc "$cc_cmd" -cflags="$cc_flags" > $cc_cfg
   . $cc_cfg
   rm -f $cc_cfg
   if test -z "$CC_CMD"; then
