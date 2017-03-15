@@ -453,12 +453,14 @@ mkobj() {
     case x$cc_id in
       xgcc)
         cc_cmd="$cc_cmd -fPIC"
+        mkdep_cflags="-fPIC"
         ;;
     esac
   fi
 
   if test -n "$op_cflags"; then
     cc_cmd="$cc_cmd $op_cflags"
+    mkdep_cflags="$mkdep_cflags $op_cflags"
   fi
   
   os_type=`$SYSCAP -os`
@@ -472,6 +474,8 @@ mkobj() {
   if test -n "$op_dir"; then
     op_dir=`echo -n "$op_dir" | sed 's#/*$#/#'`
   fi
+
+  mkdep_cflags=`echo -n "$mkdep_cflags" | sed 's/^ *//' | sed 's/ *$//'`
   
 
   cat <<EOF
@@ -505,7 +509,7 @@ EOF
         cat <<EOF
 $object: $src $op_prereq $dep_file
 	@test -d .deps/$op_dir || mkdir -p .deps/$op_dir
-	@$MKDEP -o $object -stdout $src >$dep_file
+	@$MKDEP -cflags="$mkdep_cflags" -o $object -stdout $src >$dep_file
 EOF
         if test -n "$op_dir"; then
           echo "	@test -d $op_dir || mkdir -p $op_dir"
