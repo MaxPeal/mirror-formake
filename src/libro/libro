@@ -173,7 +173,7 @@ mkshared() {
       fi
 
       run_command rm -f $out_dir$lib_so $out_dir$lib_so_c $out_dir$lib_so_cra
-  	  run_command $cc_cmd -shared -fPIC -Wl,-soname,$lib_so_c -o $out_dir/$lib_so_cra $op_obj $op_ldflags
+  	  run_command $cc_cmd -shared -fPIC -Wl,-soname,$lib_so_c -o $out_dir$lib_so_cra $op_obj $op_ldflags
   	  run_command ln -s $lib_so_cra $out_dir$lib_so_c
   	  run_command ln -s $lib_so_cra $out_dir$lib_so
     ;;
