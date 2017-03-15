@@ -1069,7 +1069,7 @@ done
 
 cat <<TOP_EOF >>$op_out_file
 ################################################################################
-# CUSTOM CODE
+# CUSTOM
 #
 # Put your custom code here
 
