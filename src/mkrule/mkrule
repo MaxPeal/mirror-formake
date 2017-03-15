@@ -694,7 +694,8 @@ EOF
 clean: clean-$op_target
 clean-$op_target:
 	rm -f $prog_local
-distclean: clean-$op_target
+distclean: distclean-$op_target
+distclean-$op_target: clean-$op_target
 EOF
   if test -n "$LDLWRAP" && test x$op_disable_ldlw = x; then
     echo "	rm -f ${prog_local}-ldlw"
@@ -912,7 +913,8 @@ EOF
 clean: clean-$op_target
 clean-$op_target:
 	rm -f $lib_targets
-distclean: clean-$op_target
+distclean: distclean-$op_target
+distclean-$op_target: clean-$op_target
 EOF
   
   if test -n "$op_rc"; then
