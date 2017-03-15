@@ -780,9 +780,8 @@ echo "" >>$op_out_file
 
 cat <<TOP_EOF >>$op_out_file
 ################################################################################
-# COMMON BUILD VARIABLES
+# COMMON
 #
-# Common settings for compilation and linking
 COMMON_STATIC_DIR="$common_static_dir"
 COMMON_PIC_DIR="$common_pic_dir"
 
