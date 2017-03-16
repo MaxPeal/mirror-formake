@@ -126,7 +126,7 @@ EOF
 print_obj_help() {
   cat <<EOF
 $script_name obj [OPTIONS] -src SRC..
-  -t TARGET        create additional phony target that start all generated object rules
+  -t TARGET        specify target name that starts generated rules
   -c++             C++ mode [autodetect]
   -cflags=FLAGS    compiler flags
   -pic             enable PIC flags
@@ -145,7 +145,7 @@ EOF
 print_prog_help() {
   cat <<EOF
 $script_name prog [OPTIONS] -src SRC.. -obj OBJ..
-  -t TARGET        create additional phony target that start generated rule
+  -t TARGET        specify target name that starts generated rules
   -c++             C++ mode [autodetect]
   -n NAME          program name
   -ldflags=FLAGS   linker flags
@@ -165,7 +165,7 @@ EOF
 print_lib_help() {
   cat <<EOF
 $script_name lib [OPTIONS] -src SRC.. -obj OBJ..
-  -t TARGET        create additional phony target that start generated rule
+  -t TARGET        specify target name that starts generated rules
   -static          create static library (default)
   -shared          create shared library
   -c++             C++ mode [autodetect]
@@ -194,7 +194,7 @@ EOF
 print_subdir_help() {
   cat <<EOF
 $script_name subdir [OPTIONS] -d DIR..
-  -t TARGET        specify phony target that start generated rule
+  -t TARGET        specify target name that starts generated rules
   -all             add to default 'all' rule
   -install         add to install/uninstall rules
   -clean           add to 'clean' rule
@@ -208,7 +208,7 @@ EOF
 print_clean_help() {
   cat <<EOF
 $script_name clean [OPTIONS] FILE..
-  -t TARGET        specify phony target that start generated rule
+  -t TARGET        specify target name that starts generated rules
   FILE..           files to clean. RC files are accepted
 EOF
 }
@@ -216,7 +216,7 @@ EOF
 print_distclean_help() {
   cat <<EOF
 $script_name distclean [OPTIONS] FILE..
-  -t TARGET        specify phony target that start generated rule
+  -t TARGET        specify target name that starts generated rules
   FILE..           files to clean. RC files are accepted
 EOF
 }
@@ -225,7 +225,7 @@ print_install_help() {
   cat <<EOF
 $script_name install TYPE [OPTIONS] FILE..
   TYPE             files type: bin, sbin, libexec, lib, inc, data, man[0-9], doc, etc
-  -t TARGET        specify phony target that start generated rules
+  -t TARGET        specify target name that starts generated rules
   -o FILE          destination file path (overrides -d options)
   -d DIR           destination directory path (overrides -o option)
   -srcdir PATH     path to the source directory
@@ -453,12 +453,14 @@ mkobj() {
     case x$cc_id in
       xgcc)
         cc_cmd="$cc_cmd -fPIC"
+        mkdep_cflags="-fPIC"
         ;;
     esac
   fi
 
   if test -n "$op_cflags"; then
     cc_cmd="$cc_cmd $op_cflags"
+    mkdep_cflags="$mkdep_cflags $op_cflags"
   fi
   
   os_type=`$SYSCAP -os`
@@ -472,6 +474,8 @@ mkobj() {
   if test -n "$op_dir"; then
     op_dir=`echo -n "$op_dir" | sed 's#/*$#/#'`
   fi
+
+  mkdep_cflags=`echo -n "$mkdep_cflags" | sed 's/^ *//' | sed 's/ *$//'`
   
 
   cat <<EOF
@@ -505,7 +509,7 @@ EOF
         cat <<EOF
 $object: $src $op_prereq $dep_file
 	@test -d .deps/$op_dir || mkdir -p .deps/$op_dir
-	@$MKDEP -o $object -stdout $src >$dep_file
+	@$MKDEP -cflags="$mkdep_cflags" -o $object -stdout $src >$dep_file
 EOF
         if test -n "$op_dir"; then
           echo "	@test -d $op_dir || mkdir -p $op_dir"
@@ -662,6 +666,8 @@ EOF
 
   if test -n "$op_target" && test "$op_target" != "$prog_local"; then
     echo "$op_target: $prog_local"
+  else
+    op_target=$op_name
   fi
 
   cat <<EOF
@@ -679,20 +685,21 @@ EOF
     fi
     file_base=`basename $prog_local`
     cat <<EOF
-install: install-$op_name
-install-$op_name: $prog_local
+install: install-$op_target
+install-$op_target: $prog_local
 	$INSTALL -m 0755 -D $prog_local \$(DESTDIR)$op_install_path/$file_base
-uninstall: uninstall-$op_name
-uninstall-$op_name:
+uninstall: uninstall-$op_target
+uninstall-$op_target:
 	rm -f \$(DESTDIR)$op_install_path/$file_base
 EOF
   fi
 
   cat <<EOF
-clean: clean-$op_name
-clean-$op_name:
+clean: clean-$op_target
+clean-$op_target:
 	rm -f $prog_local
-distclean: clean-$op_name
+distclean: distclean-$op_target
+distclean-$op_target: clean-$op_target
 EOF
   if test -n "$LDLWRAP" && test x$op_disable_ldlw = x; then
     echo "	rm -f ${prog_local}-ldlw"
@@ -850,6 +857,12 @@ EOF
 
   if test -n "$op_target"; then
     echo "$op_target: $lib_targets"
+  else
+    if test x$op_shared = x1; then
+      op_target="${op_name}-shared"
+    else
+      op_target="${op_name}-static"
+    fi
   fi
 
   echo "$lib_targets: $op_obj $op_prereq"
@@ -869,8 +882,8 @@ EOF
       op_install_path=$LIBDIR
     fi
     cat <<EOF
-install: install-$op_name
-install-$op_name: $lib_targets
+install: install-$op_target
+install-$op_target: $lib_targets
 EOF
     for file in $lib_regular; do
       file_base=`basename $file`
@@ -890,8 +903,8 @@ EOF
         ;;
     esac
     cat <<EOF
-uninstall: uninstall-$op_name
-uninstall-$op_name:
+uninstall: uninstall-$op_target
+uninstall-$op_target:
 EOF
     for file in $lib_regular $lib_symbolic; do
       file_base=`basename $file`
@@ -905,10 +918,11 @@ EOF
   fi
 
   cat <<EOF
-clean: clean-$op_name
-clean-$op_name:
+clean: clean-$op_target
+clean-$op_target:
 	rm -f $lib_targets
-distclean: clean-$op_name
+distclean: distclean-$op_target
+distclean-$op_target: clean-$op_target
 EOF
   
   if test -n "$op_rc"; then
