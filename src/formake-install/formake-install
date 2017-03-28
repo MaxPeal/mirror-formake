@@ -27,15 +27,15 @@
 
 version_string="formake-install 1.0"
 
-orig_dir=`pwd`
 script_name=`basename "$0"`
-script_dir=`dirname $0`
+orig_dir=`pwd`
+cd `dirname $0`
+script_dir=`pwd`
+cd $orig_dir
+formake_dir=
 
 op_dir=formake
 formake_scripts="abspath cfront cstem cstem+ install ldlshell ldlwrap libro src2obj mkdep mkrule optool relpath syscap"
-cd $dirname
-formake_dir=`pwd`
-cd $orig_dir
 
 print_help() {
   cat <<EOF
