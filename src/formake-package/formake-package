@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Formake fmpackage
+# Formake formake-package
 #
 # Copyright (c) 2015-2017, Oleksiy Chernyavskyy
 # All rights reserved.
@@ -54,40 +54,40 @@ while test $# -gt 0; do
   shift
 done
 
-fminstall -help >/dev/null 2>&1
+formake-install -help >/dev/null 2>&1
 if test $? -ne 0; then
-  if test -f $script_dir/fminstall; then
-    FMKINSTALL=$script_dir/fminstall
+  if test -f $script_dir/formake-install; then
+    FMKINSTALL=$script_dir/formake-install
   else
-    echo "$script_name: error: fminstall not found"
+    echo "$script_name: error: formake-install not found"
     exit 1
   fi
 else
-  FMKINSTALL=fminstall
+  FMKINSTALL=formake-install
 fi
 
-fmconfigure -help >/dev/null 2>&1
+formake-configure -help >/dev/null 2>&1
 if test $? -ne 0; then
-  if test -f $script_dir/fmconfigure; then
-    FMKCONFIGURE=$script_dir/fmconfigure
+  if test -f $script_dir/formake-configure; then
+    FMKCONFIGURE=$script_dir/formake-configure
   else
-    echo "$script_name: error: fmconfigure not found"
+    echo "$script_name: error: formake-configure not found"
     exit 1
   fi
 else
-  FMKCONFIGURE=fmconfigure
+  FMKCONFIGURE=formake-configure
 fi
 
-fmkmf -help >/dev/null 2>&1
+formake-mkmf -help >/dev/null 2>&1
 if test $? -ne 0; then
-  if test -f $script_dir/fmkmf; then
-    FMKMF=$script_dir/fmkmf
+  if test -f $script_dir/formake-mkmf; then
+    FMKMF=$script_dir/formake-mkmf
   else
-    echo "$script_name: error: fmkmf not found"
+    echo "$script_name: error: formake-mkmf not found"
     exit 1
   fi
 else
-  FMKMF=fmkmf
+  FMKMF=formake-mkmf
 fi
 
 $FMKINSTALL

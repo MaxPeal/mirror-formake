@@ -1,0 +1,132 @@
+#!/bin/sh
+#
+# Formake 'formake'
+#
+# Copyright (c) 2015-2017, Oleksiy Chernyavskyy
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+version_string="formake 1.0"
+
+orig_dir=`pwd`
+script_name=`basename "$0"`
+script_dir=`dirname $0`
+share_dir=
+
+print_help() {
+  cat <<EOF
+Portable software configuration and build automation construction kit
+
+$script_name COMMAND [OPTIONS]
+$script_name -v
+
+ -v      print version
+
+Command:
+  package     Create build automation package
+  install     Install Formake scripts into package
+  configure   Generate configure script
+  mkmf        Generate mkmf script
+
+Every command has '-help' parameter that prints command description and options.
+EOF
+}
+
+print_version() {
+  echo "$version_string"
+}
+
+if test $# -eq 0; then
+  echo "$script_name: error: no options specified" >&2
+  exit 1
+fi
+
+case "$1" in
+  -h|-help|--help)
+    print_help
+    exit 0
+    ;;
+  -v)
+    print_version
+    exit 0
+    ;;
+esac
+
+if test x"$share_dir" = x; then
+  echo "$script_name: share_dir not set. Script was installed incorrectly" >&2
+  exit 1
+fi
+
+if test ! -d "$share_dir"; then
+  echo "$script_name: $share_dir not found" >&2
+  exit 1
+fi
+
+case "$1" in
+  package)
+    shift
+    cmd_script="$share_dir/formake-package"
+    if test ! -f "$cmd_script"; then
+      echo "$script_name: command script not found: $cmd_script" >&2
+      exit 1
+    fi
+    $cmd_script "$@"
+    exit_status=$?
+    ;;
+  install)
+    shift
+    cmd_script="$share_dir/formake-install"
+    if test ! -f "$cmd_script"; then
+      echo "$script_name: command script not found: $cmd_script" >&2
+      exit 1
+    fi
+    $cmd_script "$@"
+    exit_status=$?
+    ;;
+  configure)
+    shift
+    cmd_script="$share_dir/formake-configure"
+    if test ! -f "$cmd_script"; then
+      echo "$script_name: command script not found: $cmd_script" >&2
+      exit 1
+    fi
+    $cmd_script "$@"
+    exit_status=$?
+    ;;
+  mkmf)
+    shift
+    cmd_script="$share_dir/formake-mkmf"
+    if test ! -f "$cmd_script"; then
+      echo "$script_name: command script not found: $cmd_script" >&2
+      exit 1
+    fi
+    $cmd_script "$@"
+    exit_status=$?
+    ;;
+  *)
+    echo "$script_name: invalid command: $1" >&2
+    exit 1
+    ;;
+esac
+
+exit $exit_status
+

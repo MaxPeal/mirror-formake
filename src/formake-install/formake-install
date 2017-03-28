@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Formake fminstall
+# Formake formake-install
 #
 # Copyright (c) 2015-2017, Oleksiy Chernyavskyy
 # All rights reserved.
@@ -25,7 +25,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-version_string="fminstall 1.0"
+version_string="formake-install 1.0"
 
 orig_dir=`pwd`
 script_name=`basename "$0"`
@@ -33,7 +33,9 @@ script_dir=`dirname $0`
 
 op_dir=formake
 formake_scripts="abspath cfront cstem cstem+ install ldlshell ldlwrap libro src2obj mkdep mkrule optool relpath syscap"
-share_dir=
+cd $dirname
+formake_dir=`pwd`
+cd $orig_dir
 
 print_help() {
   cat <<EOF
@@ -222,7 +224,6 @@ for script in $formake_scripts; do
   fi
 done
 
-formake_dir=$share_dir
 if test -z "$formake_dir"; then
   if test -z "$script_dir"; then
     for dir in $PATH; do
