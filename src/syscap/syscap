@@ -91,8 +91,8 @@ Flags:
  -with-ldflags=FLAGS  use linker flags. The flags will not be tested
  -disable-ld          disable any linking tests
  -with-inc=INCLUDES   use library include headers. The headers will not be tested
- -out=FILE            generate test result variables and write them to FILE
- -def-out=FILE        generate test result CPP defines and write them to FILE
+ -out=FILE            for every subtest generate status variable and write it to FILE
+ -def-out=FILE        for every subtest generate status define and write it to header FILE
  -no-break            do not break when some test are not passed
 
 System properties to test:
