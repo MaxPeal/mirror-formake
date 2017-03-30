@@ -91,6 +91,9 @@ Flags:
  -with-ldflags=FLAGS  use linker flags. The flags will not be tested
  -disable-ld          disable any linking tests
  -with-inc=INCLUDES   use library include headers. The headers will not be tested
+ -out=FILE            generate test result variables and write them to FILE
+ -def-out=FILE        generate test result CPP defines and write them to FILE
+ -no-break            do not break when some test are not passed
 
 System properties to test:
  -cc CMD            C compiler (overrides -with-cc)
@@ -766,7 +769,8 @@ setup_test_dir() {
   test_src_base=test_src_base.$ext
   
   rm -f $test_src_base
-  for inc in $op_with_inc $op_inc; do
+  echo "" >$test_src_base
+  for inc in $op_with_inc; do
     inc=`echo "$inc" | sed 's/[<]//' | sed 's/[>]//'`
     echo "#include <$inc>" >> $test_src_base
   done
@@ -983,6 +987,18 @@ elif test "$op_mode" = test; then
         have_cc_tests=1
         current_opt=
         ;;
+      -out=*)
+        op_out=`echo -n "$param" | sed 's/^[^=]*=//'`
+        current_opt=
+        ;;
+      -def-out=*)
+        op_def_out=`echo -n "$param" | sed 's/^[^=]*=//'`
+        current_opt=
+        ;;
+      -no-break)
+        op_no_break=1
+        current_opt=
+        ;;
       -cc)
         cc_type=cc
         op_test_cc=1
@@ -1191,36 +1207,35 @@ elif test "$op_mode" = test; then
       op_log_file="$orig_dir/$op_log_file"
     fi
   fi
+  if test -n "$op_out"; then
+    if echo -n "$op_out" | grep "^/" > /dev/null; then : ; else
+      op_out="$orig_dir/$op_out"
+    fi
+  fi
+  if test -n "$op_def_out"; then
+    if echo -n "$op_def_out" | grep "^/" > /dev/null; then : ; else
+      op_def_out="$orig_dir/$op_def_out"
+    fi
+  fi
 
 ################################################################################
 # TEST PROGRAMS
   op_progs=`echo -n "$op_progs" | tr ' ' '\n' | sort | uniq | tr '\n' ' '`
   for prog in $op_progs; do
+    test_failed=
     echo_status -l "%s" "checking $prog ... "
     if test x$have_command_v = x1; then
       command -v $prog >/dev/null 2>&1
-      if test $? != 0; then
-        echo_status "%s\n" "Failed"
-        clean_exit 1
-      fi
+      test $? != 0 && test_failed=1
     elif test x$have_hash = x1; then
       hash $prog >/dev/null 2>&1
-      if test $? != 0; then
-        echo_status "%s\n" "Failed"
-        clean_exit 1
-      fi
+      test $? != 0 && test_failed=1
     elif test x$have_type_p = x1; then
       type -P $prog >/dev/null 2>&1
-      if test $? != 0; then
-        echo_status "%s\n" "Failed"
-        clean_exit 1
-      fi
+      test $? != 0 && test_failed=1
     elif test x$have_whence_p = x1; then
       whence -p $prog >/dev/null 2>&1
-      if test $? != 0; then
-        echo_status "%s\n" "Failed"
-        clean_exit 1
-      fi
+      test $? != 0 && test_failed=1
     else
       found=
       IFS_save=$IFS
@@ -1232,12 +1247,25 @@ elif test "$op_mode" = test; then
         fi
       done
       IFS=$IFS_save
-      if test x$found = x; then
-        echo_status "%s\n" "Failed"
+      test x$found = x && test_failed=1
+    fi
+    if test x$test_failed = x1; then
+      echo_status "%s\n" "Failed"
+      if test x$op_no_break = x; then
         clean_exit 1
       fi
+    else
+      echo_status "%s\n" "OK"
+      if test -n "$op_out$op_def_out"; then
+        out_var=`echo -n "SC_HAVE_PROG_$prog" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
+        if test -n "$op_out"; then
+          echo "$out_var=1" >>$op_out
+        fi
+        if test -n "$op_def_out"; then
+          echo "#define $out_var 1" >>$op_def_out
+        fi
+      fi
     fi
-    echo_status "%s\n" "OK"
   done
 
   if test x$have_cc_tests = x; then
@@ -1339,7 +1367,9 @@ EOF
     ret=$?
     if test $ret -ne 0; then
       echo_status "%s\n" "Failed"
-      clean_exit $ret
+      if test x$op_no_break = x; then
+        clean_exit $ret
+      fi
     else
       echo_status "%s\n" "OK"
     fi
@@ -1369,19 +1399,25 @@ EOF
       echo_status "%s\n" "Failed"
       flags=
       for flag in $op_ldflags; do
-       echo_status "%s" "  $flag ... "
-       flags="$flags $flag"
-       echo "$LD_CMD -o app test.o $op_with_ldflags $flags" >> $syscap_log
-       $LD_CMD -o app test.o $op_with_ldflags $flags >> $syscap_log 2>&1
-       _ret=$?
-       if test $_ret -ne 0; then
-         echo_status "%s\n" "Failed"
-         clean_exit $_ret
-       else
-         echo_status "%s\n" "OK"
-       fi
+        echo_status "%s" "  $flag ... "
+        flags="$flags $flag"
+        echo "$LD_CMD -o app test.o $op_with_ldflags $flags" >> $syscap_log
+        $LD_CMD -o app test.o $op_with_ldflags $flags >> $syscap_log 2>&1
+        _ret=$?
+        if test $_ret -ne 0; then
+          echo_status "%s\n" "Failed"
+          if test x$op_no_break = x; then
+            clean_exit $_ret
+          else
+            break
+          fi
+        else
+          echo_status "%s\n" "OK"
+        fi
       done
-      clean_exit $ret
+      if test x$op_no_break = x; then
+        clean_exit $ret
+      fi
     else
       echo_status "%s\n" "OK"
     fi
@@ -1404,9 +1440,21 @@ EOF
       ret=$?
       if test $ret -ne 0; then
         echo_status "%s\n" "Failed"
-        clean_exit $ret
+        if test x$op_no_break = x; then
+          clean_exit $ret
+        fi
       else
         echo_status "%s\n" "OK"
+        if test -n "$op_out$op_def_out"; then
+          out_var=`echo -n "SC_HAVE_INC_$inc" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
+          if test -n "$op_out"; then
+            echo "$out_var=1" >>$op_out
+          fi
+          if test -n "$op_def_out"; then
+            echo "#define $out_var 1" >>$op_def_out
+          fi
+        fi
+        echo "#include <$inc>" >> $test_src_base
       fi
       rm -f test.o
     done
@@ -1419,10 +1467,7 @@ EOF
   fi
   def_idx=0
   while test $def_idx -lt $def_num; do
-    rm -f $test_src
-    if test -f $test_src_base; then
-      cp $test_src_base $test_src
-    fi
+    cat $test_src_base > $test_src
 
     if_directive=0
     eval def_string=\$def$def_idx
@@ -1488,7 +1533,9 @@ EOF
     ret=$?
     if test $ret -ne 0; then
       echo_status "%s\n" "Failed"
-      clean_exit $ret
+      if test x$op_no_break = x; then
+        clean_exit $ret
+      fi
     else
       echo_status "%s\n" "OK"
     fi
@@ -1501,10 +1548,7 @@ EOF
   if test -n "$op_type"; then
     log_title "TEST TYPES"
     for type in $op_type; do
-      rm -f $test_src
-      if test -f $test_src_base; then
-        cp $test_src_base $test_src
-      fi
+      cat $test_src_base > $test_src
 
       type_base=`echo "$type" | sed 's/ *\**$//'`
       echo "$type_base *syscap_$type_base;" >> $test_src
@@ -1516,9 +1560,20 @@ EOF
       ret=$?
       if test $ret -ne 0; then
         echo_status "%s\n" "Failed"
-        clean_exit $ret
+        if test x$op_no_break = x; then
+          clean_exit $ret
+        fi
       else
         echo_status "%s\n" "OK"
+        if test -n "$op_out$op_def_out"; then
+          out_var=`echo -n "SC_HAVE_TYPE_$type" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
+          if test -n "$op_out"; then
+            echo "$out_var=1" >>$op_out
+          fi
+          if test -n "$op_def_out"; then
+            echo "#define $out_var 1" >>$op_def_out
+          fi
+        fi
       fi
       rm -f test.o
     done
@@ -1529,10 +1584,7 @@ EOF
   if test -n "$op_enum"; then
     log_title "TEST ENUMS"
     for enum in $op_enum; do
-      rm -f $test_src
-      if test -f $test_src_base; then
-        cp $test_src_base $test_src
-      fi
+      cat $test_src_base > $test_src
 
       echo "int syscap_$enum = $enum;" >> $test_src
     
@@ -1543,9 +1595,20 @@ EOF
       ret=$?
       if test $ret -ne 0; then
         echo_status "%s\n" "Failed"
-        clean_exit $ret
+        if test x$op_no_break = x; then
+          clean_exit $ret
+        fi
       else
         echo_status "%s\n" "OK"
+        if test -n "$op_out$op_def_out"; then
+          out_var=`echo -n "SC_HAVE_ENUM_$enum" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
+          if test -n "$op_out"; then
+            echo "$out_var=1" >>$op_out
+          fi
+          if test -n "$op_def_out"; then
+            echo "#define $out_var 1" >>$op_def_out
+          fi
+        fi
       fi
       rm -f test.o
     done
@@ -1573,19 +1636,25 @@ EOF
       echo_status "%s\n" "Failed"
       libs=
       for lib in $op_libs; do
-       echo_status "%s" "  $lib ... "
-       libs="$libs $lib"
-       echo "$LD_CMD -o app test.o $op_with_ldflags $op_ldflags $libs" >> $syscap_log
-       $LD_CMD -o app test.o $op_with_ldflags $op_ldflags $libs >> $syscap_log 2>&1
-       _ret=$?
-       if test $_ret -ne 0; then
-         echo_status "%s\n" "Failed"
-         clean_exit $_ret
-       else
-         echo_status "%s\n" "OK"
-       fi
+        echo_status "%s" "  $lib ... "
+        libs="$libs $lib"
+        echo "$LD_CMD -o app test.o $op_with_ldflags $op_ldflags $libs" >> $syscap_log
+        $LD_CMD -o app test.o $op_with_ldflags $op_ldflags $libs >> $syscap_log 2>&1
+        _ret=$?
+        if test $_ret -ne 0; then
+          echo_status "%s\n" "Failed"
+          if test x$op_no_break = x; then
+            clean_exit $_ret
+          else
+            break
+          fi
+        else
+          echo_status "%s\n" "OK"
+        fi
       done
-      clean_exit $ret
+      if test x$op_no_break = x; then
+        clean_exit $ret
+      fi
     else
       echo_status "%s\n" "OK"
     fi
@@ -1596,11 +1665,10 @@ EOF
 ################################################################################
 # TEST CSTR
   if test -n "$op_cstr"; then
+    test_failed=
+
     log_title "TEST CSTR"
-    rm -f $test_src
-    if test -f $test_src_base; then
-      cp $test_src_base $test_src
-    fi
+    cat $test_src_base > $test_src
     echo "$op_cstr" >> $test_src
   
     echo_status -l "%s" "checking source string $op_cstr ... "
@@ -1610,7 +1678,10 @@ EOF
     ret=$?
     if test $ret -ne 0; then
       echo_status "%s\n" "Failed"
-      clean_exit $ret
+      test_failed=1
+      if test x$op_no_break = x; then
+        clean_exit $ret
+      fi
     else
       if test x$op_disable_ld = x; then
         echo "$LD_CMD -o app test.o $op_with_ldflags $op_ldflags $op_libs" >> $syscap_log
@@ -1626,21 +1697,29 @@ EOF
           ret=$?
           if test $ret -ne 0; then
             echo_status "%s\n" "Failed"
-            clean_exit $ret
+            test_failed=1
+            if test x$op_no_break = x; then
+              clean_exit $ret
+            fi
           else
             echo "$LD_CMD -o app test.o $op_with_ldflags $op_ldflags $op_libs" >> $syscap_log
             $LD_CMD -o app test.o $op_with_ldflags $op_ldflags $op_libs >> $syscap_log 2>&1
             ret=$?
             if test $ret -ne 0; then
               echo_status "%s\n" "Failed"
-              clean_exit $ret
+              test_failed=1
+              if test x$op_no_break = x; then
+                clean_exit $ret
+              fi
             fi
           fi
         fi
       fi
     fi
     rm -f test.o
-    echo_status "%s\n" "OK"
+    if test x$test_failed = x; then
+      echo_status "%s\n" "OK"
+    fi
   fi
   
 ################################################################################
@@ -1648,10 +1727,8 @@ EOF
   if test -n "$op_var"; then
     log_title "TEST VARIABLES"
     for var in $op_var; do
-      rm -f $test_src
-      if test -f $test_src_base; then
-        cp $test_src_base $test_src
-      fi
+      test_failed=
+      cat $test_src_base > $test_src
 
       echo_status -l "%s" "checking variable $var ... "
     
@@ -1663,7 +1740,10 @@ EOF
       ret=$?
       if test $ret -ne 0; then
         echo_status "%s\n" "Failed"
-        clean_exit $ret
+        test_failed=1
+        if test x$op_no_break = x; then
+          clean_exit $ret
+        fi
       fi
     
       if test x$op_disable_ld = x; then
@@ -1672,10 +1752,25 @@ EOF
         ret=$?
         if test $ret -ne 0; then
           echo_status "%s\n" "Failed"
-          clean_exit $ret
+          test_failed=1
+          if test x$op_no_break = x; then
+            clean_exit $ret
+          fi
         fi
       fi
-      echo_status "%s\n" "OK"
+
+      if test x$test_failed = x; then
+        echo_status "%s\n" "OK"
+        if test -n "$op_out$op_def_out"; then
+          out_var=`echo -n "SC_HAVE_VAR_$var" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
+          if test -n "$op_out"; then
+            echo "$out_var=1" >>$op_out
+          fi
+          if test -n "$op_def_out"; then
+            echo "#define $out_var 1" >>$op_def_out
+          fi
+        fi
+      fi
       rm -f test.o
     done
   fi
@@ -1685,6 +1780,8 @@ EOF
   if test -n "$op_sym"; then
     log_title "TEST SYMBOLS"
     for sym in $op_sym; do
+      test_failed=
+
       echo_status -l "%s" "checking symbol $sym ... "
     
       echo "extern void *$sym;" > $test_src
@@ -1696,7 +1793,10 @@ EOF
       ret=$?
       if test $ret -ne 0; then
         echo_status "%s\n" "Failed"
-        clean_exit $ret
+        test_failed=1
+        if test x$op_no_break = x; then
+          clean_exit $ret
+        fi
       fi
     
       if test x$op_disable_ld = x; then
@@ -1705,10 +1805,25 @@ EOF
         ret=$?
         if test $ret -ne 0; then
           echo_status "%s\n" "Failed"
-          clean_exit $ret
+          test_failed=1
+          if test x$op_no_break = x; then
+            clean_exit $ret
+          fi
         fi
       fi
-      echo_status "%s\n" "OK"
+
+      if test x$test_failed = x; then
+        echo_status "%s\n" "OK"
+        if test -n "$op_out$op_def_out"; then
+          out_var=`echo -n "SC_HAVE_SYM_$sym" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
+          if test -n "$op_out"; then
+            echo "$out_var=1" >>$op_out
+          fi
+          if test -n "$op_def_out"; then
+            echo "#define $out_var 1" >>$op_def_out
+          fi
+        fi
+      fi
       rm -f test.o
     done
   fi
@@ -1718,10 +1833,8 @@ EOF
   if test -n "$op_rval"; then
     log_title "TEST RVALS"
     for var in $op_rval; do
-      rm -f $test_src
-      if test -f $test_src_base; then
-        cp $test_src_base $test_src
-      fi
+      test_failed=
+      cat $test_src_base > $test_src
 
       echo_status -l "%s" "checking rval $var ... "
     
@@ -1733,7 +1846,10 @@ EOF
       ret=$?
       if test $ret -ne 0; then
         echo_status "%s\n" "Failed"
-        clean_exit $ret
+        test_failed=1
+        if test x$op_no_break = x; then
+          clean_exit $ret
+        fi
       fi
     
       if test x$op_disable_ld = x; then
@@ -1742,10 +1858,25 @@ EOF
         ret=$?
         if test $ret -ne 0; then
           echo_status "%s\n" "Failed"
-          clean_exit $ret
+          test_failed=1
+          if test x$op_no_break = x; then
+            clean_exit $ret
+          fi
         fi
       fi
-      echo_status "%s\n" "OK"
+
+      if test x$test_failed = x; then
+        echo_status "%s\n" "OK"
+        if test -n "$op_out$op_def_out"; then
+          out_var=`echo -n "SC_HAVE_RVAL_$var" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
+          if test -n "$op_out"; then
+            echo "$out_var=1" >>$op_out
+          fi
+          if test -n "$op_def_out"; then
+            echo "#define $out_var 1" >>$op_def_out
+          fi
+        fi
+      fi
       rm -f test.o
     done
   fi
@@ -1755,6 +1886,7 @@ EOF
   if test -n "$op_func"; then
     log_title "TEST FUNCTIONS"
     for func in $op_func; do
+      test_failed=
       func=`echo "$func" | sed 's/[(]//' | sed 's/[)]//'`
     
       echo_status -l "%s" "checking function $func ... "
@@ -1768,7 +1900,10 @@ EOF
       ret=$?
       if test $ret -ne 0; then
         echo_status "%s\n" "Failed"
-        clean_exit $ret
+        test_failed=1
+        if test x$op_no_break = x; then
+          clean_exit $ret
+        fi
       fi
     
       if test x$op_disable_ld = x; then
@@ -1777,10 +1912,25 @@ EOF
         ret=$?
         if test $ret -ne 0; then
           echo_status "%s\n" "Failed"
-          clean_exit $ret
+          test_failed=1
+          if test x$op_no_break = x; then
+            clean_exit $ret
+          fi
         fi
       fi
-      echo_status "%s\n" "OK"
+
+      if test x$test_failed = x; then
+        echo_status "%s\n" "OK"
+        if test -n "$op_out$op_def_out"; then
+          out_var=`echo -n "SC_HAVE_FUNC_$func" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
+          if test -n "$op_out"; then
+            echo "$out_var=1" >>$op_out
+          fi
+          if test -n "$op_def_out"; then
+            echo "#define $out_var 1" >>$op_def_out
+          fi
+        fi
+      fi
       rm -f test.o
     done
   fi
@@ -1790,6 +1940,7 @@ EOF
   if test -n "$op_src"; then
     log_title "TEST SOURCE FILES"
     for src in $op_src; do
+      test_failed=
       if echo -n "$src" | grep "^/" > /dev/null; then 
         src_full=$src
       else
@@ -1812,7 +1963,10 @@ EOF
       ret=$?
       if test $ret -ne 0; then
         echo_status "%s\n" "Failed"
-        clean_exit $ret
+        test_failed=1
+        if test x$op_no_break = x; then
+          clean_exit $ret
+        fi
       fi
     
       if test x$op_disable_ld = x; then
@@ -1821,10 +1975,16 @@ EOF
         ret=$?
         if test $ret -ne 0; then
           echo_status "%s\n" "Failed"
-          clean_exit $ret
+          test_failed=1
+          if test x$op_no_break = x; then
+            clean_exit $ret
+          fi
         fi
       fi
-      echo_status "%s\n" "OK"
+
+      if test x$test_failed = x; then
+        echo_status "%s\n" "OK"
+      fi
       rm -f test.o $src_base
     done
   fi
@@ -1914,10 +2074,8 @@ elif test "$op_mode" = def; then
 # READ DEFINES
   defvals=
   for def in $op_def; do
-    rm -f $test_src
-    if test -f "$test_src_base"; then
-      cat $test_src_base >$test_src
-    fi
+    cat $test_src_base > $test_src
+
     echo "SYSCAP_DEFVAL=$def" >>$test_src
     $CC_CMD $op_cflags $CPP_FLAG $test_src 2>/dev/null > test_c.out
     defval=`cat test_c.out | grep "^SYSCAP_DEFVAL" | sed 's/^SYSCAP_DEFVAL=//' | sed 's/ *$//' | sed 's/"$//' |  sed 's/^"//' | tr -d '\n'`
