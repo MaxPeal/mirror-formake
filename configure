@@ -18,7 +18,7 @@
 ################################################################################
 # BASE CONFIGURATION
 PACKAGE_NAME="formake"
-PACKAGE_VERSION="0.9.5"
+PACKAGE_VERSION="0.9.6"
 CONF="build.conf"
 CONF_H="build.h"
 
