@@ -1254,6 +1254,7 @@ elif test "$op_mode" = test; then
       if test x$op_no_break = x; then
         clean_exit 1
       fi
+      exit_status=1
     else
       echo_status "%s\n" "OK"
       if test -n "$op_out$op_def_out"; then
@@ -1370,6 +1371,7 @@ EOF
       if test x$op_no_break = x; then
         clean_exit $ret
       fi
+      exit_status=1
     else
       echo_status "%s\n" "OK"
     fi
@@ -1418,6 +1420,7 @@ EOF
       if test x$op_no_break = x; then
         clean_exit $ret
       fi
+      exit_status=1
     else
       echo_status "%s\n" "OK"
     fi
@@ -1443,6 +1446,7 @@ EOF
         if test x$op_no_break = x; then
           clean_exit $ret
         fi
+        exit_status=1
       else
         echo_status "%s\n" "OK"
         if test -n "$op_out$op_def_out"; then
@@ -1536,6 +1540,7 @@ EOF
       if test x$op_no_break = x; then
         clean_exit $ret
       fi
+      exit_status=1
     else
       echo_status "%s\n" "OK"
     fi
@@ -1563,6 +1568,7 @@ EOF
         if test x$op_no_break = x; then
           clean_exit $ret
         fi
+        exit_status=1
       else
         echo_status "%s\n" "OK"
         if test -n "$op_out$op_def_out"; then
@@ -1598,6 +1604,7 @@ EOF
         if test x$op_no_break = x; then
           clean_exit $ret
         fi
+        exit_status=1
       else
         echo_status "%s\n" "OK"
         if test -n "$op_out$op_def_out"; then
@@ -1655,6 +1662,7 @@ EOF
       if test x$op_no_break = x; then
         clean_exit $ret
       fi
+      exit_status=1
     else
       echo_status "%s\n" "OK"
     fi
@@ -1719,6 +1727,8 @@ EOF
     rm -f test.o
     if test x$test_failed = x; then
       echo_status "%s\n" "OK"
+    else
+      exit_status=1
     fi
   fi
   
@@ -1770,6 +1780,8 @@ EOF
             echo "#define $out_var 1" >>$op_def_out
           fi
         fi
+      else
+        exit_status=1
       fi
       rm -f test.o
     done
@@ -1823,6 +1835,8 @@ EOF
             echo "#define $out_var 1" >>$op_def_out
           fi
         fi
+      else
+        exit_status=1
       fi
       rm -f test.o
     done
@@ -1876,6 +1890,8 @@ EOF
             echo "#define $out_var 1" >>$op_def_out
           fi
         fi
+      else
+        exit_status=1
       fi
       rm -f test.o
     done
@@ -1930,6 +1946,8 @@ EOF
             echo "#define $out_var 1" >>$op_def_out
           fi
         fi
+      else
+        exit_status=1
       fi
       rm -f test.o
     done
@@ -1984,12 +2002,18 @@ EOF
 
       if test x$test_failed = x; then
         echo_status "%s\n" "OK"
+      else
+        exit_status=1
       fi
       rm -f test.o $src_base
     done
   fi
   
-  clean_exit 0
+  if test -n "$exit_status"; then
+    clean_exit $exit_status
+  else
+    clean_exit 0
+  fi
 elif test "$op_mode" = def; then
   orig_dir=`pwd`
   abs_path `dirname $0`
