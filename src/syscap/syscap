@@ -93,6 +93,7 @@ Flags:
  -with-inc=INCLUDES   use library include headers. The headers will not be tested
  -out=FILE            for every subtest generate status variable and write it to FILE
  -def-out=FILE        for every subtest generate status define and write it to header FILE
+ -status=ID           generate status variable/define SC_TEST_<ID>_PASSED=1 if test passed ok
  -no-break            do not break when some test are not passed
 
 System properties to test:
@@ -995,6 +996,10 @@ elif test "$op_mode" = test; then
         op_def_out=`echo -n "$param" | sed 's/^[^=]*=//'`
         current_opt=
         ;;
+      -status=*)
+        op_status_id=`echo -n "$param" | sed 's/^[^=]*=//' | sed 's/[^a-zA-Z0-9_]//g'`
+        current_opt=
+        ;;
       -no-break)
         op_no_break=1
         current_opt=
@@ -1270,7 +1275,21 @@ elif test "$op_mode" = test; then
   done
 
   if test x$have_cc_tests = x; then
-    exit 0
+    if test -n "$op_status_id" && test -n "$op_out$op_def_out"; then
+      if test x$exit_status = x || test x$exit_status = x0; then
+        if test -n "$op_out"; then
+          echo "SC_TEST_${op_status_id}_PASSED=1" >>$op_out
+        fi
+        if test -n "$op_def_out"; then
+          echo "#define SC_TEST_${op_status_id}_PASSED 1" >>$op_def_out
+        fi
+      fi
+    fi
+    if test -n "$exit_status"; then
+      exit $exit_status
+    else
+      exit 0
+    fi
   fi
 
 ################################################################################
@@ -2009,6 +2028,16 @@ EOF
     done
   fi
   
+  if test -n "$op_status_id" && test -n "$op_out$op_def_out"; then
+    if test x$exit_status = x || test x$exit_status = x0; then
+      if test -n "$op_out"; then
+        echo "SC_TEST_${op_status_id}_PASSED=1" >>$op_out
+      fi
+      if test -n "$op_def_out"; then
+        echo "#define SC_TEST_${op_status_id}_PASSED 1" >>$op_def_out
+      fi
+    fi
+  fi
   if test -n "$exit_status"; then
     clean_exit $exit_status
   else
