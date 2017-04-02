@@ -1226,11 +1226,14 @@ elif test "$op_mode" = test; then
     fi
   fi
 
+  op_progs=`echo -n "$op_progs" | sed 's/^:*//'`
+  op_inc=`echo -n "$op_inc" | sed 's/^#*//'`
   op_type=`echo -n "$op_type" | sed 's/^#*//'`
 
 ################################################################################
 # TEST PROGRAMS
-  op_progs=`echo -n "$op_progs" | tr ' ' '\n' | sort | uniq | tr '\n' ' '`
+  op_progs=`echo -n "$op_progs" | tr ':' '\n' | sort | uniq | tr '\n' ':'`
+  op_progs=`echo -n "$op_progs" | sed 's/^:*//' | sed 's/:*$//'`
   IFS_save=$IFS
   IFS=':'
   for prog in $op_progs; do
