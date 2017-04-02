@@ -1155,7 +1155,7 @@ elif test "$op_mode" = test; then
             current_opt=
             ;;
           prog)
-            op_progs="$op_progs $param"
+            op_progs="$op_progs:$param"
             ;;
           lib)
             param=`echo -n "$param" | sed 's/^lib//'`
@@ -1164,14 +1164,14 @@ elif test "$op_mode" = test; then
             fi
             ;;
           inc)
-            op_inc="$op_inc $param"
+            op_inc="$op_inc#$param"
             ;;
           def)
             eval def$def_num=\$param
             def_num=`expr $def_num + 1`
             ;;
           type)
-            op_type="$op_type $param"
+            op_type="$op_type#$param"
             ;;
           enum)
             op_enum="$op_enum $param"
@@ -1204,6 +1204,9 @@ elif test "$op_mode" = test; then
   op_with_cflags="$op_with_cflags_add $op_with_cflags"
   op_with_ldflags="$op_with_ldflags_add $op_with_ldflags"
 
+  op_with_cflags=`echo "$op_with_cflags" | sed 's/^ *//' | sed 's/ *$//'`
+  op_with_ldflags=`echo "$op_with_ldflags" | sed 's/^ *//' | sed 's/ *$//'`
+
   op_cflags=`echo "$op_cflags" | sed 's/^ *//' | sed 's/ *$//'`
   op_ldflags=`echo "$op_ldflags" | sed 's/^ *//' | sed 's/ *$//'`
 
@@ -1223,9 +1226,13 @@ elif test "$op_mode" = test; then
     fi
   fi
 
+  op_type=`echo -n "$op_type" | sed 's/^#*//'`
+
 ################################################################################
 # TEST PROGRAMS
   op_progs=`echo -n "$op_progs" | tr ' ' '\n' | sort | uniq | tr '\n' ' '`
+  IFS_save=$IFS
+  IFS=':'
   for prog in $op_progs; do
     test_failed=
     echo_status -l "%s" "checking $prog ... "
@@ -1243,15 +1250,12 @@ elif test "$op_mode" = test; then
       test $? != 0 && test_failed=1
     else
       found=
-      IFS_save=$IFS
-      IFS=:
       for dir in $PATH; do
         if test -n "$dir" && test -f "$dir/$prog" && test -x "$dir/$prog" ; then
           found=1
           break
         fi
       done
-      IFS=$IFS_save
       test x$found = x && test_failed=1
     fi
     if test x$test_failed = x1; then
@@ -1273,6 +1277,7 @@ elif test "$op_mode" = test; then
       fi
     fi
   done
+  IFS=$IFS_save
 
   if test x$have_cc_tests = x; then
     if test -n "$op_status_id" && test -n "$op_out$op_def_out"; then
@@ -1286,9 +1291,9 @@ elif test "$op_mode" = test; then
       fi
     fi
     if test -n "$exit_status"; then
-      exit $exit_status
+      clean_exit $exit_status
     else
-      exit 0
+      clean_exit 0
     fi
   fi
 
@@ -1451,6 +1456,8 @@ EOF
 # TEST HEADERS
   if test -n "$op_inc"; then
     log_title "TEST HEADERS"
+    IFS_save=$IFS
+    IFS='#'
     for inc in $op_inc; do
       rm -f $test_src
       inc=`echo "$inc" | sed 's/[<]//' | sed 's/[>]//'`
@@ -1481,6 +1488,7 @@ EOF
       fi
       rm -f test.o
     done
+    IFS=$IFS_save
   fi
   
 ################################################################################
@@ -1571,11 +1579,14 @@ EOF
 # TEST TYPES
   if test -n "$op_type"; then
     log_title "TEST TYPES"
+    IFS_save=$IFS
+    IFS='#'
     for type in $op_type; do
       cat $test_src_base > $test_src
 
       type_base=`echo "$type" | sed 's/ *\**$//'`
-      echo "$type_base *syscap_$type_base;" >> $test_src
+      var_name=`echo "syscap_$type_base" | sed 's/ /_/g'`
+      echo "$type_base *$var_name;" >> $test_src
     
       echo_status -l "%s" "checking type $type_base ... "
       log_src $test_src
@@ -1602,6 +1613,7 @@ EOF
       fi
       rm -f test.o
     done
+    IFS=$IFS_save
   fi
   
 ################################################################################
