@@ -932,6 +932,7 @@ elif test "$op_mode" = test; then
 
   current_opt=
   def_num=0
+  type_num=0
   have_cc_tests=
   while test $# -gt 0; do
     param=`echo -n "$1" | sed 's/^ *//' | sed 's/^# */#/'`
@@ -1164,14 +1165,15 @@ elif test "$op_mode" = test; then
             fi
             ;;
           inc)
-            op_inc="$op_inc#$param"
+            op_inc="$op_inc $param"
             ;;
           def)
             eval def$def_num=\$param
             def_num=`expr $def_num + 1`
             ;;
           type)
-            op_type="$op_type#$param"
+            eval type$type_num=\$param
+            type_num=`expr $type_num + 1`
             ;;
           enum)
             op_enum="$op_enum $param"
@@ -1227,8 +1229,6 @@ elif test "$op_mode" = test; then
   fi
 
   op_progs=`echo -n "$op_progs" | sed 's/^:*//'`
-  op_inc=`echo -n "$op_inc" | sed 's/^#*//'`
-  op_type=`echo -n "$op_type" | sed 's/^#*//'`
 
 ################################################################################
 # TEST PROGRAMS
@@ -1459,8 +1459,6 @@ EOF
 # TEST HEADERS
   if test -n "$op_inc"; then
     log_title "TEST HEADERS"
-    IFS_save=$IFS
-    IFS='#'
     for inc in $op_inc; do
       rm -f $test_src
       inc=`echo "$inc" | sed 's/[<]//' | sed 's/[>]//'`
@@ -1491,7 +1489,6 @@ EOF
       fi
       rm -f test.o
     done
-    IFS=$IFS_save
   fi
   
 ################################################################################
@@ -1580,18 +1577,20 @@ EOF
   
 ################################################################################
 # TEST TYPES
-  if test -n "$op_type"; then
+  if test $type_num -gt 0; then
     log_title "TEST TYPES"
-    IFS_save=$IFS
-    IFS='#'
-    for type in $op_type; do
+    type_idx=0
+    while test $type_idx -lt $type_num; do
       cat $test_src_base > $test_src
 
-      type_base=`echo "$type" | sed 's/ *\**$//'`
-      var_name=`echo "syscap_$type_base" | sed 's/ /_/g'`
+      eval type_string=\$type$type_idx
+      type_string=`echo -n "$type_string" | sed 's/^ *//'`
+
+      type_base=`echo "$type_string" | sed 's/\**$//'`
+      var_name=`echo "syscap_$type_base" | sed 's/[^a-zA-Z0-9_]/_/g'`
       echo "$type_base *$var_name;" >> $test_src
     
-      echo_status -l "%s" "checking type $type_base ... "
+      echo_status -l "%s" "checking type $type_string ... "
       log_src $test_src
       echo "$CC_CMD $op_with_cflags $op_cflags -c -o test.o $test_src" >> $syscap_log
       $CC_CMD $op_with_cflags $op_cflags -c -o test.o $test_src >> $syscap_log 2>&1
@@ -1605,7 +1604,7 @@ EOF
       else
         echo_status "%s\n" "OK"
         if test -n "$op_out$op_def_out"; then
-          out_var=`echo -n "SC_HAVE_TYPE_$type" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
+          out_var=`echo -n "SC_HAVE_TYPE_$type_string" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
           if test -n "$op_out"; then
             echo "$out_var=1" >>$op_out
           fi
@@ -1615,8 +1614,8 @@ EOF
         fi
       fi
       rm -f test.o
+      type_idx=`expr $type_idx + 1`
     done
-    IFS=$IFS_save
   fi
   
 ################################################################################
