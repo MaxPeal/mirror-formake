@@ -1,12 +1,12 @@
 Overview
--
+--------
 Formake is a universal toolkit targeted primarily on constructing software configuration and build automation solutions. Formake tools also can be useful for application in other fields, like system administration, for example.
 
 Formake provides a set of portable Shell scripts and detailed directions on developing portable and flexible software build system. Formake explores classic and standard Shell and Make as the base technologies. Since Make "language" is very weak, Formake uses Makefile-generation approach. Formake-based software build system consists of a toplevel **configure** script and a set of **mkmf** scripts that generate Makefiles. Developing software build system involves the following basic steps:
 
-* generating *configure* script using Formake **formake configure** command. This tool has many parameters that allow to customize the output script. The generated *configure* script is workable out of box and at the same time is simple and clear for the following editing to customize even more
+* generating initial *configure* script using Formake **formake configure** command. This tool has many parameters that allow to customize the output script. The generated *configure* script is workable out of box and at the same time is simple and clear for the following editing to customize even more
 * customizing *configure* script if needed
-* generating *mkmf* scripts using **formake mkmf** command. *mkmf* scripts are used to generate Makefiles. **formake mkmf** has many parameters to customize the output script. The generated *mkmf* script is workable out of box and at the same time is simple and clear for the following fine tuning
+* generating initial *mkmf* scripts using **formake mkmf** command. *mkmf* scripts are used to generate Makefiles. **formake mkmf** has many parameters to customize the output script. The generated *mkmf* script is workable out of box and at the same time is simple and clear for the following fine tuning
 * customizing *mkmf* scripts if needed
 
 Formake philosophy is that all details of a software build process must be under full controll of developer **when it is needed**. In order to make the process of developing fast and easy, Formake provides tools for automatic generation of *configure* and *mkmf* scripts for the following manual tuning for the needs of custom configuration.
@@ -17,28 +17,28 @@ Quick examples
 -
 Creating and testing build system for Hello Word program:
 ~~~bash
-cd hello_program
+$ cd hello_program
 
-formake install -std cstem
-formake configure -name HelloWorld -cc
-formake mkmf -srcroot ./ -src hello.c -type prog -name hello
+$ formake install -std cstem
+$ formake configure -name HelloWorld -cc
+$ formake mkmf -srcroot ./ -src hello.c -type prog -name hello
 
-ls -F
-> configure*  formake/  hello.c  mkmf*
+$ ls -F
+configure*  formake/  hello.c  mkmf*
 
-./configure --prefix=/tmp/test_hello
-make
-make install
-/tmp/test_hello/bin/hello
-make uninstall
+$ ./configure --prefix=/tmp/test_hello
+$ make
+$ make install
+$ /tmp/test_hello/bin/hello
+$ make uninstall
 
-make dist
-ls -F
-> build.conf  configure*  configure.log  formake/  hello.c  HelloWorld.tar.gz  Makefile  mkmf*
+$ make dist
+$ ls -F
+build.conf  configure*  configure.log  formake/  hello.c  HelloWorld.tar.gz  Makefile  mkmf*
 
-make distclean
-ls -F
-> configure*  formake/  hello.c  mkmf*
+$ make distclean
+$ ls -F
+configure*  formake/  hello.c  mkmf*
 ~~~
 
 **formake install** installs Formake scripts in *./formake* directory.
@@ -48,37 +48,37 @@ ls -F
 
 Creating and testing a build system for 2 programs that depend on zlib and X11 libraries, with sources in separate subdirectory:
 ~~~bash
-cd test2
+$ cd test2
 
-formake install -std cstem
-formake configure -name test2 -cc -syscap "-lz -lX11 zlib.h X11/Xlib.h"
-formake mkmf -srcroot ./ -subdirs src
-cd src
-formake mkmf -srcroot ../ -foo-src foo.c -foo-type prog -foo-ldflags="-lz" -bar-src bar.c -bar-type prog -bar-ldflags="-lX11"
+$ formake install -std cstem
+$ formake configure -name test2 -cc -syscap "-lz -lX11 zlib.h X11/Xlib.h"
+$ formake mkmf -srcroot ./ -subdirs src
+$ cd src
+$ formake mkmf -srcroot ../ -foo-src foo.c -foo-type prog -foo-ldflags="-lz" -bar-src bar.c -bar-type prog -bar-ldflags="-lX11"
 
-ls -F
-> bar.c  foo.c  mkmf*
+$ ls -F
+bar.c  foo.c  mkmf*
 
-cd ..
-ls -F
-> configure*  formake/  mkmf*  src/
+$ cd ..
+$ ls -F
+configure*  formake/  mkmf*  src/
 
-./configure --prefix=/tmp/test2
-make
-make install
-/tmp/test2/bin/foo
-/tmp/test2/bin/bar
-make uninstall
+$ ./configure --prefix=/tmp/test2
+$ make
+$ make install
+$ /tmp/test2/bin/foo
+$ /tmp/test2/bin/bar
+$ make uninstall
 
-make dist
-ls -F
-> build.conf  configure*  configure.log  formake/  test2.tar.gz  Makefile  mkmf*  src/
+$ make dist
+$ ls -F
+build.conf  configure*  configure.log  formake/  test2.tar.gz  Makefile  mkmf*  src/
 
-make distclean
-ls -F
-> configure*  formake/  mkmf*  src/
+$ make distclean
+$ ls -F
+configure*  formake/  mkmf*  src/
 ~~~
-In the above example *configure* checks the existance of package dependencies zlib and X11.
+In the above example *configure* checks the existence of package dependencies zlib and X11.
 
 The generated scripts work out of box and does not require additional editing. But when some changes are done, for example added new source files, it will require editing some *mkmf* scripts that are located in directories where changes take place. If, for example, some additional dependencies or build parameters are added than it will require editing *configure* script. Scripts generated by **formake configure** and **formake mkmf** are well formatted, short and commented. With the basic knowledge of Shell editing should be easy.
 
@@ -216,3 +216,5 @@ This is a simple description of the Formake. Yet there is much more interesting 
 Key principles in detail
 -
 
+[[members limit=20]]
+[[download_button]]
