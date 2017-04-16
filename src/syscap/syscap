@@ -1460,7 +1460,7 @@ EOF
   if test -n "$op_inc"; then
     log_title "TEST HEADERS"
     for inc in $op_inc; do
-      rm -f $test_src
+      cat $test_src_base > $test_src
       inc=`echo "$inc" | sed 's/[<]//' | sed 's/[>]//'`
       echo "#include <$inc>" >> $test_src
       echo_status -l "%s" "checking header $inc ... "
@@ -2143,13 +2143,19 @@ elif test "$op_mode" = def; then
   for def in $op_def; do
     cat $test_src_base > $test_src
 
-    echo "SYSCAP_DEFVAL=$def" >>$test_src
+    cat <<EOF >>$test_src
+#ifdef $def
+SYSCAP_DEFVAL=$def
+#endif
+EOF
     $CC_CMD $op_cflags $CPP_FLAG $test_src 2>/dev/null > test_c.out
-    defval=`cat test_c.out | grep "^SYSCAP_DEFVAL" | sed 's/^SYSCAP_DEFVAL=//' | sed 's/ *$//' | sed 's/"$//' |  sed 's/^"//' | tr -d '\n'`
-    if test -n "$defvals"; then
-      defvals="$defvals $defval"
-    else
-      defvals=$defval
+    defval=`cat test_c.out | grep "^ *SYSCAP_DEFVAL" | sed 's/^ *SYSCAP_DEFVAL=//' | sed 's/ *$//' | sed 's/"$//' |  sed 's/^"//' | tr -d '\n'`
+    if test -n "$defval"; then
+      if test -n "$defvals"; then
+        defvals="$defvals $defval"
+      else
+        defvals=$defval
+      fi
     fi
   done
   echo "$defvals" | sed 's/^ *//'
