@@ -1,0 +1,266 @@
+#!/bin/sh
+#
+# Formake mkdep
+#
+# Copyright (c) 2015-2017, Oleksiy Chernyavskyy
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+script_name=`basename $0`
+script_dir=`dirname $0`
+cc_cfg=/tmp/mkdep_$$_cc.cfg
+tmp_file1=/tmp/dep$$.t
+tmp_file2=/tmp/dep$$.t2
+tmp_file3=/tmp/dep$$.t3
+
+################################################################################
+# LOAD CONFIG
+if test -f $script_dir/mk.conf; then
+  . $script_dir/mk.conf
+fi
+if test -f $script_dir/mkdep.conf; then
+  . $script_dir/mkdep.conf
+fi
+################################################################################
+
+print_help() {
+cat <<EOF
+Generate dependencies of C/C++ source files for Makefile
+
+${script_name} [-c++] [-cc CMD] [-o OBJECT] [-cflags=FLAGS] [-I<PATH>] [-D<NAME>[=VALUE]] [-stdout|-d FILE] SRC..
+
+Options:
+  -c++              force using C++ compiler [autodetect]
+  -cc CMD           compiler command
+  -o OBJECT         output object file
+  -cflags=FLAGS     compiler flags
+  -I<PATH>          headers path
+  -D<NAME>[=VALUE]  define a CPP macro
+  -stdout           print dependency information to a standard output
+  -d FILE           specify output dependency file
+  SRC..             source files
+EOF
+}
+
+source_num=0
+op_sources=
+current_opt=
+while test $# -gt 0; do
+  case "$1" in
+    -h|-help|--help)
+      print_help
+      exit 0
+      ;;
+    -c++)
+      op_cxx=1
+      current_opt=
+      ;;
+    -cc)
+      current_opt=cc
+      ;;
+    -o)
+      current_opt=o
+      ;;
+    -cflags=*)
+      op_cflags=`echo -n "$1" | sed 's/^-cflags=//'`
+      current_opt=
+      ;;
+    -I*)
+      op_cflags2="$op_cflags2 $1"
+      current_opt=
+      ;;
+    -D*)
+      op_cflags2="$op_cflags2 $1"
+      current_opt=
+      ;;
+    -stdout)
+      op_stdout=1
+      op_out_file=
+      current_opt=
+      ;;
+    -d)
+      op_stdout=
+      current_opt=d
+      ;;
+    *.c)
+      op_sources="$op_sources $1"
+      source_num=`expr $source_num + 1`
+      have_c=1
+      current_opt=
+      ;;
+    *.C|*.[Cc][Cc]|*.[Cc][Pp][Pp]|*.[Cc][Xx][Xx])
+      op_sources="$op_sources $1"
+      source_num=`expr $source_num + 1`
+      have_cxx=1
+      current_opt=
+      ;;
+    *)
+      case "$current_opt" in
+        cc)
+          op_cc=$1
+          current_opt=
+          ;;
+        o)
+          op_object=$1
+          current_opt=
+          ;;
+        d)
+          op_out_file=$1
+          current_opt=
+          ;;
+        *)
+          echo "$script_name: error. Invalid parameter: $1" >&2
+          exit 1
+          ;;
+      esac
+      ;;
+  esac
+  shift
+done
+
+if test -z "$op_sources"; then
+  echo "$script_name: no source files specified" >&2
+  exit 1
+fi
+
+if test $source_num -gt 1 && test -n "$op_object"; then
+  echo "$script_name: error. Parameter '-o' can't be specified for multiple sources" >&2
+  exit 1
+fi
+
+if test -n "$have_cxx$op_cxx"; then
+  cstem_cmd="cstem+"
+else
+  cstem_cmd="cstem"
+fi
+
+$cstem_cmd -h >/dev/null 2>&1
+if test $? -eq 127; then
+  if test -f $script_dir/$cstem_cmd; then
+    cstem_cmd=$script_dir/$cstem_cmd
+  else
+    echo "$script_name: error: $cstem_cmd not found" >&2
+    exit 1
+  fi
+fi
+
+cc_cmd=$op_cc
+cc_flags=`echo -n "$cc_flags $op_cflags $op_cflags2" | sed 's/^ *//' | sed 's/ *$//'`
+if test -z "$cc_cmd$cc_flags"; then
+  cc_cmd=`$cstem_cmd -cmd`
+  if test -z "$cc_cmd"; then
+    echo "$script_name: compiler not found" >&2
+    exit 1
+  fi
+  cc_type=`$cstem_cmd -id`
+  cc_flags=`$cstem_cmd -cflags`
+  cc_ver=`$cstem_cmd -ver`
+else
+  if test -z "$cc_cmd"; then
+    cc_cmd=`$cstem_cmd -cmd`
+  fi
+  $cstem_cmd probe -cc "$cc_cmd" -cflags="$cc_flags" > $cc_cfg
+  . $cc_cfg
+  rm -f $cc_cfg
+  if test -z "$CC_CMD"; then
+    echo "$script_name: compiler $cc_cmd not found" >&2
+    exit 1
+  fi
+  cc_cmd=$CC_CMD
+  cc_type=$CC_ID
+  cc_ver=$CC_VERSION
+fi
+
+if test -n "$op_out_file"; then
+  rm -f $op_out_file
+fi
+rm -f $tmp_file1
+rm -f $tmp_file2
+rm -f $tmp_file3
+for file in $op_sources; do
+  if test -n "$op_object"; then
+    object=$op_object
+    out_dir=`dirname $op_object`
+  else
+    object=`echo -n "$file" | sed 's/\.[^.]*$/.o/'`
+    out_dir="."
+  fi
+  base_name=`basename "$object" | sed 's/\.[^.]*$//'`
+  case "$cc_type" in
+    gcc)
+      case "$cc_ver" in
+        4.*)
+          $cc_cmd -M -MT ${out_dir}/${base_name}.o -MP $cc_flags $file | sed 's/ *$//' | sed '/^$/ d' >$tmp_file2
+
+#          if test x"$out_dir" != "x."; then
+#            cat $tmp_file2 | sed "s/$base_name\.o/$out_dir\/&/" > $tmp_file1
+#            cat $tmp_file1 > $tmp_file2
+#          fi
+#
+#          cat $tmp_file2 > $tmp_file1
+#          sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$//' -e '/^$/ d' -e 's/$/ :/' -e 's/^ *//' < $tmp_file2 >> $tmp_file1
+#          rm $tmp_file2
+#          mv $tmp_file1 $tmp_file2
+          ;;
+        *)
+          $cc_cmd -E $cc_flags $file | sed -n 's!^# *[0-9][0-9]* *"\([^<][^"]*\)".*!\1!p' | sort | uniq >$tmp_file
+          cat $tmp_file1 | sed "s/^/$out_dir\/${base_name}.o: /" >$tmp_file2
+          cat $tmp_file1 | sed 's/ *$/:/' >>$tmp_file2
+          ;;
+      esac
+      ;;
+    *)
+      echo "$script_name: unsupported compiler" >&2
+      exit 0
+      ;;
+  esac
+
+  if test -n "$op_out_file"; then
+    cat $tmp_file2 >>$op_out_file
+  elif test x$op_stdout = x1; then
+    if test -f $tmp_file2; then
+      cat $tmp_file2 >>$tmp_file3
+    fi
+  else
+    if test ! -d "$out_dir"; then
+      mkdir "$out_dir"
+      if test ! -d "$out_dir"; then
+        rm -f $tmp_file
+        rm -f $tmp_file2
+        rm -f $tmp_file3
+        exit 1
+      fi
+    fi
+    cat $tmp_file2 >$out_dir/${base_name}.d
+  fi
+done
+
+if test -n "$op_out_file" && test -f $op_out_file; then
+  cat $op_out_file | sort | uniq >$tmp_file
+  cat $tmp_file1 > $op_out_file
+elif test x$op_stdout = x1 && test -f $tmp_file3; then
+  cat $tmp_file3 | sort | uniq
+fi
+rm -f $tmp_file
+rm -f $tmp_file2
+rm -f $tmp_file3
+

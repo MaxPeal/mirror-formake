@@ -1,220 +1,455 @@
-Overview
---------
-Formake is a universal toolkit targeted primarily on constructing software configuration and build automation solutions. Formake tools also can be useful for application in other fields, like system administration, for example.
+Formake is a collection of Bash scripts for POSIX systems.
 
-Formake provides a set of portable Shell scripts and detailed directions on developing portable and flexible software build system. Formake explores classic and standard Shell and Make as the base technologies. Since Make "language" is very weak, Formake uses Makefile-generation approach. Formake-based software build system consists of a toplevel **configure** script and a set of **mkmf** scripts that generate Makefiles. Developing software build system involves the following basic steps:
+Universal and portable scripts can be used in build automation, software configuration and system administration tasks.
 
-* generating initial *configure* script using Formake **formake configure** command. This tool has many parameters that allow to customize the output script. The generated *configure* script is workable out of box and at the same time is simple and clear for the following editing to customize even more
-* customizing *configure* script if needed
-* generating initial *mkmf* scripts using **formake mkmf** command. *mkmf* scripts are used to generate Makefiles. **formake mkmf** has many parameters to customize the output script. The generated *mkmf* script is workable out of box and at the same time is simple and clear for the following fine tuning
-* customizing *mkmf* scripts if needed
-
-Formake philosophy is that all details of a software build process must be under full controll of developer **when it is needed**. In order to make the process of developing fast and easy, Formake provides tools for automatic generation of *configure* and *mkmf* scripts for the following manual tuning for the needs of custom configuration.
-
-A generated scripts are short and clear since much automation code is already written and put in external scripts that Formake provides. Formake is a library of Shell scripts used in *configure* and *mkmf* scripts. Developing software build system is very similar to developing a generic software that uses external libraries.
-
-Quick examples
--
-Creating and testing build system for Hello Word program:
-~~~bash
-$ cd hello_program
-
-$ formake install -std cstem
-$ formake configure -name HelloWorld -cc
-$ formake mkmf -srcroot ./ -src hello.c -type prog -name hello
-
-$ ls -F
-configure*  formake/  hello.c  mkmf*
-
-$ ./configure --prefix=/tmp/test_hello
-$ make
-$ make install
-$ /tmp/test_hello/bin/hello
-$ make uninstall
-
-$ make dist
-$ ls -F
-build.conf  configure*  configure.log  formake/  hello.c  HelloWorld.tar.gz  Makefile  mkmf*
-
-$ make distclean
-$ ls -F
-configure*  formake/  hello.c  mkmf*
-~~~
-
-**formake install** installs Formake scripts in *./formake* directory.
-**formake configure** generates *configure* script.
-**formake mkmf** generates *mkmf* script.
+Formake provides the following scripts:
+  abspath       Calculate absolute path
+  cfront        C compiler frontend based on cstem
+  cfront+       C++ compiler frontend based on cstem+
+  cstem         C system query and test tool
+  cstem+        C++ system query and test tool
+  excom         Command test tool
+  ldlshell      Load interactive shell with predefined LD library path environment
+  ldlwrap       Create program wrapper script with predefined LD library path environment
+  libro         Build static and dynamic libraries
+  mkconfigure   Create 'configure' script
+  mkdep         Generate dependencies of C/C++ source files for Makefile
+  mkmkmf        Generate mkmf script (Makefile generation script)
+  mkrule        Generate Make rules
+  optool        Command-line options processing tool
+  pofig         Portable figure out system properties
+  relpath       Calculate relative path between two directories
+  src2obj       Convert source list to object list
 
 
-Creating and testing a build system for 2 programs that depend on zlib and X11 libraries, with sources in separate subdirectory:
-~~~bash
-$ cd test2
 
-$ formake install -std cstem
-$ formake configure -name test2 -cc -syscap "-lz -lX11 zlib.h X11/Xlib.h"
-$ formake mkmf -srcroot ./ -subdirs src
-$ cd src
-$ formake mkmf -srcroot ../ -foo-src foo.c -foo-type prog -foo-ldflags="-lz" -bar-src bar.c -bar-type prog -bar-ldflags="-lX11"
+Description of scripts and examples of usage
+---------------------------------------------
 
-$ ls -F
-bar.c  foo.c  mkmf*
+abspath
+  
+abspath calculates the absolute path of given arguments or from standard input.
 
-$ cd ..
-$ ls -F
-configure*  formake/  mkmf*  src/
+  $ abspath -help
+  abspath [-b BASE_DIR] [<path> ...]
 
-$ ./configure --prefix=/tmp/test2
-$ make
-$ make install
-$ /tmp/test2/bin/foo
-$ /tmp/test2/bin/bar
-$ make uninstall
-
-$ make dist
-$ ls -F
-build.conf  configure*  configure.log  formake/  test2.tar.gz  Makefile  mkmf*  src/
-
-$ make distclean
-$ ls -F
-configure*  formake/  mkmf*  src/
-~~~
-In the above example *configure* checks the existence of package dependencies zlib and X11.
-
-The generated scripts work out of box and does not require additional editing. But when some changes are done, for example added new source files, it will require editing some *mkmf* scripts that are located in directories where changes take place. If, for example, some additional dependencies or build parameters are added than it will require editing *configure* script. Scripts generated by **formake configure** and **formake mkmf** are well formatted, short and commented. With the basic knowledge of Shell editing should be easy.
+Examples:
+  $ pwd
+  /home/user/tmp
+  $ abspath ./
+  /home/user/tmp
+  $ abspath ../dir1/subdir2/../subdir3
+  /home/user/dir1/subdir3
+  $ abspath -b /tmp/dir1 ../dir2/../dir3/../dir4
+  /tmp/dir4
+  $ echo './' | abspath
+  /home/user/tmp
+  $ abspath ./ .. ../../../usr/../tmp
+  /home/user/tmp
+  /home/user
+  /tmp
 
 
-Background
--
+================
 
-Formake declares the following key principles for **portable** software configuration and build automation solutions:
+cfront/cfront+
 
-* build system must be based on standard Shell and Make
-* distributable scripts must be portable, with no dependencies except standard Shell
-* simple things must be implemented simply
-* complex things must be as hard as ordinary programming in Shell
-* generated scripts must be nice and clear
-* it must be modular
-* it must be easily extensible
-* stick to traditional UNIX experience, like *./configure; make; make install*
+cfront/cfront+ are simple wrappers for selected C/C++ compiler. cfront depends on cstem to find out C compiler command and flags.
+cfront+ depends on cstem+.
 
-The above principles are put in the design of Formake.
-Formake explores standard-based classic tools Shell and Make.
+Run 'cfront -help' to get help.
+Run 'cfront+ -help' to get help.
 
-The classic design of UNIX software build system is composed of the following key components:
+Examples for cfront:
+  
+  Compile a source files:
+  $ cfront -c file.c file2.c file3.c
 
-* **configure** script in the root of a source tree
-* **Makefiles** in subdirectories
-
-The following is a standard sequence of commands when building a software:
-~~~bash
-./configure
-make
-~~~
-
-Formake uses similar classic model for constructing a software build system. But it extends this model in places where it has conceptual and technological limitations:
-
-* writing portable and correct *configure* script is tedious and error-prone task, if possible at all. Formake resolves this problem by providing 2 technical solutions:
-    - Formake provides a set of tools that automate many tasks that are common for *configure* script. It   allows keep *configure* script small and simple because much code is already written and put in external tools. These scripts are simple to use and have many parameters. They can be called from *configure* script at any place and many times with different parameters
-    - Formake provides **formake configure** command that generates a well-formatted *configure* script that is workable out of box. A generated *configure* script is split on logical blocks, with descriptive comments and examples. This script is good without any modifications for simple configurations. And it serves as a starting base for complex configurations.
-* Makefiles are almost static and require much coding. The fact that Make is not a full-fledged programming language leads to hard limitations. It is very hard to write a correct and full Makefile by hand, it is very error-prone. Makefiles contain many duplicated code. The parametrisation facilities of Makefiles is very weak. Formake resolves this problem using the following approach:
-    - Formake declares that Make is good only as a backend technology for implementing target-prerequisite dependencies tracking and Makefiles should not be written manually at all. Formake solution is to generate Makefile from a Shell script. The recommended name of such script is **mkmf**. In every directory where Makefile is needed there must be created a **mkmf** script that generates a corresponding Makefile. The whole Makefile can be put inside *here document* code block in **mkmf**. All parametrised parts of Makefile can be substituted with Shell variables and the whole configuration is written outside *here document* using normal Shell programming language. Going further, all repeatable Makefile blocks can be generated inside *for* or *while* loops. Generally there are absolutely no limitations in parametrisation facilities. Formake offers to put inside **mkmf** a small code block that reads a top-level configuration file generated by *configure*. This is most convenient and sufficient solution to parameterize every **mkmf** script from one place.
-    - Formake provides a set of tools that automate many tasks that are common for *mkmf* scripts. Most notable tool is **mkrule** that generates many types of Makefile code blocks. It has many parameters and also it automatically probes build/target system parametes to generate correct system specific code. Using Formake tools allows to keep *mkmf* scripts small and simple. In common cases *mkmf* script contains no Make code at all, everything is generated from *mkrule*.
-    - Formake provides **formake mkmf** command for generating a well-formatted *mkmf* scripts that are workable out of box. It works the same as *formake configure* for generating *configure* script. A generated *mkmf* script is split on logical blocks, with descriptive comments and examples. This script is good without any modifications for simple configurations. And it serves as a starting base for complex configurations.
-
-To summarise, constructing software build system using Formake involes the following basic steps:
-
-* generate *configure* script using **formake configure**
-* edit *configure* script for custom configuration that can't be achieved using **formake configure** parameters
-* generate *mkmf* scripts using **formake mkmf**
-* edit *mkmf* scripts for custom configurations that can't be achieved using **formake mkmf** parameters
-* use Formake tools in scripts
-
-It must be emphasized that *configure* and *mkmf* scripts are generated only once and are intended for further manual tuning.
+  Link objects:
+  $ cfront ld -o program file.o file2.o file3.o
 
 
-The problems of build automation software
--
-Different build automation software provide automatic generation of *configure* script and *Makefiles* from input configuration files.
 
-When it comes to using existing build systems from user point of view it works good in many cases. User just runs 'configure; make; make install'. But things are not so simple for a developer. It is a common belief that build system can't be simple by nature. Mostly it is explained by existence of the endless number of possible software configurations, build and target system configurations, compilers, tools, architectures. It is true in cases when complexity is connected with mentioned factors. But it can't be accepted when the source of complexity lies in shortcomings of the underlying design of build automation software, when the scope of possible configurations is limited by capabilities of the underlying description format provided by build automation system. For example, the common case is when it is required to generate parameterized Makefile but the underlying format allows a limited capabilities to make conditional operations, like simple if-than-else. It forces developer to configure his src/module/submodule/Makefile in toplevel 'configure' script, that hardly can be accepted as a right way.
+================
 
-Another factor of complexity is connected with a common problem known as overengineering. A build automation system takes a mission to automate everything and this leads to inventing a freaky language. The objective reality is such that not all tasks can be automated easily. It's not a right way to invent a new language or format instead of using existing Shell that is well-known, standard, portable and just every developer should know it.
+cstem/cstem+
 
-A software build system must be treated as a generic program that must be written with a full-fledged programming language, in the same way as a program that is built by that build system. This is a key principle of Formake.
+cstem is a script for probing C compiler parameters and testing C system properties. It can be configured for using specified compiler
+command, linker command, compiler and linker flags. cstem+ is very similar script but for C++ compiler. cstem and cstem+ have same semantics of parameters with minor differencies of several parameter names.
 
-There is only one language that is most convenient for writing software build systems. It is Bash, the variant of Shell. This selection is based on the following factors:
+cstem has 4 modes:
+  - config mode, for configuring compiler and linker
+  - probe mode, for getting detailed compiler parameters. This is the default mode
+  - test mode, for testing different C system facilities
+  - def mode, for getting CPP macro values
 
-* it exists on every UNIX-based system
-* it is standard
-* it is simple
-* it is convenient for tasks of software configuration and build automation
+To get help run 'cstem -help' or 'cstem+ -help'.
 
-It explains the reason why Formake is written completely with Shell and a Formake-based software build system is comprised of scripts written solely with Shell.
+Example. Configure cstem:
+  $ cstem config CC=gcc CFLAGS="-O3 -g0 -I. -DRELEASE" LDFLAGS="-L."
 
-The following is a list of common problems that raise from the weaknesses of different build automation systems and how they are resolved in Formake way:
+Example. Probe compiler parameters:
+  $ cstem
+  id:                 gcc
+  version:            4.9.2
+  command:            gcc
+  cflags:             -O3 -g0 -I. -DRELEASE
+  ldflags:            -L.
+  language standard:  c89
+  target os:          gnulinux
+  target os version:  -
+  target kernel:      linux
+  target arch:        x86_64
+  bitness:            64
+  endianess:          -
+  data model:         lp64
 
-* impossibility or a hard way to describe different build configurations for different input parameters
-Input parameters can be parameters passed by user, build system or target system parameters. A certain build automation system can provide a static declarative format that is not a programming language at all. Static format limits the scope of possible configurations by the number of configuration variables provided by a format. This approach is known as *Declarative* programming. It has one notable advantage - simplicity. But another side of the simplicity is a limited list os possible configurations. For example, you can't select proper compiler flags based on compiler type and target architecture.
-Formake doesn't have such limitations since it uses a full-fledged programming language for writing configuration script. This approach is known as *Imperative* programming, as opposed to declarative approach. Yet Formake implements also declarative model on top of imperative. So it has all the advantages of declarative formats. It is achieved by using **formake configure** and **formake mkmf** commands. These scripts generate configure and mkmf scripts based on a wide range of input parameters that are same as static format variables.
-* ....
+Example. Probe compiler command and flags:
+  $ cstem -cmd -cflags
+  gcc -O3 -g0 -I. -DRELEASE
+
+Example. Probe compiler type:
+  $ cstem -id
+  gcc
+
+Example. Probe compiler version:
+  $ cstem -ver
+  4.9.2
+
+Example. Probe compiler target architecture:
+  $ cstem -arch
+  x86_64
+
+Exmaple. Probe linker flags:
+  $ cstem -ldflags
+  -L.
+
+Example. Test libxml2 library and headers:
+  $ cstem test -lxml2 -I/usr/include/libxml2 libxml/hash.h
+  checking header libxml/hash.h ... OK
+  checking libraries  -lxml2 ... OK
+
+Example. Test compiler flags:
+  $ cstem test -cflags="-Wall -march=native"
+  checking compiler flags -Wall -march=native ... OK
+
+Example. Check '__gnu_linux__' macro:
+  $ cstem def __gnu_linux__
+  1
+
+Example. Check '__SIZEOF_INT__' macro:
+  $ cstem def __SIZEOF_INT__
+  4
+
+cstem has many options that allow to probe and test any C related properties. In 'probe' mode it allows to get the following data:
+  - compiler type (vendor)
+  - compiler version
+  - compiler command
+  - C language standard
+  - target OS
+  - target OS version
+  - target kernel
+  - target architecture
+  - target bitness
+  - target endianess
+  - target data model
+
+In 'test' we can test the following system properties:
+  - compiler. check if we have workable compiler
+  - compiler flags. check if given flags are correct
+  - linker. check if we have workable linker
+  - linker flags. check if given linker flags are correct for our linker
+  - libraries. check if given libraries are available
+  - headers. check if specified headers are available on system
+  - defines. test specified defines and complex macro commands
+  - types. check if specified types are available
+  - enum constants
+  - extern variables
+  - functions
+  - symbols
+  - rvalues
+  - one line source strings
+
+cstem has many options for every mode that allow to configure compiler/linker command, compiler and linker flags, output format, etc.
 
 
-Formake scripts
--
-Formake provides the following set of scripts:
+================
 
-    * abspath         Calculate absolute path
-    * cfront          C/C++ compiler frontend
-    * cstem           Configure and probe C compiler
-    * cstem+          Configure and probe C++ compiler
-    * ldlshell        Load interactive shell with predefined LD library path environment
-    * ldlwrap         Create program wrapper script with predefined LD library path
-    * libro           Build static and dynamic libraries
-    * mkdep           Generate dependencies of C/C++ source files for Makefile
-    * mkrule          Generate Make rules
-    * optool          Command-line options processing tool
-    * relpath         Calculate relative path between two directories
-    * src2obj         Convert source list to object list
-    * syscap          System capabilities query and test tool
+excom
 
-    * formake configure     Generate configure script
-    * formake install       Install Formake scripts into package
-    * formake mkmf          Generate mkmf script
-    * formake package       Create build automation package
+excom is an abbreviation for COMmand EXist. This script tests if we have specified commands on system.
+
+For example, let's check if we have commands ar, install, wget:
+  $ excom ar install wget
+  checking ar ... OK
+  checking install ... OK
+  checking wget ... OK
 
 
-Basically formake just provides a number of scripts that can be used separately in any tasks that they happen to be useful. Major scripts provide automation of the following tasks:
+================
 
-* find compiler, probe it's parameters, probe target system configuration (cstem, cstem+)
-* test built programs locally before installation (ldlshell, ldlwrap)
-* build static and dynamic libraries on different systems (libro)
-* generate source dependencies for constructing correct Makefiles (mkdep)
-* generate simple and complex Make rules (mkrule)
-* parse command-line options (optool)
-* probe system parameters, probe any dependencies (syscap)
-* generate configure script (formake configure)
-* generate Makefile generation script (formake mkmf)
+ldlshell
 
-Besides the scripts Formake offers a general architecture of a conventional software build system. It is very simple and consist of only 2 key components:
+Load interactive shell with predefined LD library path environment
 
-* **configure**. It is a well-known Shell script that performs common system probe and build configuration. Developer can generate parameterized **configure** script using **formake configure**. Generated script works out of the box and it is also easily readable for the following editing. Generated script is split on logical sections with comments and examples. Formake provides a set of tools that do the automation tasks that are common for **configure** scripts. As far as many automation code is already implemented and placed in separate scripts, the **configure** script remains short and easily editable. All that is needed is to know Shell.
-* **mkmf**. In every directory that must have a Makefile developer places **mkmf** script that generate a final Makefile. The main idea behind this approach is that Make is not a full-fledged programming language. Some Make versions, like GNU Make, implement different extensions to the standard Make language that allow to do some simple operations. Yet such Make extensions give a little and look perverted and obscure. In addition you bind to a specific Make implementation. The recommended solution is rather evident - use Shell script to generate Makefile. And the recommended name of such script is **mkmf**.  Formake provides a command **formake mkmf** that generates parameterized **mkmf** scripts. Such script can work out of box. It is expected that developer will edit it when he needs more than **formake mkmf** can give. Formake provides tools that automate tasks that are common in **mkmf** scripts. The generated **mkmf** script is well formatted with predefined structure splitted on sections with comments and examples. All that is needed is to know Shell and sometimes Make.
-
-When **configure** is run, at the end it runs the root **mkmf** script that runs other **mkmf** scripts in subdirectories in order. Every **mkmf** script runs **mkmf** in every subdirectory that contains such script.
-
-Formake provides tools and 'architecture'. The 'architecture' provided is not something specific, for many developers it would be rather ordinary and evident. And the evidence is a qualification of simplicity, that comes to be an advantage.
-
-There is one important feature of the above architecture. A distributable software package contains general package-wide **configure** script that performs probe and configuration common for the whole package build. At the same time every subdirectory contains it's own **mkmf** script that performs only configuration specific for only that subdirectory. It looks rather evident here. But there exist some build automation systems that do not allow parameterized configuring of subdirectories in that subdirectories. The only solution they give is to write configuration of all subdirectories in single root **configure** script (or whatever it can be named). It looks rather odd.
-
-It must be noted that Formake only provides tools and recommended approach of developing the final build system. It's up to developer to use recommended way or go with his own. Developer can decide to write **configure** and **mkmf** scripts manually from start to end without using Formake generation tools. Or developer can edit Formake scripts or write his own implementations. Or use any of the Formake scripts in different build automation system. Any of these decisions are correct.
-
-As it was already mentioned Formake scripts can be used in any solutions and configurations where they can be useful. There is no special binding to a job of software build automation. Every script can be used on its own. But a few scripts have dependencies on other scripts. Yet the dependency graph is very short.
-
-This is a simple description of the Formake. Yet there is much more interesting in details.
+This script runs new Shell with properly defined LD variables (LD_LIBRARY_PATH and other). It takes values from configuration file and uses profiles.
+This tool is useful in software build systems to test compiled programs that depend on other libraries from a software package.
 
 
-Key principles in detail
--
+================
 
-[[members limit=20]]
-[[download_button]]
+ldlwrap
+
+This tool generates wrapper Shell script with predefined LD variables for testing compiled programs.
+
+For example, we have program 'src/calc' that depends on libraries 'libs/libmath' and 'libs/libui' of our package. To test program we generate wrapper script:
+  $ cd src; ../mk/ldlwrap -L../libs calc
+  $ ls calc-ldlw
+  calc-ldlw
+  $ ./calc-ldlw
+In the above example ldlwrap generates script 'calc-ldlw'. This script runs 'calc' program with properly defined LD_LIBRARY_PATH variable to find all dependency
+libraries: libmath and libui.
+
+
+================
+
+libro
+
+This script hides all the complexities of building a C/C++ library on different systems. It is under development.
+
+
+================
+
+mkconfigure
+
+Generate 'configure' script.
+
+This tool generates 'configure' script that is workable out of box. It can be tuned slightly using a set of parameters. For simple tasks it works without modifications.
+Generated script is well commented and is easy to read. Generated script is a good starting point for developing software build system. Together with 'mkmf' scripts it
+is possible to develop flexible and portable build system without undesired bloat.
+
+================
+
+mkdep
+
+Generate dependencies of C/C++ source files for Makefile
+
+Example for simple source file 'file1.c':
+  $ mkdep file1.c
+  $ cat file1.d
+  file1.o: file1.c /usr/include/stdc-predef.h /usr/include/stdio.h \
+   /usr/include/features.h /usr/include/x86_64-linux-gnu/sys/cdefs.h \
+   /usr/include/x86_64-linux-gnu/bits/wordsize.h \
+   /usr/include/x86_64-linux-gnu/gnu/stubs.h \
+   /usr/include/x86_64-linux-gnu/gnu/stubs-64.h \
+   /usr/lib/gcc/x86_64-linux-gnu/4.9/include/stddef.h \
+   /usr/include/x86_64-linux-gnu/bits/types.h \
+   /usr/include/x86_64-linux-gnu/bits/typesizes.h /usr/include/libio.h \
+   /usr/include/_G_config.h /usr/include/wchar.h \
+   /usr/lib/gcc/x86_64-linux-gnu/4.9/include/stdarg.h \
+   /usr/include/x86_64-linux-gnu/bits/stdio_lim.h \
+   /usr/include/x86_64-linux-gnu/bits/sys_errlist.h
+  /usr/include/stdc-predef.h:
+  /usr/include/stdio.h:
+  /usr/include/features.h:
+  /usr/include/x86_64-linux-gnu/sys/cdefs.h:
+  /usr/include/x86_64-linux-gnu/bits/wordsize.h:
+  /usr/include/x86_64-linux-gnu/gnu/stubs.h:
+  /usr/include/x86_64-linux-gnu/gnu/stubs-64.h:
+  /usr/lib/gcc/x86_64-linux-gnu/4.9/include/stddef.h:
+  /usr/include/x86_64-linux-gnu/bits/types.h:
+  /usr/include/x86_64-linux-gnu/bits/typesizes.h:
+  /usr/include/libio.h:
+  /usr/include/_G_config.h:
+  /usr/include/wchar.h:
+  /usr/lib/gcc/x86_64-linux-gnu/4.9/include/stdarg.h:
+  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h:
+  /usr/include/x86_64-linux-gnu/bits/sys_errlist.h:
+
+
+This script should be used in Makefiles. The proper usage can be seen from 'mkmf' script generated by mkmkmf tool.
+
+================
+
+mkmkmf
+
+mkmkmf is a mkmf generation script. mkmf script is Makefile generation script. So mkmkmf is used to quickly generate 'mkmf' scripts that generate Makefile scripts.
+This script is useful for developers that want to create portable and parametrized software build system.
+
+It has many parameters for configuring output script. The generated 'mkmf' script is workable and can be used without modifications in most cases.
+Generated script is easily readable and can be modified for desired functioning.
+
+There are plenty parameters and a defined techique of constructing portable and flexible software build system. See a manual in doc directory.
+
+================
+
+mkrule
+
+mkrule generates Make rules.
+
+This script is extensively used in 'mkmf' scripts to generate Makefile parts.
+It has many modes for generating different types of rules:
+  init        generate standard init macros and rules
+  obj         generate rules that compile objects from sources
+  prog        generate rule that links program from objects
+  lib         generate rule that creates library from objects
+  subdir      generate rule that runs Make in other sub-directories
+  clean       generate rule that cleans files
+  distclean   generate rule that cleans build configuration files
+  install     generate rules that install/uninstall files on system
+  dist        generate rule that creates distribution tarball
+
+Every mode has many parameters. Run 'mkrule -help' and for every mode 'mkrule <MODE> -help' to get a short help on usage.
+
+Example. Generate initial Makefile block:
+  $ mkrule init
+  ################################################################################
+  # INIT
+  # # mkrule init
+  # all:
+  # install:
+  # uninstall:
+  # clean:
+  # distclean:
+  # dist:
+  # dist-tree:
+
+Example. Generate C source compilation rules:
+  $ ./mkrule obj -cflags="-DRELEASE -DGUI -I../md -I." -d _objects -src file1.c file2.c file3.c
+  ################################################################################
+  # OBJECTS
+  # mkrule obj -cflags=-DRELEASE -DGUI -I../md -I. -d _objects -src file1.c file2.c
+  _objects/file1.o: file1.c  .deps/_objects/file1.d
+          @test -d .deps/_objects/ || mkdir -p .deps/_objects/
+          @mkdep -cflags="-DRELEASE -DGUI -I../md -I." -o _objects/file1.o -stdout file1.c >.deps/_objects/file1.d
+          @test -d _objects/ || mkdir -p _objects/
+          gcc  -DRELEASE -DGUI -I../md -I. -c file1.c -o _objects/file1.o
+  -include .deps/_objects/file1.d
+  .deps/_objects/file1.d:
+  
+  _objects/file2.o: file2.c  .deps/_objects/file2.d
+          @test -d .deps/_objects/ || mkdir -p .deps/_objects/
+          @mkdep -cflags="-DRELEASE -DGUI -I../md -I." -o _objects/file2.o -stdout file2.c >.deps/_objects/file2.d
+          @test -d _objects/ || mkdir -p _objects/
+          gcc  -DRELEASE -DGUI -I../md -I. -c file2.c -o _objects/file2.o
+  -include .deps/_objects/file2.d
+  .deps/_objects/file2.d:
+  
+  clean: clean-obj-469934
+  clean-obj-469934:
+          rm -f  _objects/file1.o _objects/file2.o
+  
+  distclean: distclean-obj-469934
+  distclean-obj-469934: clean-obj-469934
+          rm -Rf .deps
+
+
+
+mkrule depends on the following scripts: pofig, cstem, cstem+, mkdep, ldlwrap, libro
+
+
+================
+
+optool
+
+This script allows to do some processing with command-line options. It has several work modes that allow:
+  convert options to Shell variables
+  convert options to CPP defines
+  check options
+  test options
+  parse options
+
+Example. Convert options to Shell variables:
+  $ optool dump -cflags -enable-db -prefix=/usr/local -output-format=xml
+  FLAG_CFLAGS=1
+  FLAG_ENABLE_DB=1
+  PREFIX="/usr/local"
+  OUTPUT_FORMAT="xml"
+
+Example. Validate input options:
+  $ optool validate -help -cflags -enable-db -prefix -cflags -output-format - -cflags -help -zzzzz
+  invalid parameter: -zzzzz
+
+Example. Parse options:
+  $ . `optool source -option1 -option2 -prefix=/usr/local -output-format=xml`
+  $ echo $FLAG_OPTION1
+  1
+  $ echo $PREFIX
+  /usr/local
+  $ echo $OUTPUT_FORMAT
+  xml
+
+
+This tool is usefull in Shell scripts to quickly check and parse input options.
+
+================
+
+pofig
+
+pofig - Portable Figure Out system properties
+
+This scripts probes the following system parameters:
+  - OS
+  - OS version
+  - kernel
+  - kernel version
+  - distro
+  - distro version
+  - architecture
+
+Example. Get all system properties in verbose mode:
+  $ pofig -v
+  OS                gnulinux
+  OS Version        unknown
+  Kernel            linux
+  Kernel version    3.16.0
+  Distro            Debian
+  Distro version    8.7
+  Arch              x86_64
+
+Example. Get operating system name:
+  $ pofig -os
+  gnulinux
+
+
+
+================
+
+relpath
+
+Calculate relative path between two directories - source directory (FROM) and destination directory (TO). First parameter is source. Second parameter is destination.
+Second parameter can be omitted, by default it is current location.
+
+Run 'relpath -help' to get usage format.
+
+Example:
+  $ pwd
+  /home/user/tmp
+  $ relpath ./
+  .
+  $ relpath /home
+  user/tmp
+  $ relpath /usr/include
+  ../../home/user/tmp
+  $ relpath ./ /usr/include
+  ../../../usr/include
+
+
+================
+
+src2obj
+
+Convert list of source files to a list of object files.
+
+This script is useful in generating rules for Makefiles. For example:
+  $ src2obj -o _objects file1.c file2.c file3.c
+  _objects/file1.o
+  _objects/file2.o
+  _objects/file3.o
+
+Example2:
+  $ src2obj -s _sources file1.c src/file2.c src2/file3.c
+  _sources/file1.o
+  _sources/src/file2.o
+  _sources/src2/file3.o
+

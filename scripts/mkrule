@@ -1,0 +1,1819 @@
+#!/bin/sh
+#
+# Formake mkrule
+#
+# Copyright (c) 2015-2017, Oleksiy Chernyavskyy
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+version_string="mkrule 1.0"
+
+script_name=`basename "$0"`
+script_options="$@"
+script_dir=`dirname $0`
+op_srcdir=
+op_buildroot=
+
+################################################################################
+# LOAD CONFIG
+MKRULE=
+TAR=
+INSTALL=
+PREFIX=
+EXEC_PREFIX=
+BINDIR=
+SBINDIR=
+LIBEXECDIR=
+ETCDIR=
+LIBDIR=
+INCDIR=
+SHAREDIR=
+MANDIR=
+DOCDIR=
+PACKAGE_NAME=
+PACKAGE_VERSION=
+DATADIR=
+PACKAGE_DOCDIR=
+
+if test -f $script_dir/mk.conf; then
+  . $script_dir/mk.conf
+fi
+if test -f $script_dir/mkrule.conf; then
+  . $script_dir/mkrule.conf
+fi
+test -n "$TAR"             || TAR=tar
+test -n "$INSTALL"         || INSTALL=install
+
+test -n "$PREFIX"      || PREFIX=/usr/local
+test -n "$EXEC_PREFIX" || EXEC_PREFIX=$PREFIX
+test -n "$BINDIR"      || BINDIR=$EXEC_PREFIX/bin
+test -n "$SBINDIR"     || SBINDIR=$EXEC_PREFIX/sbin
+test -n "$LIBEXECDIR"  || LIBEXECDIR=$EXEC_PREFIX/libexec
+test -n "$ETCDIR"      || ETCDIR=$PREFIX/etc
+test -n "$LIBDIR"      || LIBDIR=$EXEC_PREFIX/lib
+test -n "$INCDIR"      || INCDIR=$PREFIX/include
+test -n "$SHAREDIR"    || SHAREDIR=$PREFIX/share
+test -n "$MANDIR"      || MANDIR=$SHAREDIR/man
+test -n "$DOCDIR"      || DOCDIR=$SHAREDIR/doc
+
+test -n "$PACKAGE_NAME"        || PACKAGE_NAME=package
+test -n "$PACKAGE_VERSION"     || PACKAGE_VERSION=1.0.0
+test -n "$DATADIR"    || DATADIR=$SHAREDIR/$PACKAGE_NAME$PACKAGE_VERSION
+test -n "$PACKAGE_DOCDIR"      || PACKAGE_DOCDIR=$SHAREDIR/doc/$PACKAGE_NAME$PACKAGE_VERSION
+################################################################################
+
+cd_param=
+orig_dir=`pwd`
+cd -P / >/dev/null 2>&1
+if test $? -eq 0; then
+  cd_param="-P"
+fi
+cd "$orig_dir"
+
+print_help() {
+  cat <<EOF
+Generate Make rules
+
+$script_name init|obj|prog|lib|subdir|clean|distclean|install OPTIONS
+$script_name -v
+  init        generate standard init macros and rules
+  obj         generate rules that compile objects from sources
+  prog        generate rule that links program from objects
+  lib         generate rule that creates library from objects
+  subdir      generate rule that runs Make in other sub-directories
+  clean       generate rule that cleans files
+  distclean   generate rule that cleans build configuration files
+  install     generate rules that install/uninstall files on system
+  dist        generate rule that creates distribution tarball
+  -v          print version
+
+First parameter specifies a mode. To get help on each mode run '$script_name MODE -help'
+EOF
+}
+
+print_init_help() {
+  cat <<EOF
+$script_name init
+EOF
+}
+
+print_obj_help() {
+  cat <<EOF
+$script_name obj [OPTIONS] -src SRC..
+  -t TARGET        specify target name that starts generated rules
+  -c++             C++ mode [autodetect]
+  -cflags=FLAGS    compiler flags
+  -pic             enable PIC flags
+  -d DIR           output directory for generated objects
+  -p PREREQ..      additional prerequisites of rules
+  -disable-mkdep   disable generating source dependencies for Makefile
+  -mkdep CMD       specify path to mkdep tool
+  -builddir PATH   path to a build directory where makefile is placed
+  -rc FILE         create RC file
+  -var [PREFIX]    create a Make variable [PREFIX_]OBJECTS containing a list of generated objects
+  -srcdir PATH     path to the source directory
+  -src SRC..       list of source files
+EOF
+}
+
+print_prog_help() {
+  cat <<EOF
+$script_name prog [OPTIONS] -src SRC.. -obj OBJ..
+  -t TARGET        specify target name that starts generated rules
+  -c++             C++ mode [autodetect]
+  -n NAME          program name
+  -ldflags=FLAGS   linker flags
+  -disable-ldlw    do not create ldlw wrapper script for the program
+  -d DIR           output directory for generated executable file
+  -p PREREQ..      additional prerequisites of a rule
+  -all             add to default 'all' rule
+  -install [PATH]  create install/uninstall rules. Specify optional installation path if needed
+  -rc FILE         create RC file
+  -var [PREFIX]    create a Make variable [PREFIX_]PROGRAM containing a generated executable file
+  -objdir PATH     path to the object directory
+  -obj OBJ..       list of object files. RC files are accepted
+  -src SRC..       list of source files (will be converted to the list of object files)
+EOF
+}
+
+print_lib_help() {
+  cat <<EOF
+$script_name lib [OPTIONS] -src SRC.. -obj OBJ..
+  -t TARGET        specify target name that starts generated rules
+  -static          create static library (default)
+  -shared          create shared library
+  -c++             C++ mode [autodetect]
+  -n NAME          library name
+  -ver X[.Y[.Z]]   library version in specified format
+  -ldflags=FLAGS   linker flags
+  -d DIR           output directory for generated library files
+  -p PREREQ..      additional prerequisites of a rule
+  -all             add to default 'all' rule
+  -install [PATH]  create install/uninstall rules. Specify optional installation path if needed
+  -rc FILE         create RC file
+  -var [PREFIX]    create the following Make variables:
+                     [PREFIX_]LIB_NAME      - library name
+                     [PREFIX_]LIB_FILES     - generated library files
+                     [PREFIX_]LIB_TYPE      - library type: static, shared
+                     [PREFIX_]LIB_A         - static library file with '.a' extension
+                     [PREFIX_]LIB_SO        - shared library file with '.so' extension
+                     [PREFIX_]LIB_SO_C      - shared library file with '.so.X' extension
+                     [PREFIX_]LIB_SO_CRA    - shared library file with '.so.X.X.X' extension
+  -objdir PATH     path to the object directory
+  -obj OBJ..       list of object files. RC files are accepted
+  -src SRC..       list of source files (will be converted to the list of object files)
+EOF
+}
+
+print_subdir_help() {
+  cat <<EOF
+$script_name subdir [OPTIONS] -d DIR..
+  -t TARGET        specify target name that starts generated rules
+  -all             add to default 'all' rule
+  -install         add to install/uninstall rules
+  -clean           add to 'clean' rule
+  -distclean       add to 'distclean' rule
+  -dist            add to 'dist' rule
+  -p PREREQ..      additional prerequisites of a rule
+  -d DIR..         list of directories
+EOF
+}
+
+print_clean_help() {
+  cat <<EOF
+$script_name clean [OPTIONS] FILE..
+  -t TARGET        specify target name that starts generated rules
+  FILE..           files to clean. RC files are accepted
+EOF
+}
+
+print_distclean_help() {
+  cat <<EOF
+$script_name distclean [OPTIONS] FILE..
+  -t TARGET        specify target name that starts generated rules
+  FILE..           files to clean. RC files are accepted
+EOF
+}
+
+print_install_help() {
+  cat <<EOF
+$script_name install TYPE [OPTIONS] FILE..
+  TYPE             files type: bin, sbin, libexec, lib, inc, data, man[0-9], doc, etc
+  -t TARGET        specify target name that starts generated rules
+  -o FILE          destination file path (overrides -d options)
+  -d DIR           destination directory path (overrides -o option)
+  -srcdir PATH     path to the source directory
+  FILE..           files to install. RC files are accepted
+EOF
+}
+
+print_dist_help() {
+  cat <<EOF
+$script_name dist [OPTIONS]
+  -buildroot PATH  path to the build root directory
+  -srcdir PATH     path to the source directory
+  -n NAME          package name
+  -ver VERSION     package version
+  -f FILE..        files to put in distribution tarball
+EOF
+}
+
+print_version() {
+  echo "$version_string"
+}
+
+abs_path() {
+  _sub_orig_dir=`pwd`
+  if test $# = 0; then
+    abs_path_ret=
+    return
+  fi
+  if test $# = 2; then
+    _arg_orig_dir=$1
+    _arg=$2
+    if echo -n "$_arg" | grep "^/" > /dev/null; then
+      :
+    else
+      _arg=`echo -n "$_arg_orig_dir/$_arg" | sed 's!//*!/!g'`
+    fi
+  else
+    _arg=$1
+  fi
+  if test -e "$_arg"; then
+    if test -d $_arg; then
+      _file=
+    else
+      _file=`basename -- $_arg`
+      _arg=`dirname -- $_arg`
+    fi
+
+    cd $_cd_param $_arg
+    abs_path_ret=`pwd`
+    if test x"$_file" != "x"; then
+      abs_path_ret="$abs_path_ret/$_file"
+    fi
+
+    cd $_cd_param $_sub_orig_dir
+  else
+    if echo -n "$_arg" | grep "^/" > /dev/null; then
+      abs_path_ret="$_arg"
+    else
+      abs_path_ret="$_sub_orig_dir/$_arg"
+    fi
+    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#//*#/#g'`
+    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/*$#/#'`
+    string_prev=
+    while test "x$abs_path_ret" != "x$string_prev" ; do
+      string_prev=$abs_path_ret
+      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/[^/][^/][^/][^/]*/\.\./#/#g' | sed 's#/[^/][^/.]/\.\./#/#g' | sed 's#/[^/.][^/]/\.\./#/#g' | sed 's#/[^/.]/\.\./#/#g'`
+      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#^/\.\./#/#' | sed 's#^/\.\.$#/#'`
+      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/\./#/#g' | sed 's#/\.$#/#'`
+    done
+    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/$##' | sed 's#^$#/#'`
+  fi
+}
+
+rel_path() {
+  abs_path "$1"
+  file_from=$abs_path_ret
+  if test -n "$2"; then
+    abs_path "$2"
+    file_to=$abs_path_ret
+  else
+    file_to=`pwd`
+  fi
+
+  file_from_tmp=$file_from
+  while test `expr "$file_to/" : "^$file_from_tmp/"` -eq 0; do
+    file_from_tmp=`dirname "$file_from_tmp"`
+  done
+  dir_up=`echo -n "$file_from" | sed "s:^$file_from_tmp::" | sed 's:^/::' | sed 's:[^/][^/]*:..:g'`
+  dir_down=`echo -n "$file_to" | sed "s:^$file_from_tmp::" | sed 's:^/::'`
+  rel_path_ret=`echo -n "$dir_up/$dir_down" | sed 's:^/*$:.:' | sed 's:^/*::' | sed 's:/*$::'`
+}
+
+get_pofig() {
+  pofig -h >/dev/null 2>&1
+  if test $? -ne 127; then
+    POFIG=pofig
+  else
+    $script_dir/pofig -h >/dev/null 2>&1
+    if test $? -ne 127; then
+      POFIG=$script_dir/pofig
+    else
+      echo "$script_name: error: pofig not found" >&2
+      exit 1
+    fi
+  fi
+}
+
+get_cstem() {
+  if test x$cxx_mode = x; then
+    xstem=cstem
+  else
+    xstem=cstem+
+  fi
+  
+  $xstem -h >/dev/null 2>&1
+  if test $? -ne 127; then
+    CSTEM=$xstem
+  elif test -f $script_dir/$xstem; then
+      CSTEM=$script_dir/$xstem
+  else
+    echo "$script_name: error: $xstem not found" >&2
+    exit 1
+  fi
+}
+
+get_mkdep() {
+  if test -n "$op_mkdep_cmd"; then
+    MKDEP=$op_mkdep_cmd
+  else
+    $script_dir/mkdep -h >/dev/null 2>&1
+    if test $? -ne 127; then
+      if test -n "$op_builddir"; then
+        rel_path $op_builddir $script_dir/mkdep
+      else
+        rel_path ./ $script_dir/mkdep
+      fi
+      MKDEP=$rel_path_ret
+    else
+      mkdep -h >/dev/null 2>&1
+      if test $? -ne 127; then
+        MKDEP=mkdep
+      else
+        echo "$script_name: error: mkdep not found" >&2
+        exit 1
+      fi
+    fi
+  fi
+}
+
+get_random() {
+# RANDOM METHOD 1
+  if test -z "$RANDOM"; then
+    if test -f /dev/urandom; then
+      fold --help >/dev/null 2>&1
+      if test $? -ne 127; then
+        have_fold=1
+      fi
+      head --help >/dev/null 2>&1
+      if test $? -ne 127; then
+        have_head=1
+      fi
+      if test x$have_fold$have_head = x11; then
+        RANDOM=`cat /dev/urandom | tr -dc 'a-fA-F0-9' | fold -w 8 | head -n 1`
+      fi
+    fi
+  fi
+
+# RANDOM METHOD 2
+  if test -z "$RANDOM"; then
+    shuf --help >/dev/null 2>&1
+    if test $? -ne 127; then
+      RANDOM=`shuf -i 0-999999 -n 1`
+    fi
+  fi
+
+# RANDOM METHOD 3
+  if test -z "$RANDOM"; then
+      mktemp --help >/dev/null 2>&1
+      if test $? -ne 127; then
+        RANDOM=`mktemp -u "XXXXXX"`
+      fi
+  fi
+}
+
+get_ldlwrap() {
+  LDLWRAP=
+  ldlwrap -help >/dev/null 2>&1
+  if test $? -ne 127; then
+    LDLWRAP=ldlwrap
+  elif test -f $script_dir/ldlwrap; then
+    LDLWRAP=$script_dir/ldlwrap
+  fi
+}
+
+mkobj() {
+  if test -z "$op_src"; then
+    echo "$script_name: missing parameter -src" >&2
+    exit 1
+  fi
+
+  get_pofig
+  get_cstem
+  if test x$op_disable_mkdep = x; then
+    get_mkdep
+  fi
+  
+  cc_cmd=`$CSTEM -cmd -cflags`
+  if test -z "$cc_cmd"; then
+    echo "$script_name: compiler not found" >&2
+    exit 1
+  fi
+
+  test -z "$op_srcdir" || op_srcdir=`echo -n "$op_srcdir" | sed 's#/*$#/#' | sed 's#^\./$##'`
+  if test -n "$op_srcdir"; then
+    sources=
+    for file in $op_src; do
+      file=`echo -n "$file" | sed 's#^/*##' | sed 's#^\./##'`
+      sources="$sources $op_srcdir$file"
+    done
+    op_src=$sources
+  fi
+
+  if test x$op_pic = x1; then
+    cc_id=`$CSTEM -id`
+    case x$cc_id in
+      xgcc)
+        cc_cmd="$cc_cmd -fPIC"
+        mkdep_cflags="-fPIC"
+        ;;
+    esac
+  fi
+
+  if test -n "$op_cflags"; then
+    cc_cmd="$cc_cmd $op_cflags"
+    mkdep_cflags="$mkdep_cflags $op_cflags"
+  fi
+  
+  os_type=`$POFIG -os`
+  case "$os_type" in
+    gnulinux|*)
+      obj_ext="o"
+      modern_make=1
+      ;;
+  esac
+  
+  if test -n "$op_dir"; then
+    op_dir=`echo -n "$op_dir" | sed 's#/*$#/#'`
+  fi
+
+  mkdep_cflags=`echo -n "$mkdep_cflags" | sed 's/^ *//' | sed 's/ *$//'`
+  
+
+  cat <<EOF
+################################################################################
+# OBJECTS
+# $script_name $script_options
+EOF
+  tmp_file_base="/tmp/mkrule_$$_base.txt"
+  tmp_file_full="/tmp/mkrule_$$_full"
+  echo "" >$tmp_file_base
+  echo "" >$tmp_file_full
+  for src in $op_src; do
+    src_base=`basename -- $src`
+    if grep -F -x "$src_base" $tmp_file_base > /dev/null; then
+      if grep -F -x "$src" $tmp_file_full > /dev/null; then
+        :
+      else
+        echo "$script_name: error: file $src conflicts with other file having the same name from different location" >&2
+        rm -f $tmp_file_base
+        rm -f $tmp_file_full
+        exit 1
+      fi
+    else
+      echo "$src_base" >> $tmp_file_base
+      echo "$src" >> $tmp_file_full
+      name_base=`echo -n "$src_base" | sed 's/\.[^.]*$//'`
+      object="$op_dir${name_base}.$obj_ext"
+      object_list="$object_list $object"
+      if test x$op_disable_mkdep = x; then
+        dep_file=".deps/$op_dir${name_base}.d"
+        cat <<EOF
+$object: $src $op_prereq $dep_file
+	@test -d .deps/$op_dir || mkdir -p .deps/$op_dir
+	@$MKDEP -cflags="$mkdep_cflags" -o $object -stdout $src >$dep_file
+EOF
+        if test -n "$op_dir"; then
+          echo "	@test -d $op_dir || mkdir -p $op_dir"
+        fi
+        echo "	$cc_cmd -c $src -o $object"
+        if test x$modern_make = x1; then
+          cat <<EOF
+-include $dep_file
+$dep_file:
+EOF
+        else
+	      mkdir -p .deps/$op_dir
+	      echo "" >$dep_file
+          cat <<EOF
+$dep_file:
+	@mkdir -p .deps/$op_dir
+	@echo "" >$dep_file
+include $dep_file
+EOF
+        fi
+      else # disable mkdep
+        echo "$object: $src $op_prereq"
+        if test -n "$op_dir"; then
+          echo "	@test -d $op_dir || mkdir -p $op_dir"
+        fi
+        echo "	$cc_cmd -c $src -o $object"
+      fi
+      echo ""
+    fi
+  done
+  rm -f $tmp_file_base
+  rm -f $tmp_file_full
+
+  if test x$op_var = x1; then
+    echo "${op_var_prefix}OBJECTS = $object_list"
+  fi
+  
+  clean_target=
+  if test -n "$op_target"; then
+    echo "$op_target: $object_list"
+    clean_target="clean-$op_target"
+  else
+    get_random
+    if test -n "$RANDOM"; then
+      clean_target="clean-obj-$RANDOM"
+    fi
+  fi
+
+  if test -n "$clean_target"; then
+    cat <<EOF
+clean: $clean_target
+$clean_target:
+	rm -f $object_list
+
+EOF
+  fi
+  
+  if test x$op_disable_mkdep = x; then
+    distclean_target=
+    if test -n "$op_target"; then
+      distclean_target="distclean-$op_target"
+    else
+      get_random
+      if test -n "$RANDOM"; then
+        distclean_target="distclean-obj-$RANDOM"
+      fi
+    fi
+
+    if test -n "$distclean_target"; then
+      cat <<EOF
+distclean: $distclean_target
+$distclean_target: $clean_target
+	rm -Rf .deps
+
+EOF
+    fi
+  fi
+  
+  if test -n "$op_rc"; then
+    object_list=`echo -n "$object_list" | sed 's/^ *//'`
+    echo "OBJECTS=\"$object_list\"" > $op_rc
+    if test x$cxx_mode = x; then
+      echo "LANG=\"c\"" >> $op_rc
+    else
+      echo "LANG=\"c++\"" >> $op_rc
+    fi
+  fi
+}
+
+
+mkprog() {
+  if test -n "$op_src"; then
+    for file in $op_src; do
+      obj=`echo -n "$file" | sed 's/\.[^.]*/.o/'`
+      op_obj="$op_obj $obj"
+    done
+  fi
+
+  if test -n "$op_objdir"; then
+    op_objdir=`echo -n "$op_objdir" | sed 's#/*$#/#'`
+    objects=
+    for obj in $op_obj; do
+      objects="$objects $op_objdir$obj"
+    done
+    op_obj=$objects
+  fi
+  op_obj=`echo -n "$op_obj" | sed 's/^ *//'`
+
+  if test -z "$op_obj"; then
+    echo "$script_name: missing parameters -obj or -src" >&2
+    exit 1
+  fi
+
+  get_pofig
+  get_cstem
+  get_ldlwrap
+  
+  cc_cmd=`$CSTEM -cmd`
+  if test -z "$cc_cmd"; then
+    echo "$script_name: compiler not found" >&2
+    exit 1
+  fi
+
+  os_type=`$POFIG -os`
+  case "$os_type" in
+    gnulinux|*)
+      exe_ext=
+      ;;
+  esac
+    
+  if test -n "$op_dir"; then
+    op_dir=`echo -n "$op_dir" | sed 's#/*$#/#'`
+  fi
+
+  if test -z "$op_name"; then
+    op_name=a.out
+  fi
+  
+  prog_local="$op_dir$op_name$exe_ext"
+
+  cat <<EOF
+################################################################################
+# PROGRAMS
+# $script_name $script_options
+EOF
+  
+  if test x$op_var = x1; then
+    echo "${op_var_prefix}PROGRAM = $prog_local"
+  fi
+
+  if test x$op_all = x1; then
+    echo "all: $prog_local"
+  fi
+
+  if test -n "$op_target" && test "$op_target" != "$prog_local"; then
+    echo "$op_target: $prog_local"
+  else
+    op_target=$op_name
+  fi
+
+  cat <<EOF
+$prog_local: $op_obj $op_prereq
+	$cc_cmd -o $prog_local $op_obj $op_ldflags
+EOF
+
+  if test -n "$LDLWRAP" && test x$op_disable_ldlw = x; then
+    $LDLWRAP $op_ldflags ./$prog_local
+  fi
+
+  if test x$op_install = x1; then
+    if test -z "$op_install_path"; then
+      op_install_path=$BINDIR
+    fi
+    file_base=`basename $prog_local`
+    cat <<EOF
+install: install-$op_target
+install-$op_target: $prog_local
+	$INSTALL -m 0755 -D $prog_local \$(DESTDIR)$op_install_path/$file_base
+uninstall: uninstall-$op_target
+uninstall-$op_target:
+	rm -f \$(DESTDIR)$op_install_path/$file_base
+EOF
+  fi
+
+  cat <<EOF
+clean: clean-$op_target
+clean-$op_target:
+	rm -f $prog_local
+distclean: distclean-$op_target
+distclean-$op_target: clean-$op_target
+EOF
+  if test -n "$LDLWRAP" && test x$op_disable_ldlw = x; then
+    echo "	rm -f ${prog_local}-ldlw"
+  fi
+  
+  if test -n "$op_rc"; then
+    echo "PROGRAM=\"$prog_local\"" > $op_rc
+  fi
+  echo ""
+}
+
+mklib() {
+  if test -n "$op_src"; then
+    for file in $op_src; do
+      obj=`echo -n "$file" | sed 's/\.[^.]*/.o/'`
+      op_obj="$op_obj $obj"
+    done
+  fi
+
+  if test -n "$op_objdir"; then
+    op_objdir=`echo -n "$op_objdir" | sed 's#/*$#/#'`
+    objects=
+    for obj in $op_obj; do
+      objects="$objects $op_objdir$obj"
+    done
+    op_obj=$objects
+  fi
+  op_obj=`echo -n "$op_obj" | sed 's/^ *//'`
+
+  if test -z "$op_obj"; then
+    echo "$script_name: missing parameters -obj or -src" >&2
+    exit 1
+  fi
+
+  get_pofig
+  os_type=`$POFIG -os`
+  case "$os_type" in
+    gnulinux)
+      cp_no_deref="--no-dereference"
+      ;;
+    solaris)
+      cp_no_deref="-r -P"
+      ;;
+    freebsd|aix)
+      cp_no_deref="-P"
+      ;;
+  esac
+    
+  libro -h >/dev/null 2>&1
+  if test $? -ne 127; then
+    libro_cmd=libro
+  else
+    $script_dir/libro -h >/dev/null 2>&1
+    if test $? -ne 127; then
+      libro_cmd=$script_dir/libro
+    else
+      echo "$script_name: error: libro not found" >&2
+      exit 1
+    fi
+  fi
+  
+  if test x$op_shared = x1; then
+    lib_type=shared
+  else
+    lib_type=static
+  fi
+      
+  libro_cmd="$libro_cmd $lib_type -print4mk"
+
+  if test x$cxx_mode = x1; then
+    libro_cmd="$libro_cmd -c++"
+  fi
+
+  if test -z "$op_name"; then
+    op_name=nn
+  fi
+  libro_cmd="$libro_cmd -name $op_name"
+  
+  if test -n "$op_ver"; then
+    libro_cmd="$libro_cmd -ver $op_ver"
+  fi
+
+  if test -n "$op_ldflags"; then
+    libro_cmd="$libro_cmd -ldflags=\"$op_ldflags\""
+  fi
+
+  if test -n "$op_dir"; then
+    libro_cmd="$libro_cmd -o \"$op_dir\""
+  fi
+
+  libro_cmd="$libro_cmd -obj $op_obj"
+
+  IFS_save=$IFS
+  IFS="
+"
+  lib_targets=
+  lib_cmd=
+  lib_so_cra=
+  lib_so_c=
+  lib_so=
+  lib_a=
+  lib_regular=
+  lib_symbolic=
+  for line in `eval $libro_cmd`; do
+    case x"$line" in
+      xTARGETS*)
+        lib_targets=`echo -n "$line" | sed 's/^TARGETS *//'`
+        ;;
+      xCMD*)
+        cmd=`echo -n "$line" | sed 's/^CMD *//'`
+        lib_cmd="$lib_cmd
+$cmd"
+        ;;
+      xLIB_SO_CRA*)
+        lib_so_cra=`echo -n "$line" | sed 's/^LIB_SO_CRA *//'`
+        ;;
+      xLIB_SO_C*)
+        lib_so_c=`echo -n "$line" | sed 's/^LIB_SO_C *//'`
+        ;;
+      xLIB_SO*)
+        lib_so=`echo -n "$line" | sed 's/^LIB_SO *//'`
+        ;;
+      xLIB_A*)
+        lib_a=`echo -n "$line" | sed 's/^LIB_A *//'`
+        ;;
+      xREGULAR_FILES*)
+        lib_regular=`echo -n "$line" | sed 's/^REGULAR_FILES*//'`
+        ;;
+      xSYMLINKS*)
+        lib_symbolic=`echo -n "$line" | sed 's/^SYMLINKS*//'`
+        ;;
+    esac
+  done
+  IFS=$IFS_save
+  
+  cat <<EOF
+################################################################################
+# LIBRARIES
+# $script_name $script_options
+EOF
+
+  if test x$op_var = x1; then
+    echo "${op_var_prefix}LIB_FILES = $lib_targets"
+    echo "${op_var_prefix}LIB_NAME = $op_name"
+    echo "${op_var_prefix}LIB_TYPE = $lib_type"
+    echo "${op_var_prefix}LIB_A = $lib_a"
+    echo "${op_var_prefix}LIB_SO = $lib_so"
+    echo "${op_var_prefix}LIB_SO_C = $lib_so_c"
+    echo "${op_var_prefix}LIB_SO_CRA = $lib_so_cra"
+  fi
+
+  if test x$op_all = x1; then
+    echo "all: $lib_targets"
+  fi
+
+  if test -n "$op_target"; then
+    echo "$op_target: $lib_targets"
+  else
+    if test x$op_shared = x1; then
+      op_target="${op_name}-shared"
+    else
+      op_target="${op_name}-static"
+    fi
+  fi
+
+  echo "$lib_targets: $op_obj $op_prereq"
+  IFS_save=$IFS
+  IFS="
+"
+  for cmd in $lib_cmd; do
+    cmd=`echo -n "$cmd" | sed 's/ *$//'`
+    if test -n "$cmd"; then
+      echo "	$cmd"
+    fi
+  done
+  IFS=$IFS_save
+
+  if test x$op_install = x1; then
+    if test -z "$op_install_path"; then
+      op_install_path=$LIBDIR
+    fi
+    cat <<EOF
+install: install-$op_target
+install-$op_target: $lib_targets
+EOF
+    for file in $lib_regular; do
+      file_base=`basename $file`
+      if test x$op_shared = x1; then
+	    echo "	$INSTALL -m 0755 -D $file \$(DESTDIR)$op_install_path/$file_base"
+      else
+	    echo "	$INSTALL -m 0644 -D $file \$(DESTDIR)$op_install_path/$file_base"
+      fi
+    done
+    for file in $lib_symbolic; do
+      echo "	/bin/cp $cp_no_deref $file \$(DESTDIR)$op_install_path"
+    done
+
+    case "$os_type" in
+      gnulinux)
+        echo "	PATH=\$\$PATH:/sbin ldconfig -n \$(DESTDIR)$op_install_path"
+        ;;
+    esac
+    cat <<EOF
+uninstall: uninstall-$op_target
+uninstall-$op_target:
+EOF
+    for file in $lib_regular $lib_symbolic; do
+      file_base=`basename $file`
+	  echo "	rm -f \$(DESTDIR)$op_install_path/$file_base"
+    done
+    case "$os_type" in
+      gnulinux)
+        echo "	PATH=\$\$PATH:/sbin ldconfig -n \$(DESTDIR)$op_install_path"
+        ;;
+    esac
+  fi
+
+  cat <<EOF
+clean: clean-$op_target
+clean-$op_target:
+	rm -f $lib_targets
+distclean: distclean-$op_target
+distclean-$op_target: clean-$op_target
+EOF
+  
+  if test -n "$op_rc"; then
+    cat <<EOF > $op_rc
+LIB_FILES="$lib_targets"
+LIB_NAME="$op_name"
+LIB_A="$lib_a"
+LIB_SO="$lib_so"
+LIB_SO_C="$lib_so_c"
+LIB_SO_CRA="$lib_so_cra"
+LIB_TYPE="$lib_type"
+EOF
+  fi
+  echo ""
+}
+
+mksubdir() {
+  cat <<EOF
+################################################################################
+# SUBDIRS
+# $script_name $script_options
+EOF
+
+  if test -z "$op_dirs"; then
+    echo ""
+    exit 0
+  fi
+
+  if test x$op_all = x1; then
+    echo "all: subdirs"
+    print_nl=1
+  fi
+
+  if test -n "$op_target"; then
+    echo "$op_target: $op_dirs"
+  fi
+
+  test x$print_nl = x1 && echo ""
+  print_nl=
+
+  for dir in $op_dirs; do
+    cat <<EOF
+subdirs: subdir-$dir
+subdir-$dir: $op_prereq
+	\$(MAKE) -C $dir
+EOF
+    if test x$op_install = x1; then
+      cat <<EOF
+install: install-$dir
+install-$dir:
+	\$(MAKE) -C $dir install
+uninstall: uninstall-$dir
+uninstall-$dir:
+	\$(MAKE) -C $dir uninstall
+EOF
+    fi
+    if test x$op_clean = x1; then
+      cat <<EOF
+clean: clean-$dir
+clean-$dir:
+	\$(MAKE) -C $dir clean
+EOF
+    fi
+    if test x$op_distclean = x1; then
+      cat <<EOF
+distclean: distclean-$dir
+distclean-$dir:
+	\$(MAKE) -C $dir distclean
+EOF
+    fi
+    if test x$op_dist = x1; then
+      cat <<EOF
+dist-tree: dist-tree-$dir
+dist-tree-$dir:
+	\$(MAKE) -C $dir dist-tree
+EOF
+    fi
+    echo ""
+  done
+  echo ""
+}
+
+mkclean() {
+  cat <<EOF
+################################################################################
+# CLEAN
+# $script_name $script_options
+EOF
+
+  if test -z "$op_files"; then
+    echo ""
+    exit 0
+  fi
+
+  if test -z "$op_target"; then
+    get_random
+    op_target="clean-$RANDOM"
+  fi
+
+  cat <<EOF
+clean: $op_target
+$op_target:
+	rm -Rf $op_files
+distclean: $op_target
+EOF
+  echo ""
+}
+
+mkdistclean() {
+  cat <<EOF
+################################################################################
+# DISTCLEAN
+# $script_name $script_options
+EOF
+
+  if test -z "$op_files"; then
+    echo ""
+    exit 0
+  fi
+
+  if test -z "$op_target"; then
+    get_random
+    op_target="distclean-$RANDOM"
+  fi
+
+  cat <<EOF
+distclean: $op_target
+$op_target:
+	rm -Rf $op_files
+EOF
+  echo ""
+}
+
+mkinstall() {
+  cat <<EOF
+################################################################################
+# INSTALL
+# $script_name $script_options
+EOF
+
+  if test -z "$op_files"; then
+    echo ""
+    exit 0
+  fi
+
+  test -z "$op_srcdir" || op_srcdir=`echo -n "$op_srcdir" | sed 's#/*$#/#' | sed 's#^\./$##'`
+  if test -n "$op_srcdir"; then
+    files=
+    for file in $op_files; do
+      file=`echo -n "$file" | sed 's#^/*##' | sed 's#^\./##'`
+      files="$files $op_srcdir$file"
+    done
+    op_files=$files
+  fi
+
+  num_files=`echo "$op_files" | wc -w`
+  if test -n "$op_ofile" && test $num_files -gt 1; then
+    echo "$script_name: option '-o' can't be used for multiple installation files" >&2
+    exit 1
+  fi
+
+  if test -z "$op_target"; then
+    get_random
+    op_target="$op_type-$RANDOM"
+  fi
+
+  case $op_type in
+    bin)
+      perm="0755"
+      dir=$BINDIR
+      ;;
+    sbin)
+      perm="0755"
+      dir=$SBINDIR
+      ;;
+    libexec)
+      perm="0755"
+      dir=$LIBEXECDIR
+      ;;
+    lib)
+      perm="0644"
+      dir=$LIBDIR
+      ;;
+    inc)
+      perm="0444"
+      dir=$INCDIR
+      ;;
+    data)
+      perm="0444"
+      dir=$DATADIR
+      ;;
+    man[0-9])
+      perm="0444"
+      man_index=`echo -n "$op_type" | sed 's/^man//'`
+      dir="$MANDIR/man$man_index"
+      ;;
+    doc)
+      perm="0444"
+      dir=$PACKAGE_DOCDIR
+      ;;
+    etc)
+      perm="0444"
+      dir=$ETCDIR
+      ;;
+  esac
+
+  if test -n "$op_ofile"; then
+    dir=`dirname $op_ofile`
+  else
+    test -z "$op_dir" || dir=$op_dir
+    if test "$dir" != '/'; then
+      dir=`echo -n "$dir" | sed 's#/*$##'`
+    fi
+  fi
+
+  cat <<EOF
+install: install-$op_target
+install-$op_target: $op_files
+EOF
+  if test -n "$op_ofile"; then
+    printf "\t%s\n" "$INSTALL -m $perm -D $op_files \$(DESTDIR)$op_ofile"
+  else
+    for file in $op_files; do
+      file_base=`basename $file`
+      printf "\t%s\n" "$INSTALL -m $perm -D $file \$(DESTDIR)$dir/$file_base"
+    done
+  fi
+  cat <<EOF
+uninstall: uninstall-$op_target
+uninstall-$op_target:
+EOF
+  if test -n "$op_ofile"; then
+    printf "\t%s\n" "rm -f \$(DESTDIR)$op_ofile"
+  else
+    for file in $op_files; do
+      file_base=`basename $file`
+      printf "\t%s\n" "rm -f \$(DESTDIR)$dir/$file_base"
+    done
+  fi
+  if test $op_type = doc || test $op_type = data; then
+    printf "\t%s\n" "-test \`find \$(DESTDIR)$dir ! -type d -print | wc -l\` -eq 0 && rm -Rf \$(DESTDIR)$dir"
+  elif test $op_type = inc; then
+    dir_base=`basename $dir`
+    if test "$dir_base" != include; then
+      printf "\t%s\n" "-test \`find \$(DESTDIR)$dir ! -type d -print | wc -l\` -eq 0 && rm -Rf \$(DESTDIR)$dir"
+    fi
+  fi
+  echo ""
+}
+
+mkdist() {
+  cat <<EOF
+################################################################################
+# DIST
+# $script_name $script_options
+EOF
+
+  test -z "$op_srcdir" || op_srcdir=`echo -n "$op_srcdir" | sed 's#/*$#/#' | sed 's#^\./$##'`
+  test -n "$op_name" || op_name=package
+
+  if echo -n "$op_buildroot" | grep "^/" > /dev/null; then
+    echo "$script_name: warning: build root path must be relative" >&2
+  fi
+
+  if test -n "$op_buildroot"; then
+    rel_path "$op_buildroot" ./
+    subdir=$rel_path_ret
+    subdir=`echo -n "$subdir" | sed 's#/*$#/#' | sed 's#^\./$##'`
+  else
+    echo "$script_name: warning: build root not specified" >&2
+  fi
+
+  dist_dirs=
+  dist_files=
+  for file in $op_files; do
+    file=`echo -n "$file" | sed 's#^\./##'`
+    if echo -n "$file" | grep "^/" > /dev/null; then
+      echo "$script_name: error: invalid dist file path: $file" >&2
+      exit 1
+    elif echo -n "$file" | grep "^\.\./" > /dev/null; then
+      echo "$script_name: error: invalid dist file path: $file" >&2
+      exit 1
+    else
+      if test ! -e $op_srcdir$file; then
+        echo "$script_name: error: dist file not found: $op_srcdir$file" >&2
+        exit 1
+      fi
+      if test -d $op_srcdir$file; then
+        dist_dirs="$dist_dirs $dir"
+      else
+        dir=`dirname $file`
+        dist_dirs="$dist_dirs $dir"
+        dist_files="$dist_files $file"
+      fi
+    fi
+  done
+  dist_dirs=`echo -n "$dist_dirs" | tr ' ' '\n' | sort | uniq | grep -v '\.' | tr '\n' ' ' | sed 's/^ *//'`
+  dist_files=`echo -n "$dist_files" | sed 's/^ *//'`
+
+  get_random
+
+  if test "$op_buildroot" = "./" || test "$op_buildroot" = "."; then
+    if test -n "$op_ver"; then
+      dist_package="$op_name-$op_ver"
+    else
+      dist_package=$op_name
+    fi
+
+    cat <<EOF
+dist\$(DIST_ID):
+	rm -Rf dist_tree
+	\$(MAKE) dist-tree
+	mv dist_tree $dist_package
+	$TAR -czvf ${dist_package}.tar.gz $dist_package
+	rm -Rf $dist_package
+
+distclean\$(DIST_ID): distclean-$RANDOM
+distclean-$RANDOM:
+	rm -f ${dist_package}.tar.gz
+
+DIST_ID = $RANDOM
+
+EOF
+  else
+    cat <<EOF
+dist\$(DIST_ID):
+	\$(MAKE) -C $op_buildroot dist
+DIST_ID = $RANDOM
+
+EOF
+  fi
+  if test -n "$op_buildroot"; then
+    buildroot=`echo -n "$op_buildroot" | sed 's#/*$#/#' | sed 's#^\./$##'`
+    cat <<EOF
+dist-tree: dist-tree-$RANDOM
+dist-tree-$RANDOM:
+	mkdir -p ${buildroot}dist_tree/$subdir
+EOF
+    for dir in $dist_dirs; do
+      echo "	mkdir -p ${buildroot}dist_tree/$subdir$dir"
+    done
+    for file in $dist_files; do
+      echo "	cp -R -P $op_srcdir$file ${buildroot}dist_tree/$subdir$file"
+    done
+  else
+    cat <<EOF
+# WARNING: build root not specified via -buildroot parameter
+dist-tree:
+EOF
+  fi
+  echo ""
+}
+
+if test $# -eq 0; then
+  echo "$script_name: error: no parameters specified" >&2
+  exit 1
+fi
+
+case "$1" in
+  -h|-help|--help)
+    print_help
+    exit 0
+    ;;
+  -v)
+    print_version
+    exit 0
+    ;;
+  init)
+    op_mode=init
+    ;;
+  obj)
+    op_mode=obj
+    ;;
+  prog)
+    op_mode=prog
+    ;;
+  lib)
+    op_mode=lib
+    ;;
+  subdir)
+    op_mode=subdir
+    ;;
+  clean)
+    op_mode=clean
+    ;;
+  distclean)
+    op_mode=distclean
+    ;;
+  install)
+    op_mode=install
+    ;;
+  dist)
+    op_mode=dist
+    ;;
+  *)
+    echo "$script_name: error: invalid parameter $1" >&2
+    exit 1
+    ;;
+esac
+shift
+
+if test $op_mode = install; then
+  if test $# -eq 0; then
+    echo "$script_name: error: additional parameters missing" >&2
+    exit 1
+  fi
+  case "$1" in
+    bin|sbin|libexec|lib|inc|data|man[0-9]|doc|etc)
+      op_type=$1
+      ;;
+    -h|-help|--help)
+      print_install_help
+      exit 0
+      ;;
+    *)
+      echo "$script_name: error: invalid file type '$1'" >&2
+      exit 1
+  esac
+  shift
+fi
+
+cxx_mode=
+op_files=
+current_opt=
+while test $# -gt 0; do
+  case "$1" in
+    -h|-help|--help)
+      case $op_mode in
+        init)
+          print_init_help
+          ;;
+        obj)
+          print_obj_help
+          ;;
+        prog)
+          print_prog_help
+          ;;
+        lib)
+          print_lib_help
+          ;;
+        subdir)
+          print_subdir_help
+          ;;
+        clean)
+          print_clean_help
+          ;;
+        distclean)
+          print_distclean_help
+          ;;
+        install)
+          print_install_help
+          ;;
+        dist)
+          print_dist_help
+          ;;
+      esac
+      exit 0
+      ;;
+    -buildroot)
+      if test $op_mode != dist; then
+        echo "$script_name: error: invalid parameter $1 for current mode" >&2
+        exit 1
+      fi
+      current_opt=buildroot
+      ;;
+    -objdir)
+      case $op_mode in
+        prog|lib)
+          : ;;
+        *)
+          echo "$script_name: error: invalid parameter $1 for current mode" >&2
+          exit 1
+          ;;
+      esac
+      current_opt=objdir
+      ;;
+    -srcdir)
+      case $op_mode in
+        obj|install|dist)
+          : ;;
+        *)
+          echo "$script_name: error: invalid parameter $1 for current mode" >&2
+          exit 1
+          ;;
+      esac
+      current_opt=srcdir
+      ;;
+    -f)
+      if test $op_mode != dist; then
+        echo "$script_name: error: invalid parameter $1 for current mode" >&2
+        exit 1
+      fi
+      op_files=
+      current_opt=f
+      ;;
+    -builddir)
+      if test $op_mode != obj; then
+        echo "$script_name: error: invalid parameter $1 for current mode" >&2
+        exit 1
+      fi
+      current_opt=builddir
+      ;;
+    -t)
+      case $op_mode in
+        obj|prog|lib|subdir|clean|distclean|install)
+          : ;;
+        *)
+          echo "$script_name: error: invalid parameter $1 for current mode" >&2
+          exit 1
+          ;;
+      esac
+      current_opt=t
+      ;;
+    -c++)
+      case $op_mode in
+        obj|prog|lib)
+          : ;;
+        *)
+          echo "$script_name: error: invalid parameter $1 for current mode" >&2
+          exit 1
+          ;;
+      esac
+      cxx_mode=1
+      current_opt=
+      ;;
+    -cflags=*)
+      if test $op_mode != obj; then
+        echo "$script_name: error: invalid parameter $1 for current mode" >&2
+        exit 1
+      fi
+      op_cflags=`echo -n "$1" | sed 's/^[^=]*=//'`
+      current_opt=
+      ;;
+    -pic)
+      if test $op_mode != obj; then
+        echo "$script_name: error: invalid parameter $1 for current mode" >&2
+        exit 1
+      fi
+      op_pic=1
+      current_opt=
+      ;;
+    -o)
+      if test $op_mode != install; then
+        echo "$script_name: error: invalid parameter $1 for current mode" >&2
+        exit 1
+      fi
+      op_dir=
+      current_opt=ofile
+      ;;
+    -d)
+      case $op_mode in
+        obj|prog|lib|subdir|install)
+          : ;;
+        *)
+          echo "$script_name: error: invalid parameter $1 for current mode" >&2
+          exit 1
+          ;;
+      esac
+      if test $op_mode = subdir; then
+        op_dirs=
+        current_opt=dirs
+      elif test $op_mode = install; then
+        op_ofile=
+        current_opt=dir
+      else
+        current_opt=dir
+      fi
+      ;;
+    -p)
+      case $op_mode in
+        obj|prog|lib|subdir)
+          : ;;
+        *)
+          echo "$script_name: error: invalid parameter $1 for current mode" >&2
+          exit 1
+          ;;
+      esac
+      op_prereq=
+      current_opt=prereq
+      ;;
+    -disable-mkdep)
+      if test $op_mode != obj; then
+        echo "$script_name: error: invalid parameter $1 for current mode" >&2
+        exit 1
+      fi
+      op_disable_mkdep=1
+      current_opt=
+      ;;
+    -mkdep)
+      if test $op_mode != obj; then
+        echo "$script_name: error: invalid parameter $1 for current mode" >&2
+        exit 1
+      fi
+      current_opt=mkdep
+      ;;
+    -rc)
+      case $op_mode in
+        obj|prog|lib)
+          : ;;
+        *)
+          echo "$script_name: error: invalid parameter $1 for current mode" >&2
+          exit 1
+          ;;
+      esac
+      current_opt=rc
+      ;;
+    -var)
+      case $op_mode in
+        obj|prog|lib)
+          : ;;
+        *)
+          echo "$script_name: error: invalid parameter $1 for current mode" >&2
+          exit 1
+          ;;
+      esac
+      op_var=1
+      current_opt=var
+      ;;
+    -src)
+      case $op_mode in
+        obj|prog|lib)
+          : ;;
+        *)
+          echo "$script_name: error: invalid parameter $1 for current mode" >&2
+          exit 1
+          ;;
+      esac
+      op_src=
+      current_opt=src
+      ;;
+    -n)
+      case $op_mode in
+        prog|lib|dist)
+          : ;;
+        *)
+          echo "$script_name: error: invalid parameter $1 for current mode" >&2
+          exit 1
+          ;;
+      esac
+      current_opt=n
+      ;;
+    -ldflags=*)
+      if test $op_mode != prog && test $op_mode != lib; then
+        echo "$script_name: error: invalid parameter $1 for current mode" >&2
+        exit 1
+      fi
+      op_ldflags=`echo -n "$1" | sed 's/^[^=]*=//'`
+      current_opt=
+      ;;
+    -disable-ldlw)
+      if test $op_mode != prog; then
+        echo "$script_name: error: invalid parameter $1 for current mode" >&2
+        exit 1
+      fi
+      op_disable_ldlw=1
+      current_opt=
+      ;;
+    -all)
+      case $op_mode in
+        prog|lib|subdir)
+          : ;;
+        *)
+          echo "$script_name: error: invalid parameter $1 for current mode" >&2
+          exit 1
+          ;;
+      esac
+      op_all=1
+      current_opt=
+      ;;
+    -install)
+      case $op_mode in
+        prog|lib)
+          op_install=1
+          current_opt=install
+          ;;
+        subdir)
+          op_install=1
+          current_opt=
+          ;;
+        *)
+          echo "$script_name: error: invalid parameter $1 for current mode" >&2
+          exit 1
+          ;;
+      esac
+      ;;
+    -obj)
+      if test $op_mode != prog && test $op_mode != lib; then
+        echo "$script_name: error: invalid parameter $1 for current mode" >&2
+        exit 1
+      fi
+      op_obj=
+      current_opt=obj
+      ;;
+    -static)
+      if test $op_mode != lib; then
+        echo "$script_name: error: invalid parameter $1 for current mode" >&2
+        exit 1
+      fi
+      op_static=1
+      op_shared=
+      current_opt=
+      ;;
+    -shared)
+      if test $op_mode != lib; then
+        echo "$script_name: error: invalid parameter $1 for current mode" >&2
+        exit 1
+      fi
+      op_static=
+      op_shared=1
+      current_opt=
+      ;;
+    -ver)
+      if test $op_mode != lib && test $op_mode != dist; then
+        echo "$script_name: error: invalid parameter $1 for current mode" >&2
+        exit 1
+      fi
+      current_opt=ver
+      ;;
+    -clean)
+      if test $op_mode != subdir; then
+        echo "$script_name: error: invalid parameter $1 for current mode" >&2
+        exit 1
+      fi
+      op_clean=1
+      current_opt=
+      ;;
+    -distclean)
+      if test $op_mode != subdir; then
+        echo "$script_name: error: invalid parameter $1 for current mode" >&2
+        exit 1
+      fi
+      op_distclean=1
+      current_opt=
+      ;;
+    -dist)
+      if test $op_mode != subdir; then
+        echo "$script_name: error: invalid parameter $1 for current mode" >&2
+        exit 1
+      fi
+      op_dist=1
+      current_opt=
+      ;;
+    *)
+      case "$current_opt" in
+        buildroot)
+          op_buildroot=$1
+          current_opt=
+          ;;
+        objdir)
+          op_objdir=$1
+          current_opt=
+          ;;
+        srcdir)
+          op_srcdir=$1
+          current_opt=
+          ;;
+        f)
+          op_files="$op_files $1"
+          ;;
+        builddir)
+          op_builddir=$1
+          current_opt=
+          ;;
+        t)
+          op_target=$1
+          current_opt=
+          ;;
+        dir)
+          op_dir=$1
+          current_opt=
+          ;;
+        dirs)
+          op_dirs="$op_dirs $1"
+          ;;
+        prereq)
+          op_prereq="$op_prereq $1"
+          ;;
+        mkdep)
+          op_mkdep_cmd=$1
+          current_opt=
+          ;;
+        rc)
+          op_rc=$1
+          current_opt=
+          ;;
+        var)
+          op_var_prefix=`echo -n "$1" | sed 's/_$//' | sed 's/$/_/'`
+          current_opt=
+          ;;
+        src)
+          case "$1" in
+            *.C|*.[Cc][Cc]|*.[Cc][Pp][Pp]|*.[Cc][Xx][Xx])
+              cxx_mode=1
+              ;;
+          esac
+          op_src="$op_src $1"
+          ;;
+        n)
+          op_name=$1
+          current_opt=
+          ;;
+        install)
+          op_install_path=$1
+          current_opt=
+          ;;
+        obj)
+          case "$1" in
+            *.rc)
+              if test ! -f $1; then
+                echo "$script_name: RC file not found: $1" >&2
+                exit 1
+              fi
+              abs_path $1
+              . $abs_path_ret
+              op_obj="$op_obj $OBJECTS"
+              if test "x$LANG" = "xc++"; then
+                cxx_mode=1
+              fi
+              ;;
+            *)
+              op_obj="$op_obj $1"
+              ;;
+          esac
+          ;;
+        ver)
+          op_ver=$1
+          current_opt=
+          ;;
+        ofile)
+          op_ofile=$1
+          current_opt=
+          ;;
+        *)
+          case $op_mode in
+            clean|distclean|install)
+              op_files="$op_files $1"
+              ;;
+            *)
+              echo "$script_name: error: invalid parameter $1" >&2
+              exit 1
+              ;;
+          esac
+          ;;
+      esac
+      ;;
+  esac
+  shift
+done
+
+abs_path `dirname $0`
+script_dir=$abs_path_ret
+
+op_dirs=`echo -n "$op_dirs" | sed 's/^ *//'`
+op_prereq=`echo -n "$op_prereq" | sed 's/^ *//'`
+op_obj=`echo -n "$op_obj" | sed 's/^ *//'`
+op_files=`echo -n "$op_files" | sed 's/^ *//'`
+
+case $op_mode in
+  obj)
+    mkobj
+    ;;
+  prog)
+    mkprog
+    ;;
+  lib)
+    mklib
+    ;;
+  subdir)
+    mksubdir
+    ;;
+  clean)
+    mkclean
+    ;;
+  distclean)
+    mkdistclean
+    ;;
+  install)
+    mkinstall
+    ;;
+  dist)
+    mkdist
+    ;;
+  init)
+    cat <<EOF
+################################################################################
+# INIT
+# $script_name $script_options
+all:
+install:
+uninstall:
+clean:
+distclean:
+dist:
+dist-tree:
+
+EOF
+    ;;
+esac
+
+exit 0
+

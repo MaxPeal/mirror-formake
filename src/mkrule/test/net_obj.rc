@@ -1,2 +1,0 @@
-OBJECTS="_net_pic/net1.o _net_pic/net2.o _net_pic/net3.o _net_pic/net4.o _net_pic/net5.o"
-LANG="c"

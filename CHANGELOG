@@ -3,3 +3,6 @@ Formake v0.9.7  02 Apr 2017:
 
 Formake v0.9.6  31 Mar 2017:
   * new syscap features: no-break mode, subtest status variables generation
+
+Formake v0.9.7  01 Jun 2017:
+  * split syscap on pofig, excom and all C/C++ related went to cstem/cstem+

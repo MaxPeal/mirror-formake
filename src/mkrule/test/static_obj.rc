@@ -1,2 +1,0 @@
-OBJECTS="_static/file1.o _static/file2.o _static/file3.o _static/file4.o _static/file5.o"
-LANG="c"
