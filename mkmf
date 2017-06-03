@@ -43,7 +43,7 @@ mkrule install bin $install_bin >>$MAKEFILE
 #
 # Create distribution tarball by 'make dist'
 
-DIST_FILES="configure mk/excom mk/relpath mk/mkrule mkmf CHANGELOG COPYING $install_bin scripts/cstem/props.txt scripts/cstem/mkcstem.tcl"
+DIST_FILES="configure mk/excom mk/relpath mk/mkrule mkmf CHANGELOG COPYING README $install_bin scripts/cstem/props.txt scripts/cstem/mkcstem.tcl"
 mkrule dist -n $PACKAGE_NAME -ver $PACKAGE_VERSION -buildroot $BUILDROOT -srcdir $SRCDIR -f $DIST_FILES >>$MAKEFILE || exit 1
 
 ################################################################################
