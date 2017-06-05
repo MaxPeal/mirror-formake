@@ -17,4 +17,5 @@ Formake v0.9.9  05 Jun 2017:
 
 Formake v0.10
   * pofig: fixed OS detection algorithm
+  * pofig: fixed linux OS detection
 
