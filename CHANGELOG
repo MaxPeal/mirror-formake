@@ -6,3 +6,8 @@ Formake v0.9.6  31 Mar 2017:
 
 Formake v0.9.7  01 Jun 2017:
   * split syscap on pofig, excom and all C/C++ related went to cstem/cstem+
+  * refactored many other parts
+
+Formake v0.9.8  05 Jun 2017:
+  * added -help-props parameter to cstem/cstem+
+
