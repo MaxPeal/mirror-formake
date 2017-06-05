@@ -36,7 +36,7 @@
 # the name of linux kernel based OS. Since there is no OS named Linux we can use prop_kernel_linux to indicate kernel name.
 
 
-version_string="Formake pofig 0.10"
+version_string="Formake pofig 0.11"
 
 print_help() {
 cat <<EOF
