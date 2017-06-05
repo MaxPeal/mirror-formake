@@ -15,3 +15,6 @@ Formake v0.9.9  05 Jun 2017:
   * pofig: added debian support
   * pofig: added -help-props parameter
 
+Formake v0.10
+  * pofig: fixed OS detection algorithm
+
