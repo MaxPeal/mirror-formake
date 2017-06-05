@@ -36,24 +36,96 @@
 # the name of linux kernel based OS. Since there is no OS named Linux we can use prop_kernel_linux to indicate kernel name.
 
 
-version_string="Formake pofig 0.9"
+version_string="Formake pofig 0.10"
 
 print_help() {
-cat <<EOF >&2
+cat <<EOF
 Portable figure out system properties
 
 $script_name [OPTIONS]
 
- -os        print OS
- -osver     print OS version
- -kernel    print kernel
- -kernver   print kernel version
- -distro    print distro
- -distver   print distro version
- -arch      print architecture
- -id        print system id
- -v         verbose mode
- -version   print version
+ -os          print OS
+ -osver       print OS version
+ -kernel      print kernel
+ -kernver     print kernel version
+ -distro      print distro
+ -distver     print distro version
+ -arch        print architecture
+ -id          print system id
+ -v           verbose mode
+ -version     print version
+ -help-props  print a detailed list of properties
+EOF
+}
+
+print_help_props() {
+cat <<EOF
+OPERATING SYSTEMS
+--------------------------------------------------------------------------------
+aix               IBM AIX
+amiga             AmigaOS
+aros              AROS Research Operating System
+bitrig            Bitrig
+cygwin            Cygwin
+darwin            Darwin
+dragonfly         DragonFly BSD
+esx               VMware ESXi
+freebsd           FreeBSD
+gnulinux          GNU/Linux
+haiku             Haiku
+hpux              HP-UX
+interix           Interix
+irix              IRIX
+lynxos            LynxOS RTOS
+mingw             MinGW
+mingw64           MinGW-w64
+minix             MINIX
+mirbsd            MirOS BSD
+mks               MKS Toolkit
+morphos           MorphOS
+netbsd            NetBSD
+openbsd           OpenBSD
+qnx               QNX
+riscos            RISC OS
+solaris           Solaris
+syllable          Syllable Desktop
+zvm               IBM z/VM
+
+KERNELS
+--------------------------------------------------------------------------------
+linux             Linux
+
+DISTRIBUTIONS
+--------------------------------------------------------------------------------
+debian            Debian
+gentoo            Gentoo
+
+ARCHITECTURES
+--------------------------------------------------------------------------------
+alpha             Alpha
+arc               ARC (Argonaut RISC Core)
+arm               ARM (Advanced RISC Machine)
+arm64             ARM 64-bit (ARMv8, AArch64 or ARM64)
+avr32             Atmel AVR
+cris              ETRAX CRIS
+frv               Fujitsu FR-V
+hexagon           Qualcomm Hexagon
+hppa              PA-RISC
+hppa64            PA-RISC 64-bit
+ia64              IA-64
+m32r              M32R
+mips              MIPS
+mips64            MIPS64
+or1k              32-bit OpenRISC 1000 family
+powerpc           PowerPC
+sparc             SPARC
+sparc64           SPARC64
+superh            SuperH
+tile              Tilera Tile processor
+x86               x86
+x86_64            x86-64 (AMD64)
+xtensa            Tensilica Xtensa processor
+zarch             IBM z/Architecture
 EOF
 }
 
@@ -624,6 +696,10 @@ for arg in "$@"; do
   case "$arg" in
     -h|-help|--help)
       print_help
+      exit 0
+      ;;
+    -help-props)
+      print_help_props
       exit 0
       ;;
     -version)
