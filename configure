@@ -14,7 +14,7 @@
 ################################################################################
 # BASE CONFIGURATION
 PACKAGE_NAME="formake"
-PACKAGE_VERSION="0.9.8"
+PACKAGE_VERSION="0.9.9"
 CONF="build.conf"
 MK_CONF="mk.conf"
 DISTCLEAN_FILES="$CONF $MK_CONF configure.log"

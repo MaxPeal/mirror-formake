@@ -11,3 +11,7 @@ Formake v0.9.7  01 Jun 2017:
 Formake v0.9.8  05 Jun 2017:
   * added -help-props parameter to cstem/cstem+
 
+Formake v0.9.9  05 Jun 2017:
+  * pofig: added debian support
+  * pofig: added -help-props parameter
+
