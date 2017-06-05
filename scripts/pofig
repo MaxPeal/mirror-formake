@@ -81,6 +81,7 @@ gen_system_id() {
 
 
 perform_probe() {
+  distro_version=
   config_os=unknown
   config_os_version=unknown
   config_kernel=unknown
@@ -96,6 +97,13 @@ perform_probe() {
   uname >/dev/null 2>&1
   if test $? -eq 127; then
     return
+  fi
+
+  lsb_release >/dev/null 2>&1
+  if test $? -ne 127; then
+    have_lsb_release=1
+  else
+    have_lsb_release=
   fi
 
   uname_m=`(uname -m) 2>/dev/null` || uname_m=unknown
@@ -425,13 +433,6 @@ perform_probe() {
           config_arch=xtensa
           ;;
       esac
-
-      if test -f /etc/gentoo-release; then
-        distro_version=`cat /etc/gentoo-release | sed 's/.* release *\([0-9.][0-9.]*\).*/\1/'`
-        config_distro=gentoo
-        config_distro_vmajor=`echo $distro_version | sed 's/\([0-9]*\)\..*/\1/'`
-        config_distro_vminor=`echo $distro_version | sed 's/^.*\.\([0-9]*\).*/\1/'`
-      fi
       ;;
     syllable)
       config_os=syllable
@@ -494,6 +495,39 @@ perform_probe() {
       ;;
   esac
 
+  if test -f /etc/debian_version; then
+    config_distro=debian
+    distro_version=`cat /etc/debian_version | sed 's/^ *//' | sed 's/ *$//'`
+  elif test -f /etc/gentoo-release; then
+    config_distro=gentoo
+    distro_version=`cat /etc/gentoo-release | sed 's/.* release *\([0-9.][0-9.]*\).*/\1/'`
+  elif test x$have_lsb_release = x1; then
+    if lsb_release -id | grep -i debian >/dev/null; then
+      config_distro=debian
+    fi
+    distro_version=`lsb_release -r | sed 's/^Release[^0-9]*//' | sed 's/[^0-9]*$//'`
+  elif test -f /etc/os-release; then
+    if cat /etc/os-release | grep -i debian >/dev/null; then
+      config_distro=debian
+    fi
+    distro_version=`cat /etc/os-release | grep "^VERSION_ID" | sed 's/^VERSION_ID[^0-9]*//' | sed 's/[^0-9]*$//'`
+  elif test -f /etc/issue; then
+    if cat /etc/issue | grep -i debian >/dev/null; then
+      config_distro=debian
+    fi
+    distro_version=`cat /etc/issue | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
+  elif test -f /etc/issue.net; then
+    if cat /etc/issue.net | grep -i debian >/dev/null; then
+      config_distro=debian
+    fi
+    distro_version=`cat /etc/issue.net | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
+  fi
+
+  if test -n "$distro_version"; then
+    distro_version=`echo -n "$distro_version" | sed 's/[^0-9.]//g' | sed '/^\s*$/d'`
+    config_distro_vmajor=`echo -n "$distro_version" | sed 's/[^0-9].*//'`
+    config_distro_vminor=`echo -n "$distro_version" | sed 's/^[0-9]*//' | sed 's/^[^0-9]*//' | sed 's/[^0-9].*//'`
+  fi
 
   if test -n "$config_os_vmajor"; then
     config_os_version=$config_os_vmajor
