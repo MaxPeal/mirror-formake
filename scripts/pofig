@@ -413,8 +413,11 @@ perform_probe() {
     linux)
       config_kernel=linux
       uname_o=`uname -o 2>/dev/null`
-      case "$uname_o" in
-        GNU/Linux)
+      case "x$uname_o" in
+        xGNU/Linux)
+          config_os=gnulinux
+          ;;
+	x)
           config_os=gnulinux
           ;;
       esac
