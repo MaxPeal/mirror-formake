@@ -36,7 +36,7 @@
 # the name of linux kernel based OS. Since there is no OS named Linux we can use prop_kernel_linux to indicate kernel name.
 
 
-version_string="Formake pofig 0.11"
+version_string="Formake pofig 0.12"
 
 print_help() {
 cat <<EOF
@@ -258,7 +258,7 @@ perform_probe() {
     morphos)
       config_os=morphos
       ;;
-    z/VM)
+    z/vm)
       config_os=zvm
       config_arch=zarch
       ;;
@@ -539,7 +539,7 @@ perform_probe() {
     darwin)
       config_os=darwin
       ;;
-    procnto* | QNX)
+    procnto* | qnx)
       config_os=qnx
 
       if test "$uname_p" = "x86"; then
