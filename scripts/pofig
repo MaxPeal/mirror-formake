@@ -36,7 +36,7 @@
 # the name of linux kernel based OS. Since there is no OS named Linux we can use prop_kernel_linux to indicate kernel name.
 
 
-version_string="Formake pofig 0.12"
+version_string="Formake pofig 0.13"
 
 print_help() {
 cat <<EOF
@@ -99,6 +99,7 @@ DISTRIBUTIONS
 --------------------------------------------------------------------------------
 debian            Debian
 gentoo            Gentoo
+redhat            Red Hat
 
 ARCHITECTURES
 --------------------------------------------------------------------------------
@@ -572,7 +573,10 @@ perform_probe() {
 
   if test -f /etc/debian_version; then
     config_distro=debian
-    distro_version=`cat /etc/debian_version | sed 's/^ *//' | sed 's/ *$//'`
+    distro_version=`cat /etc/debian_version | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
+  elif test -f /etc/redhat-release; then
+    config_distro=redhat
+    distro_version=`cat /etc/redhat-release | grep -i "red hat" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
   elif test -f /etc/gentoo-release; then
     config_distro=gentoo
     distro_version=`cat /etc/gentoo-release | sed 's/.* release *\([0-9.][0-9.]*\).*/\1/'`
@@ -589,13 +593,19 @@ perform_probe() {
   elif test -f /etc/issue; then
     if cat /etc/issue | grep -i debian >/dev/null; then
       config_distro=debian
+      distro_version=`cat /etc/issue | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
+    elif cat /etc/issue | grep -i "red hat" >/dev/null; then
+      config_distro=redhat
+      distro_version=`cat /etc/issue | grep -i "red hat" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
     fi
-    distro_version=`cat /etc/issue | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
   elif test -f /etc/issue.net; then
     if cat /etc/issue.net | grep -i debian >/dev/null; then
       config_distro=debian
+      distro_version=`cat /etc/issue.net | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
+    elif cat /etc/issue.net | grep -i "red hat" >/dev/null; then
+      config_distro=redhat
+      distro_version=`cat /etc/issue.net | grep -i "red hat" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
     fi
-    distro_version=`cat /etc/issue.net | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
   fi
 
   if test -n "$distro_version"; then
