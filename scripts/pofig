@@ -36,7 +36,7 @@
 # the name of linux kernel based OS. Since there is no OS named Linux we can use prop_kernel_linux to indicate kernel name.
 
 
-version_string="Formake pofig 0.13"
+version_string="Formake pofig 0.14"
 
 print_help() {
 cat <<EOF
@@ -98,6 +98,7 @@ linux             Linux
 DISTRIBUTIONS
 --------------------------------------------------------------------------------
 debian            Debian
+devuan            Devuan
 gentoo            Gentoo
 redhat            Red Hat
 
@@ -574,6 +575,18 @@ perform_probe() {
   if test -f /etc/debian_version; then
     config_distro=debian
     distro_version=`cat /etc/debian_version | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
+  elif test -f /etc/devuan_version; then
+    config_distro=devuan
+    if test x$have_lsb_release = x1; then
+      distro_version=`lsb_release -r | sed 's/^Release[^0-9]*//' | sed 's/[^0-9]*$//'`
+    else
+      codename=`cat /etc/devuan_version | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
+      if test -n "$codename"; then
+        case "$codename" in
+          jessie) distro_version=1 ;;
+        esac
+      fi
+    fi
   elif test -f /etc/redhat-release; then
     config_distro=redhat
     distro_version=`cat /etc/redhat-release | grep -i "red hat" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
@@ -585,6 +598,8 @@ perform_probe() {
       config_distro=debian
     elif lsb_release -id | grep -i "red *hat" >/dev/null; then
       config_distro=redhat
+    elif lsb_release -id | grep -i "devuan" >/dev/null; then
+      config_distro=devuan
     fi
     distro_version=`lsb_release -r | sed 's/^Release[^0-9]*//' | sed 's/[^0-9]*$//'`
   elif test -f /etc/os-release; then
@@ -592,6 +607,8 @@ perform_probe() {
       config_distro=debian
     elif cat /etc/os-release | grep -i "red *hat" >/dev/null; then
       config_distro=redhat
+    elif cat /etc/os-release | grep -i "devuan" >/dev/null; then
+      config_distro=devuan
     fi
     distro_version=`cat /etc/os-release | grep "^VERSION_ID" | sed 's/^VERSION_ID[^0-9]*//' | sed 's/[^0-9]*$//'`
   elif test -f /etc/issue; then
@@ -601,6 +618,9 @@ perform_probe() {
     elif cat /etc/issue | grep -i "red hat" >/dev/null; then
       config_distro=redhat
       distro_version=`cat /etc/issue | grep -i "red hat" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
+    elif cat /etc/issue | grep -i "devuan" >/dev/null; then
+      config_distro=devuan
+      distro_version=`cat /etc/issue | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
     fi
   elif test -f /etc/issue.net; then
     if cat /etc/issue.net | grep -i debian >/dev/null; then
@@ -609,6 +629,9 @@ perform_probe() {
     elif cat /etc/issue.net | grep -i "red hat" >/dev/null; then
       config_distro=redhat
       distro_version=`cat /etc/issue.net | grep -i "red hat" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
+    elif cat /etc/issue.net | grep -i devuan >/dev/null; then
+      config_distro=devuan
+      distro_version=`cat /etc/issue.net | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
     fi
   fi
 
