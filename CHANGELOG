@@ -22,3 +22,6 @@ Formake v0.10
   * cstem/cstem+: added support of older GCC versions
   * cstem/cstem+: other fixes
 
+Formake v0.11
+  * pofig: added Devuan Linux detection
+
