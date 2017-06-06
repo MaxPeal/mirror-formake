@@ -87,7 +87,7 @@ out_format=
 config_file="$script_dir/cstem.conf"
 ext="c"
 tmp_dir=/tmp/cstem_$$
-version_string="0.2"
+version_string="0.3"
 
 
 ################################################################################
@@ -343,7 +343,7 @@ EOF
 }
 
 print_version() {
-  echo "cstem $version_string"
+  echo "Formake cstem $version_string"
 }
 
 probe_os() {
@@ -512,7 +512,7 @@ read_cc_props() {
   probe_h_out="/tmp/cstem_$$_out"
   $cc_cmd $CFLAGS $CPP_FLAG $probe_h 2>/dev/null > $probe_h_out
   probe_sh="/tmp/cstem_$$.sh"
-  cat $probe_h_out | grep "^D[SV][EA][TL]" | sed 's/=\(.*\)$/="\1"/' > $probe_sh
+  cat $probe_h_out | grep "^D[SV][EA][TL]" | sed 's/=\(.*\)$/="\1"/' | sed 's/""*/"/g' > $probe_sh
   . $probe_sh
   rm -f $probe_sh
   rm -f $probe_h_out

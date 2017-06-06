@@ -183,7 +183,7 @@ config_file="$script_dir/cstem+.conf"
 ext="C"
 ########## BLOCK_END
 tmp_dir=/tmp/cstem_$$
-version_string="0.2"
+version_string="0.3"
 
 
 ################################################################################
@@ -510,9 +510,9 @@ EOF
 
 print_version() {
 ########## CC_BLOCK_START
-  echo "cstem $version_string"
+  echo "Formake cstem $version_string"
 ########## CX_BLOCK_START
-  echo "cstem+ $version_string"
+  echo "Formake cstem+ $version_string"
 ########## BLOCK_END
 }
 
@@ -707,7 +707,7 @@ read_cc_props() {
   $cc_cmd $CXXFLAGS $CPP_FLAG $probe_h 2>/dev/null > $probe_h_out
 ########## BLOCK_END
   probe_sh="/tmp/cstem_$$.sh"
-  cat $probe_h_out | grep "^D[SV][EA][TL]" | sed 's/=\(.*\)$/="\1"/' > $probe_sh
+  cat $probe_h_out | grep "^D[SV][EA][TL]" | sed 's/=\(.*\)$/="\1"/' | sed 's/""*/"/g' > $probe_sh
   . $probe_sh
   rm -f $probe_sh
   rm -f $probe_h_out
