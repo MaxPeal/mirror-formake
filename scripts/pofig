@@ -590,6 +590,8 @@ perform_probe() {
   elif test -f /etc/os-release; then
     if cat /etc/os-release | grep -i debian >/dev/null; then
       config_distro=debian
+    elif cat /etc/os-release | grep -i "red *hat" >/dev/null; then
+      config_distro=redhat
     fi
     distro_version=`cat /etc/os-release | grep "^VERSION_ID" | sed 's/^VERSION_ID[^0-9]*//' | sed 's/[^0-9]*$//'`
   elif test -f /etc/issue; then
