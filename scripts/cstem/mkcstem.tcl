@@ -550,7 +550,7 @@ probe_os() {
     morphos)
       config_os=morphos
       ;;
-    z/VM)
+    z/vm)
       config_os=zvm
       ;;
     riscos)
@@ -607,7 +607,7 @@ probe_os() {
     darwin)
       config_os=darwin
       ;;
-    procnto* | QNX)
+    procnto* | qnx)
       config_os=qnx
       ;;
     dragonfly)
