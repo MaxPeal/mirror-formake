@@ -576,13 +576,15 @@ perform_probe() {
     distro_version=`cat /etc/debian_version | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
   elif test -f /etc/redhat-release; then
     config_distro=redhat
-    distro_version=`cat /etc/redhat-release | grep -i "red hat" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
+    distro_version=`cat /etc/redhat-release | grep -i "red hat" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
   elif test -f /etc/gentoo-release; then
     config_distro=gentoo
     distro_version=`cat /etc/gentoo-release | sed 's/.* release *\([0-9.][0-9.]*\).*/\1/'`
   elif test x$have_lsb_release = x1; then
     if lsb_release -id | grep -i debian >/dev/null; then
       config_distro=debian
+    elif lsb_release -id | grep -i "red *hat" >/dev/null; then
+      config_distro=redhat
     fi
     distro_version=`lsb_release -r | sed 's/^Release[^0-9]*//' | sed 's/[^0-9]*$//'`
   elif test -f /etc/os-release; then
@@ -596,7 +598,7 @@ perform_probe() {
       distro_version=`cat /etc/issue | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
     elif cat /etc/issue | grep -i "red hat" >/dev/null; then
       config_distro=redhat
-      distro_version=`cat /etc/issue | grep -i "red hat" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
+      distro_version=`cat /etc/issue | grep -i "red hat" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
     fi
   elif test -f /etc/issue.net; then
     if cat /etc/issue.net | grep -i debian >/dev/null; then
@@ -604,7 +606,7 @@ perform_probe() {
       distro_version=`cat /etc/issue.net | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
     elif cat /etc/issue.net | grep -i "red hat" >/dev/null; then
       config_distro=redhat
-      distro_version=`cat /etc/issue.net | grep -i "red hat" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
+      distro_version=`cat /etc/issue.net | grep -i "red hat" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
     fi
   fi
 
