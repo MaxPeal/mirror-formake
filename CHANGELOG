@@ -19,4 +19,5 @@ Formake v0.10
   * pofig: fixed OS detection algorithm
   * pofig: fixed linux OS detection
   * pofig: added Red Hat support
+  * cstem/cstem+: errors with older GCC. Fixed preprocessor output parsing
 
