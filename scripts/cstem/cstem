@@ -507,7 +507,7 @@ EOF
 }
 
 read_cc_props() {
-  probe_h="/tmp/cstem_$$.h"
+  probe_h="/tmp/cstem_$$.c"
   cat $script_abs | grep -A 10000 "/\* *COMPILER DEFINES *\*/" | grep -v "^EOF" > $probe_h
   probe_h_out="/tmp/cstem_$$_out"
   $cc_cmd $CFLAGS $CPP_FLAG $probe_h 2>/dev/null > $probe_h_out

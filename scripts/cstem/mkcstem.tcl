@@ -695,9 +695,9 @@ EOF
 
 read_cc_props() {
 ########## CC_BLOCK_START
-  probe_h="/tmp/cstem_$$.h"
+  probe_h="/tmp/cstem_$$.c"
 ########## CX_BLOCK_START
-  probe_h="/tmp/cstem_$$.H"
+  probe_h="/tmp/cstem_$$.cpp"
 ########## BLOCK_END
   cat $script_abs | grep -A 10000 "/\* *COMPILER DEFINES *\*/" | grep -v "^EOF" > $probe_h
   probe_h_out="/tmp/cstem_$$_out"
