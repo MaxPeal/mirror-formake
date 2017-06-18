@@ -605,7 +605,7 @@ perform_probe() {
       config_distro=redhat
     elif lsb_release -id | grep -i "devuan" >/dev/null; then
       config_distro=devuan
-    elif lsb_release -id | grep -i "suse" >/dev/null; then
+    elif lsb_release -id | grep -i "suse" | grep -i "enterprise" >/dev/null; then
       config_distro=suse
     fi
     distro_version=`lsb_release -r | sed 's/^Release[^0-9]*//' | sed 's/[^0-9]*$//'`
@@ -616,6 +616,8 @@ perform_probe() {
       config_distro=redhat
     elif cat /etc/os-release | grep -i "devuan" >/dev/null; then
       config_distro=devuan
+    elif cat /etc/os-release | grep -i "suse" | grep -i "enterprise" >/dev/null; then
+      config_distro=suse
     fi
     distro_version=`cat /etc/os-release | grep "^VERSION_ID" | sed 's/^VERSION_ID[^0-9]*//' | sed 's/[^0-9]*$//'`
   elif test -f /etc/issue; then
