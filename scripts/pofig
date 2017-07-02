@@ -36,6 +36,25 @@
 # the name of linux kernel based OS. Since there is no OS named Linux we can use prop_kernel_linux to indicate kernel name.
 
 
+# TESTED ON:
+#   Debian 3.0 r6 i386
+#   Debian 4.0 r9 x86-64
+#   Debian 5.0 x86-64
+#   Devuan 1.0 x86-64
+#   Red Hat 7.1 i386
+#   Red Hat 8.0 i386
+#   RHEL 3 i386
+#   RHEL 4.6 x86-64
+#   RHEL 5.8 x86-64 server
+#   RHEL 6.8 x86-64
+#   RHEL 7.3 x86-64
+#   Suse Linux Enterprise Desktop 10 i386
+#   Suse Linux Enterprise Server 10 i386
+#   Suse Linux Enterprise Server 10 x86-64
+#   Suse Linux Enterprise Desktop 11 x86-64
+#   Suse Linux Enterprise Desktop 12 x86-64
+
+
 version_string="Formake pofig 0.14"
 
 print_help() {
