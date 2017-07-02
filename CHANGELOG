@@ -25,4 +25,5 @@ Formake v0.10
 Formake v0.11
   * pofig: added Devuan Linux detection
   * pofig: added Suse Linux Enterprise detection
+  * pofig: added Linux Mint detection
 
