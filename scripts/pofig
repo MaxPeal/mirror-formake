@@ -45,6 +45,7 @@
 #   Debian 8.7 x86-64
 #   Debian 9.0 x86-64
 #   Devuan 1.0 x86-64
+#   Fedora 14 i386
 #   Red Hat 7.1 i386
 #   Red Hat 8.0 i386
 #   RHEL 3 i386
@@ -122,6 +123,7 @@ DISTRIBUTIONS
 --------------------------------------------------------------------------------
 debian            Debian
 devuan            Devuan
+fedora            Fedora
 gentoo            Gentoo
 redhat            Red Hat
 suse              Suse Linux Enterprise
@@ -611,6 +613,9 @@ perform_probe() {
         esac
       fi
     fi
+  elif test -f /etc/fedora-release; then
+    config_distro=fedora
+    distro_version=`cat /etc/redhat-release | grep -i "fedora" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
   elif test -f /etc/redhat-release; then
     config_distro=redhat
     distro_version=`cat /etc/redhat-release | grep -i "red hat" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
@@ -648,12 +653,15 @@ perform_probe() {
     if cat /etc/issue | grep -i debian >/dev/null; then
       config_distro=debian
       distro_version=`cat /etc/issue | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
-    elif cat /etc/issue | grep -i "red hat" >/dev/null; then
-      config_distro=redhat
-      distro_version=`cat /etc/issue | grep -i "red hat" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
     elif cat /etc/issue | grep -i "devuan" >/dev/null; then
       config_distro=devuan
       distro_version=`cat /etc/issue | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
+    elif cat /etc/issue | grep -i "fedora" >/dev/null; then
+      config_distro=fedora
+      distro_version=`cat /etc/issue | grep -i "fedora" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
+    elif cat /etc/issue | grep -i "red hat" >/dev/null; then
+      config_distro=redhat
+      distro_version=`cat /etc/issue | grep -i "red hat" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
     elif cat /etc/issue | grep -i "suse linux enterprise" >/dev/null; then
       config_distro=suse
       distro_version=`cat /etc/issue | sed 's/.*suse linux[^0-9]*//i' | sed 's/^\([0-9]*\).*$/\1/' | sed '/^\s*$/d'`
