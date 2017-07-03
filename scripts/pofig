@@ -630,6 +630,8 @@ perform_probe() {
   elif test x$have_lsb_release = x1; then
     if lsb_release -id | grep -i debian >/dev/null; then
       config_distro=debian
+    elif lsb_release -id | grep -i "fedora" >/dev/null; then
+      config_distro=fedora
     elif lsb_release -id | grep -i "red *hat" >/dev/null; then
       config_distro=redhat
     elif lsb_release -id | grep -i "devuan" >/dev/null; then
@@ -641,6 +643,8 @@ perform_probe() {
   elif test -f /etc/os-release; then
     if cat /etc/os-release | grep -i debian >/dev/null; then
       config_distro=debian
+    elif cat /etc/os-release | grep -i "fedora" >/dev/null; then
+      config_distro=fedora
     elif cat /etc/os-release | grep -i "red *hat" >/dev/null; then
       config_distro=redhat
     elif cat /etc/os-release | grep -i "devuan" >/dev/null; then
