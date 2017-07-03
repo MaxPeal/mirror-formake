@@ -45,8 +45,6 @@
 #   Debian 8.7 x86-64
 #   Debian 9.0 x86-64
 #   Devuan 1.0 x86-64
-#   Linux Mint Debian Edition 2 x86-64
-#   Linux Mint 18.1 x86-64
 #   Red Hat 7.1 i386
 #   Red Hat 8.0 i386
 #   RHEL 3 i386
@@ -125,7 +123,6 @@ DISTRIBUTIONS
 debian            Debian
 devuan            Devuan
 gentoo            Gentoo
-mint              Linux Mint
 redhat            Red Hat
 suse              Suse Linux Enterprise
 
@@ -599,14 +596,7 @@ perform_probe() {
       ;;
   esac
 
-  if test -d /etc/linuxmint; then
-    config_distro=mint
-    if test -f /etc/linuxmint/info; then
-      distro_version=`cat /etc/linuxmint/info | grep "^RELEASE" | sed 's/^RELEASE[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
-    elif test x$have_lsb_release = x1; then
-      distro_version=`lsb_release -r | sed 's/^Release[^0-9]*//' | sed 's/[^0-9]*$//'`
-    fi
-  elif test -f /etc/debian_version; then
+  if test -f /etc/debian_version; then
     config_distro=debian
     distro_version=`cat /etc/debian_version | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
   elif test -f /etc/devuan_version; then
@@ -641,8 +631,6 @@ perform_probe() {
       config_distro=devuan
     elif lsb_release -id | grep -i "suse" | grep -i "enterprise" >/dev/null; then
       config_distro=suse
-    elif lsb_release -id | grep -i "linuxmint" >/dev/null; then
-      config_distro=mint
     fi
     distro_version=`lsb_release -r | sed 's/^Release[^0-9]*//' | sed 's/[^0-9]*$//'`
   elif test -f /etc/os-release; then
@@ -654,8 +642,6 @@ perform_probe() {
       config_distro=devuan
     elif cat /etc/os-release | grep -i "suse" | grep -i "enterprise" >/dev/null; then
       config_distro=suse
-    elif cat /etc/os-release | grep -i "linux mint" >/dev/null; then
-      config_distro=mint
     fi
     distro_version=`cat /etc/os-release | grep "^VERSION_ID" | sed 's/^VERSION_ID[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
   elif test -f /etc/issue; then
@@ -671,12 +657,6 @@ perform_probe() {
     elif cat /etc/issue | grep -i "suse linux enterprise" >/dev/null; then
       config_distro=suse
       distro_version=`cat /etc/issue | sed 's/.*suse linux[^0-9]*//i' | sed 's/^\([0-9]*\).*$/\1/' | sed '/^\s*$/d'`
-    elif cat /etc/issue | grep -i "lmde" >/dev/null; then
-      config_distro=mint
-      distro_version=`cat /etc/issue | sed 's/.*lmde[^0-9]*//i' | sed 's/^\([0-9]*\).*$/\1/' | sed '/^\s*$/d'`
-    elif cat /etc/issue | grep -i "linux mint" >/dev/null; then
-      config_distro=mint
-      distro_version=`cat /etc/issue | sed 's/.*linux mint[^0-9]*//i' | sed 's/^\([0-9.]*\).*$/\1/' | sed '/^\s*$/d'`
     fi
   fi
 
