@@ -61,6 +61,7 @@
 #   RHEL 7.3 x86-64
 #   Slackware 12.0 i386
 #   Slackware 13.37 i386
+#   Slackware 14.02 x86-64
 #   Suse Linux Enterprise Desktop 10 i386
 #   Suse Linux Enterprise Server 10 i386
 #   Suse Linux Enterprise Server 10 x86-64
@@ -644,6 +645,8 @@ perform_probe() {
       config_distro=suse
     elif cat /etc/os-release | grep -i ubuntu >/dev/null; then
       config_distro=ubuntu
+    elif cat /etc/os-release | grep -i slackware >/dev/null; then
+      config_distro=slackware
     elif cat /etc/os-release | grep -i debian >/dev/null; then
       config_distro=debian
     fi
