@@ -133,6 +133,7 @@ linux             Linux
 
 DISTRIBUTIONS
 --------------------------------------------------------------------------------
+arch              Arch
 debian            Debian
 devuan            Devuan
 fedora            Fedora
@@ -639,6 +640,8 @@ perform_probe() {
       config_distro=devuan
     elif cat /etc/os-release | grep -i gentoo >/dev/null; then
       config_distro=gentoo
+    elif cat /etc/os-release | grep -i "arch linux" >/dev/null; then
+      config_distro=arch
     elif cat /etc/os-release | grep -i opensuse >/dev/null; then
       config_distro=opensuse
     elif cat /etc/os-release | grep -i suse | grep -i "enterprise" >/dev/null; then
@@ -655,6 +658,8 @@ perform_probe() {
     if cat /etc/issue | grep -i "devuan" >/dev/null; then
       config_distro=devuan
       distro_version=`cat /etc/issue | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
+    elif cat /etc/issue | grep -i "arch linux" >/dev/null; then
+      config_distro=arch
     elif cat /etc/issue | grep -i "fedora" >/dev/null; then
       config_distro=fedora
       distro_version=`cat /etc/issue | grep -i "fedora" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
@@ -703,6 +708,8 @@ perform_probe() {
       distro_version=`cat /etc/slackware-version | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
     elif test -f /etc/gentoo-release; then
       config_distro=gentoo
+    elif test -f /etc/arch-release; then
+      config_distro=arch
     elif test -f /etc/SuSE-release; then
       if cat /etc/SuSE-release | grep -i opensuse > /dev/null; then
         config_distro=opensuse
