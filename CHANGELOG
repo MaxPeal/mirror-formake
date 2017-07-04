@@ -29,4 +29,5 @@ Formake v0.11
   * pofig: added OpenSUSE detection
   * pofig: added Ubuntu detection
   * pofig: updated support of Gentoo
+  * pofig: added Slackware detection
 

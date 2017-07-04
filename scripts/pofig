@@ -59,6 +59,7 @@
 #   RHEL 5.8 x86-64 server
 #   RHEL 6.8 x86-64
 #   RHEL 7.3 x86-64
+#   Slackware 12.0 i386
 #   Suse Linux Enterprise Desktop 10 i386
 #   Suse Linux Enterprise Server 10 i386
 #   Suse Linux Enterprise Server 10 x86-64
@@ -692,6 +693,9 @@ perform_probe() {
     elif test -f /etc/redhat-release; then
       config_distro=redhat
       distro_version=`cat /etc/redhat-release | grep -i "red hat" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
+    elif test -f /etc/slackware-version; then
+      config_distro=slackware
+      distro_version=`cat /etc/slackware-version | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
     elif test -f /etc/gentoo-release; then
       config_distro=gentoo
     elif test -f /etc/SuSE-release; then
