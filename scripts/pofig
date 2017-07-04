@@ -48,6 +48,7 @@
 #   Fedora 14 i386
 #   Fedora 20 x86-64
 #   Fedora 25 x86-64
+#   OpenSUSE 11.4 x86-64
 #   Red Hat 7.1 i386
 #   Red Hat 8.0 i386
 #   RHEL 3 i386
@@ -127,6 +128,7 @@ debian            Debian
 devuan            Devuan
 fedora            Fedora
 gentoo            Gentoo
+opensuse          OpenSUSE
 redhat            Red Hat
 suse              Suse Linux Enterprise
 
@@ -625,7 +627,11 @@ perform_probe() {
     config_distro=gentoo
     distro_version=`cat /etc/gentoo-release | sed 's/.* release *\([0-9.][0-9.]*\).*/\1/'`
   elif test -f /etc/SuSE-release; then
-    config_distro=suse
+    if cat /etc/SuSE-release | grep -i opensuse > /dev/null; then
+      config_distro=opensuse
+    else
+      config_distro=suse
+    fi
     distro_major=`cat /etc/SuSE-release | grep VERSION | sed 's/^ *VERSION *= *//' | sed 's/ *$//'`
     distro_minor=`cat /etc/SuSE-release | grep PATCHLEVEL | sed 's/^ *PATCHLEVEL*= *//' | sed 's/ *$//'`
     distro_version="$distro_major.$distro_minor"
@@ -638,6 +644,8 @@ perform_probe() {
       config_distro=redhat
     elif lsb_release -id | grep -i "devuan" >/dev/null; then
       config_distro=devuan
+    elif lsb_release -id | grep -i "opensuse" >/dev/null; then
+      config_distro=opensuse
     elif lsb_release -id | grep -i "suse" | grep -i "enterprise" >/dev/null; then
       config_distro=suse
     fi
@@ -651,6 +659,8 @@ perform_probe() {
       config_distro=redhat
     elif cat /etc/os-release | grep -i "devuan" >/dev/null; then
       config_distro=devuan
+    elif cat /etc/os-release | grep -i "opensuse" >/dev/null; then
+      config_distro=opensuse
     elif cat /etc/os-release | grep -i "suse" | grep -i "enterprise" >/dev/null; then
       config_distro=suse
     fi
@@ -668,9 +678,12 @@ perform_probe() {
     elif cat /etc/issue | grep -i "red hat" >/dev/null; then
       config_distro=redhat
       distro_version=`cat /etc/issue | grep -i "red hat" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
+    elif cat /etc/issue | grep -i "opensuse" >/dev/null; then
+      config_distro=opensuse
+      distro_version=`cat /etc/issue | sed 's/.*opensuse[^0-9]*//i' | sed 's/^\([0-9.]*\).*$/\1/' | sed '/^\s*$/d'`
     elif cat /etc/issue | grep -i "suse linux enterprise" >/dev/null; then
       config_distro=suse
-      distro_version=`cat /etc/issue | sed 's/.*suse linux[^0-9]*//i' | sed 's/^\([0-9]*\).*$/\1/' | sed '/^\s*$/d'`
+      distro_version=`cat /etc/issue | sed 's/.*suse linux[^0-9]*//i' | sed 's/^\([0-9].*\).*$/\1/' | sed '/^\s*$/d'`
     fi
   fi
 
