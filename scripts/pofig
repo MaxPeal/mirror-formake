@@ -60,6 +60,7 @@
 #   RHEL 6.8 x86-64
 #   RHEL 7.3 x86-64
 #   Slackware 12.0 i386
+#   Slackware 13.37 i386
 #   Suse Linux Enterprise Desktop 10 i386
 #   Suse Linux Enterprise Server 10 i386
 #   Suse Linux Enterprise Server 10 x86-64
@@ -137,6 +138,7 @@ fedora            Fedora
 gentoo            Gentoo
 opensuse          OpenSUSE
 redhat            Red Hat
+slackware         Slackware
 suse              Suse Linux Enterprise
 ubuntu            Ubuntu
 
