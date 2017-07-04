@@ -63,6 +63,7 @@
 #   Suse Linux Enterprise Server 10 x86-64
 #   Suse Linux Enterprise Desktop 11 x86-64
 #   Suse Linux Enterprise Desktop 12 x86-64
+#   Ubuntu 12.04 x86-64
 
 
 version_string="Formake pofig 0.14"
@@ -133,6 +134,7 @@ gentoo            Gentoo
 opensuse          OpenSUSE
 redhat            Red Hat
 suse              Suse Linux Enterprise
+ubuntu            Ubuntu
 
 ARCHITECTURES
 --------------------------------------------------------------------------------
@@ -604,74 +606,42 @@ perform_probe() {
       ;;
   esac
 
-  if test -f /etc/debian_version; then
-    config_distro=debian
-    distro_version=`cat /etc/debian_version | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
-  elif test -f /etc/devuan_version; then
-    config_distro=devuan
-    if test x$have_lsb_release = x1; then
-      distro_version=`lsb_release -r | sed 's/^Release[^0-9]*//' | sed 's/[^0-9]*$//'`
-    else
-      codename=`cat /etc/devuan_version | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
-      if test -n "$codename"; then
-        case "$codename" in
-          jessie) distro_version=1 ;;
-        esac
-      fi
-    fi
-  elif test -f /etc/fedora-release; then
-    config_distro=fedora
-    distro_version=`cat /etc/redhat-release | grep -i "fedora" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
-  elif test -f /etc/redhat-release; then
-    config_distro=redhat
-    distro_version=`cat /etc/redhat-release | grep -i "red hat" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
-  elif test -f /etc/gentoo-release; then
-    config_distro=gentoo
-    distro_version=`cat /etc/gentoo-release | sed 's/.* release *\([0-9.][0-9.]*\).*/\1/'`
-  elif test -f /etc/SuSE-release; then
-    if cat /etc/SuSE-release | grep -i opensuse > /dev/null; then
-      config_distro=opensuse
-    else
-      config_distro=suse
-    fi
-    distro_major=`cat /etc/SuSE-release | grep VERSION | sed 's/^ *VERSION *= *//' | sed 's/ *$//'`
-    distro_minor=`cat /etc/SuSE-release | grep PATCHLEVEL | sed 's/^ *PATCHLEVEL*= *//' | sed 's/ *$//'`
-    distro_version="$distro_major.$distro_minor"
-  elif test x$have_lsb_release = x1; then
-    if lsb_release -id | grep -i debian >/dev/null; then
-      config_distro=debian
-    elif lsb_release -id | grep -i "fedora" >/dev/null; then
+  if test x$have_lsb_release = x1; then
+    if lsb_release -id | grep -i fedora >/dev/null; then
       config_distro=fedora
     elif lsb_release -id | grep -i "red *hat" >/dev/null; then
       config_distro=redhat
-    elif lsb_release -id | grep -i "devuan" >/dev/null; then
+    elif lsb_release -id | grep -i devuan >/dev/null; then
       config_distro=devuan
-    elif lsb_release -id | grep -i "opensuse" >/dev/null; then
+    elif lsb_release -id | grep -i opensuse >/dev/null; then
       config_distro=opensuse
-    elif lsb_release -id | grep -i "suse" | grep -i "enterprise" >/dev/null; then
+    elif lsb_release -id | grep -i suse | grep -i "enterprise" >/dev/null; then
       config_distro=suse
+    elif lsb_release -id | grep -i ubuntu >/dev/null; then
+      config_distro=ubuntu
+    elif lsb_release -id | grep -i debian >/dev/null; then
+      config_distro=debian
     fi
     distro_version=`lsb_release -r | sed 's/^Release[^0-9]*//' | sed 's/[^0-9]*$//'`
   elif test -f /etc/os-release; then
-    if cat /etc/os-release | grep -i debian >/dev/null; then
-      config_distro=debian
-    elif cat /etc/os-release | grep -i "fedora" >/dev/null; then
+    if cat /etc/os-release | grep -i fedora >/dev/null; then
       config_distro=fedora
     elif cat /etc/os-release | grep -i "red *hat" >/dev/null; then
       config_distro=redhat
-    elif cat /etc/os-release | grep -i "devuan" >/dev/null; then
+    elif cat /etc/os-release | grep -i devuan >/dev/null; then
       config_distro=devuan
-    elif cat /etc/os-release | grep -i "opensuse" >/dev/null; then
+    elif cat /etc/os-release | grep -i opensuse >/dev/null; then
       config_distro=opensuse
-    elif cat /etc/os-release | grep -i "suse" | grep -i "enterprise" >/dev/null; then
+    elif cat /etc/os-release | grep -i suse | grep -i "enterprise" >/dev/null; then
       config_distro=suse
+    elif cat /etc/os-release | grep -i ubuntu >/dev/null; then
+      config_distro=ubuntu
+    elif cat /etc/os-release | grep -i debian >/dev/null; then
+      config_distro=debian
     fi
     distro_version=`cat /etc/os-release | grep "^VERSION_ID" | sed 's/^VERSION_ID[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
   elif test -f /etc/issue; then
-    if cat /etc/issue | grep -i debian >/dev/null; then
-      config_distro=debian
-      distro_version=`cat /etc/issue | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
-    elif cat /etc/issue | grep -i "devuan" >/dev/null; then
+    if cat /etc/issue | grep -i "devuan" >/dev/null; then
       config_distro=devuan
       distro_version=`cat /etc/issue | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
     elif cat /etc/issue | grep -i "fedora" >/dev/null; then
@@ -686,6 +656,49 @@ perform_probe() {
     elif cat /etc/issue | grep -i "suse linux enterprise" >/dev/null; then
       config_distro=suse
       distro_version=`cat /etc/issue | sed 's/.*suse linux[^0-9]*//i' | sed 's/^\([0-9].*\).*$/\1/' | sed '/^\s*$/d'`
+    elif cat /etc/issue | grep -i ubuntu >/dev/null; then
+      config_distro=ubuntu
+      distro_version=`cat /etc/issue | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
+    elif cat /etc/issue | grep -i debian >/dev/null; then
+      config_distro=debian
+      distro_version=`cat /etc/issue | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
+    fi
+  fi
+
+  if test "$config_distro" = "unknown"; then
+    if test -f /etc/debian_version; then
+      config_distro=debian
+      distro_version=`cat /etc/debian_version | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
+    elif test -f /etc/devuan_version; then
+      config_distro=devuan
+      if test x$have_lsb_release = x1; then
+        distro_version=`lsb_release -r | sed 's/^Release[^0-9]*//' | sed 's/[^0-9]*$//'`
+      else
+        codename=`cat /etc/devuan_version | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
+        if test -n "$codename"; then
+          case "$codename" in
+            jessie) distro_version=1 ;;
+          esac
+        fi
+      fi
+    elif test -f /etc/fedora-release; then
+      config_distro=fedora
+      distro_version=`cat /etc/redhat-release | grep -i "fedora" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
+    elif test -f /etc/redhat-release; then
+      config_distro=redhat
+      distro_version=`cat /etc/redhat-release | grep -i "red hat" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
+    elif test -f /etc/gentoo-release; then
+      config_distro=gentoo
+      distro_version=`cat /etc/gentoo-release | sed 's/.* release *\([0-9.][0-9.]*\).*/\1/'`
+    elif test -f /etc/SuSE-release; then
+      if cat /etc/SuSE-release | grep -i opensuse > /dev/null; then
+        config_distro=opensuse
+      else
+        config_distro=suse
+      fi
+      distro_major=`cat /etc/SuSE-release | grep VERSION | sed 's/^ *VERSION *= *//' | sed 's/ *$//'`
+      distro_minor=`cat /etc/SuSE-release | grep PATCHLEVEL | sed 's/^ *PATCHLEVEL*= *//' | sed 's/ *$//'`
+      distro_version="$distro_major.$distro_minor"
     fi
   fi
 

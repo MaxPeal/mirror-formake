@@ -27,4 +27,5 @@ Formake v0.11
   * pofig: added Suse Linux Enterprise detection
   * pofig: added Fedora Linux detection
   * pofig: added OpenSUSE detection
+  * pofig: added Ubuntu detection
 
