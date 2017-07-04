@@ -48,6 +48,7 @@
 #   Fedora 14 i386
 #   Fedora 20 x86-64
 #   Fedora 25 x86-64
+#   Gentoo Live 20160704 x86-64
 #   OpenSUSE 11.4 x86-64
 #   OpenSUSE 13.2 i586
 #   OpenSUSE 42.2 x86-64
@@ -632,6 +633,8 @@ perform_probe() {
       config_distro=redhat
     elif cat /etc/os-release | grep -i devuan >/dev/null; then
       config_distro=devuan
+    elif cat /etc/os-release | grep -i gentoo >/dev/null; then
+      config_distro=gentoo
     elif cat /etc/os-release | grep -i opensuse >/dev/null; then
       config_distro=opensuse
     elif cat /etc/os-release | grep -i suse | grep -i "enterprise" >/dev/null; then
@@ -691,7 +694,6 @@ perform_probe() {
       distro_version=`cat /etc/redhat-release | grep -i "red hat" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
     elif test -f /etc/gentoo-release; then
       config_distro=gentoo
-      distro_version=`cat /etc/gentoo-release | sed 's/.* release *\([0-9.][0-9.]*\).*/\1/'`
     elif test -f /etc/SuSE-release; then
       if cat /etc/SuSE-release | grep -i opensuse > /dev/null; then
         config_distro=opensuse
