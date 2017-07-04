@@ -64,6 +64,8 @@
 #   Suse Linux Enterprise Desktop 11 x86-64
 #   Suse Linux Enterprise Desktop 12 x86-64
 #   Ubuntu 12.04 x86-64
+#   Ubuntu 14.04 x86-64
+#   Ubuntu 17.04 x86-64
 
 
 version_string="Formake pofig 0.14"
