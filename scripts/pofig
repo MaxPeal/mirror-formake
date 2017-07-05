@@ -38,6 +38,7 @@
 
 # TESTED ON:
 #   Arch Linux x86-64
+#   CentOS 5 i386
 #   Debian 3.0 r6 i386
 #   Debian 4.0 r9 x86-64
 #   Debian 5.0 x86-64
@@ -620,6 +621,8 @@ perform_probe() {
       config_distro=fedora
     elif lsb_release -id | grep -i "red *hat" >/dev/null; then
       config_distro=redhat
+    elif lsb_release -id | grep -i centos >/dev/null; then
+      config_distro=redhat
     elif lsb_release -id | grep -i devuan >/dev/null; then
       config_distro=devuan
     elif lsb_release -id | grep -i opensuse >/dev/null; then
@@ -636,6 +639,8 @@ perform_probe() {
     if cat /etc/os-release | grep -i fedora >/dev/null; then
       config_distro=fedora
     elif cat /etc/os-release | grep -i "red *hat" >/dev/null; then
+      config_distro=redhat
+    elif cat /etc/os-release | grep -i centos >/dev/null; then
       config_distro=redhat
     elif cat /etc/os-release | grep -i devuan >/dev/null; then
       config_distro=devuan
@@ -667,6 +672,9 @@ perform_probe() {
     elif cat /etc/issue | grep -i "red hat" >/dev/null; then
       config_distro=redhat
       distro_version=`cat /etc/issue | grep -i "red hat" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
+    elif cat /etc/issue | grep -i centos >/dev/null; then
+      config_distro=redhat
+      distro_version=`cat /etc/issue | grep -i centos | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
     elif cat /etc/issue | grep -i "opensuse" >/dev/null; then
       config_distro=opensuse
       distro_version=`cat /etc/issue | sed 's/.*opensuse[^0-9]*//i' | sed 's/^\([0-9.]*\).*$/\1/' | sed '/^\s*$/d'`
@@ -700,10 +708,14 @@ perform_probe() {
       fi
     elif test -f /etc/fedora-release; then
       config_distro=fedora
-      distro_version=`cat /etc/redhat-release | grep -i "fedora" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
+      distro_version=`cat /etc/fedora-release | grep -i "fedora" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
     elif test -f /etc/redhat-release; then
       config_distro=redhat
-      distro_version=`cat /etc/redhat-release | grep -i "red hat" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
+      if cat /etc/redhat-release | grep -i centos > /dev/null; then
+        distro_version=`cat /etc/redhat-release | grep -i centos | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
+      else
+        distro_version=`cat /etc/redhat-release | grep -i "red hat" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
+      fi
     elif test -f /etc/slackware-version; then
       config_distro=slackware
       distro_version=`cat /etc/slackware-version | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
