@@ -38,6 +38,7 @@
 
 # TESTED ON:
 #   DragonFly BSD 3.8 i386
+#   DragonFly BSD 4.8.0 x86-64
 #   GNU Linux:
 #     Arch Linux x86-64
 #     CentOS 5 i386
