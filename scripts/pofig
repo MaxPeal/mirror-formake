@@ -76,6 +76,7 @@
 #     Ubuntu 14.04 x86-64
 #     Ubuntu 17.04 x86-64
 #  NetBSD 6.0.4 i386
+#  NetBSD 7.1 x86-64
 
 
 version_string="Formake pofig 0.14"
