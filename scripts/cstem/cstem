@@ -1574,19 +1574,19 @@ if test x$mode_probe = x1; then
 
   if test -z "$print_string" && test -z "$out_format"; then
     cat <<EOF
-id:                 ${prop_id:-"-"}
-version:            ${prop_version:-"-"}
-command:            ${prop_cmd:-"-"}
-cflags:             ${prop_cflags:-"-"}
-ldflags:            ${prop_ldflags:-"-"}
-language standard:  ${prop_std:-"-"}
-target os:          ${prop_os:-"-"}
-target os version:  ${prop_os_version:-"-"}
-target kernel:      ${prop_kernel:-"-"}
-target arch:        ${prop_arch:-"-"}
-bitness:            ${prop_bitness:-"-"}
-endianess:          ${prop_endianess:-"-"}
-data model:         ${prop_data_model:-"-"}
+id:                 ${prop_id:--}
+version:            ${prop_version:--}
+command:            ${prop_cmd:--}
+cflags:             ${prop_cflags:--}
+ldflags:            ${prop_ldflags:--}
+language standard:  ${prop_std:--}
+target os:          ${prop_os:--}
+target os version:  ${prop_os_version:--}
+target kernel:      ${prop_kernel:--}
+target arch:        ${prop_arch:--}
+bitness:            ${prop_bitness:--}
+endianess:          ${prop_endianess:--}
+data model:         ${prop_data_model:--}
 EOF
   else
     if test -z "$print_string"; then

@@ -1879,23 +1879,23 @@ if test x$mode_probe = x1; then
 
   if test -z "$print_string" && test -z "$out_format"; then
     cat <<EOF
-id:                 ${prop_id:-"-"}
-version:            ${prop_version:-"-"}
-command:            ${prop_cmd:-"-"}
+id:                 ${prop_id:--}
+version:            ${prop_version:--}
+command:            ${prop_cmd:--}
 ########## CC_BLOCK_START
-cflags:             ${prop_cflags:-"-"}
+cflags:             ${prop_cflags:--}
 ########## CX_BLOCK_START
-cxxflags:           ${prop_cxxflags:-"-"}
+cxxflags:           ${prop_cxxflags:--}
 ########## BLOCK_END
-ldflags:            ${prop_ldflags:-"-"}
-language standard:  ${prop_std:-"-"}
-target os:          ${prop_os:-"-"}
-target os version:  ${prop_os_version:-"-"}
-target kernel:      ${prop_kernel:-"-"}
-target arch:        ${prop_arch:-"-"}
-bitness:            ${prop_bitness:-"-"}
-endianess:          ${prop_endianess:-"-"}
-data model:         ${prop_data_model:-"-"}
+ldflags:            ${prop_ldflags:--}
+language standard:  ${prop_std:--}
+target os:          ${prop_os:--}
+target os version:  ${prop_os_version:--}
+target kernel:      ${prop_kernel:--}
+target arch:        ${prop_arch:--}
+bitness:            ${prop_bitness:--}
+endianess:          ${prop_endianess:--}
+data model:         ${prop_data_model:--}
 EOF
   else
     if test -z "$print_string"; then
