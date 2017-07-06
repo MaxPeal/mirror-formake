@@ -272,9 +272,9 @@ perform_probe() {
         hppa)
           config_arch=hppa
           ;;
-	i386)
+        i386)
           config_arch=x86
-	  ;;
+        ;;
         mipseb | mipsel)
           config_arch=mips
           ;;
@@ -527,6 +527,9 @@ perform_probe() {
         hexagon)
           config_arch=hexagon
           ;;
+        i386)
+          config_arch=x86
+          ;;
         i686)
           config_arch=x86
           ;;
@@ -628,6 +631,9 @@ perform_probe() {
       case "$uname_m" in
         i386)
           config_arch=x86
+          ;;
+        x86_64)
+          config_arch=x86_64
           ;;
       esac
       config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
