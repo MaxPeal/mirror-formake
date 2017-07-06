@@ -32,4 +32,5 @@ Formake v0.11
   * pofig: added Slackware detection
   * pofig: added Arch Linux detection
   * pofig: updated support of NetBSD
+  * pofig: updated support of OpenBSD
 
