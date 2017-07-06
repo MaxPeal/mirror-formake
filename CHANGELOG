@@ -36,4 +36,5 @@ Formake v0.11
   * pofig: updated support of DragonFly BSD
   * minor fixes for compatibility with older sh
   * pofig: highly improved arch detection
+  * pofig: updated support of FreeBSD
 
