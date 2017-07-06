@@ -34,4 +34,5 @@ Formake v0.11
   * pofig: updated support of NetBSD
   * pofig: updated support of OpenBSD
   * pofig: updated support of DragonFly BSD
+  * minor fixes for compatibility with older sh
 
