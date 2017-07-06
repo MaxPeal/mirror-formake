@@ -31,6 +31,7 @@
 # TESTED ON:
 #   DragonFly BSD 3.8 i386
 #   DragonFly BSD 4.8.0 x86-64
+#   FreeBSD 11.0 i386
 #   GNU Linux:
 #     Arch Linux x86-64
 #     CentOS 5 i386
@@ -247,7 +248,7 @@ perform_probe() {
     netbsd)
       config_os=netbsd
       config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
-      config_os_vminor=`echo -n "$uname_r" | sed 's/^[0-9]*\.//' | sed 's/\..*//'`
+      config_os_vminor=`echo -n "$uname_r" | sed 's/^[0-9]*\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
     bitrig)
       config_os=bitrig
@@ -255,7 +256,7 @@ perform_probe() {
     openbsd)
       config_os=openbsd
       config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
-      config_os_vminor=`echo -n "$uname_r" | sed 's/^[0-9]*\.//' | sed 's/\..*//'`
+      config_os_vminor=`echo -n "$uname_r" | sed 's/^[0-9]*\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
     mirbsd)
       config_os=mirbsd
@@ -326,6 +327,8 @@ perform_probe() {
       ;;
     freebsd)
       config_os=freebsd
+      config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
+      config_os_vminor=`echo -n "$uname_r" | sed 's/^[0-9]*\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
     cygwin)
       config_os=cygwin
