@@ -83,7 +83,7 @@
 #  OpenBSD 6.1 x86-64
 
 
-version_string="Formake pofig 0.14"
+version_string="Formake pofig 0.15"
 
 print_help() {
 cat <<EOF
@@ -260,41 +260,6 @@ perform_probe() {
   case "$uname_s_lc" in
     netbsd)
       config_os=netbsd
-      case "$uname_p" in
-        alpha)
-          config_arch=alpha
-          ;;
-        arm)
-          config_arch=arm
-          ;;
-        hppa)
-          config_arch=hppa
-          ;;
-        i386)
-          config_arch=x86
-        ;;
-        mipseb | mipsel)
-          config_arch=mips
-          ;;
-        powerpc)
-          config_arch=powerpc
-          ;;
-        sh5*)
-          config_arch=superh
-          ;;
-        sh3eb | sh3el)
-          config_arch=superh
-          ;;
-        sparc)
-          config_arch=sparc
-          ;;
-        sparc64)
-          config_arch=sparc64
-          ;;
-        x86_64)
-          config_arch=x86_64
-          ;;
-      esac
       config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
       config_os_vminor=`echo -n "$uname_r" | sed 's/^[0-9]*\.//' | sed 's/\..*//'`
       ;;
@@ -303,24 +268,11 @@ perform_probe() {
       ;;
     openbsd)
       config_os=openbsd
-      case "$uname_m" in
-        i386)
-          config_arch=x86
-          ;;
-        amd64)
-          config_arch=x86_64
-          ;;
-      esac
       config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
       config_os_vminor=`echo -n "$uname_r" | sed 's/^[0-9]*\.//' | sed 's/\..*//'`
       ;;
     mirbsd)
       config_os=mirbsd
-      case "$uname_m" in
-        macppc)
-          config_arch=powerpc
-          ;;
-      esac
       ;;
     amigaos)
       config_os=amiga
@@ -334,11 +286,6 @@ perform_probe() {
       ;;
     riscos)
       config_os=riscos
-      case "$uname_m" in
-        arm*)
-          config_arch=arm
-          ;;
-      esac
       ;;
     sunos)
       case "$uname_m:$uname_r" in
@@ -358,11 +305,6 @@ perform_probe() {
           ;;
       esac
 
-      case "$uname_p" in
-        sparc)
-          config_arch=sparc
-          ;;
-      esac
       ;;
     irix*)
       config_os=irix
@@ -392,49 +334,15 @@ perform_probe() {
           config_os_vminor=$uname_r
           ;;
       esac
-
-      case "$uname_p" in
-        powerpc)
-          config_arch=powerpc
-          ;;
-      esac
-
-      case "$uname_m" in
-        ia64)
-          config_arch=ia64
-          ;;
-      esac
       ;;
     hp-ux)
       config_os=hpux
-
-      case "$uname_m" in
-        ia64)
-          config_arch=ia64
-          ;;
-	  esac
       ;;
     freebsd)
       config_os=freebsd
-      case "$uname_p" in
-        amd64)
-          config_arch=x86_64
-          ;;
-      esac
       ;;
     cygwin)
       config_os=cygwin
-      case "$uname_m" in
-        amd64 | x86_64)
-          config_arch=x86_64
-          ;;
-        i*)
-          config_arch=x86
-          ;;
-        p*)
-          config_arch=powerpc
-          ;;
-      esac
       ;;
     mingw64)
       config_os=mingw64
@@ -444,213 +352,225 @@ perform_probe() {
       ;;
     windows32*)
       config_os=mingw
-      case "$uname_m" in
-        i*)
-          config_arch=x86
-          ;;
-      esac
       ;;
     interix)
       config_os=interix
-      case "$uname_m" in
-        x86)
-          config_arch=x86
-          ;;
-        authenticamd | genuineintel | EM64T)
-          config_arch=x86_64
-          ;;
-        IA64)
-          config_arch=ia64
-          ;;
-      esac
       ;;
     windows_95 | windows_98 | windows_nt)
       case "$uname_m" in
         8664)
           config_os=mks
-          config_arch=x86_64
           ;;
       esac
       ;;
     minix)
       config_os=minix
-      case "$uname_m" in
-        i*86)
-          config_arch=x86
-          ;;
-      esac
       ;;
     linux)
-      uname_o=`uname -o 2>/dev/null`
-      case "x$uname_o" in
-        xGNU/Linux)
-          config_os=gnulinux
-          ;;
-	x)
-          config_os=gnulinux
-          ;;
-      esac
-
+      config_os=gnulinux
       uname_r=`uname -r 2>/dev/null`
       kernel_version=`uname -r 2>/dev/null | sed 's/\([0-9]*\.[0-9]*\.[0-9]*\).*/\1/'`
       config_kernel_vmajor=`echo $kernel_version | sed 's/\([0-9]*\)\..*/\1/'`
       config_kernel_vminor=`echo $kernel_version | sed 's/^.*\.\([0-9]*\)\.[0-9]*.*/\1/'`
       config_kernel_vrevision=`echo $kernel_version | sed 's/^.*\.[0-9]*\.\([0-9]*\).*/\1/'`
-
-      case "$uname_m" in
-        aarch64 | aarch64_be)
-          config_arch=arm64
-          ;;
-        alpha)
-          config_arch=alpha
-          ;;
-        arc | arceb)
-          config_arch=arc
-          ;;
-        arm*)
-          config_arch=arm
-          ;;
-        avr32*)
-          config_arch=avr32
-          ;;
-        cris | crisv32)
-          config_arch=cris
-          ;;
-        frv)
-          config_arch=frv
-          ;;
-        hexagon)
-          config_arch=hexagon
-          ;;
-        i386)
-          config_arch=x86
-          ;;
-        i686)
-          config_arch=x86
-          ;;
-        ia64)
-          config_arch=ia64
-          ;;
-        m32r*)
-          config_arch=m32r
-          ;;
-        mips)
-          config_arch=mips
-          ;;
-        mips64)
-          config_arch=mips64
-          ;;
-        or1k|or32)
-          config_arch=or1k
-          ;;
-        padre)
-          config_arch=sparc
-          ;;
-        parisc64 | hppa64)
-          config_arch=hppa64
-          ;;
-        parisc | hppa)
-          config_arch=hppa
-          ;;
-        ppc64 | ppc64le)
-          config_arch=powerpc
-          ;;
-        ppc | ppcle)
-          config_arch=powerpc
-          ;;
-        sh64*)
-          config_arch=superh
-          ;;
-        sh*)
-          config_arch=superh
-          ;;
-        sparc)
-          config_arch=sparc
-          ;;
-        sparc64)
-          config_arch=sparc64
-          ;;
-        tile*)
-          config_arch=tile
-          ;;
-        x86_64)
-          config_arch=x86_64
-          ;;
-        xtensa*)
-          config_arch=xtensa
-          ;;
-      esac
       ;;
     syllable)
       config_os=syllable
-      case "$uname_m" in
-        i*86)
-          config_arch=x86
-          ;;
-      esac
       ;;
     lynxos)
       config_os=lynxos
-      case "$uname_m:$uname_r" in
-        i*86:*)
-          config_arch=x86
-          ;;
-        TSUNAMI:2.*)
-          config_arch=sparc
-          ;;
-        PowerPC:2.* | PowerPC:3.[01]* | PowerPC:4.[02]*)
-          config_arch=powerpc
-          ;;
-      esac
       ;;
     haiku)
       config_os=haiku
-      case "$uname_m" in
-        x86_64)
-          config_arch=x86_64
-          ;;
-      esac
       ;;
     darwin)
       config_os=darwin
       ;;
     procnto* | qnx)
       config_os=qnx
-
-      if test "$uname_p" = "x86"; then
-        config_arch=x86
-      fi
       ;;
     dragonfly)
       config_os=dragonfly
-      case "$uname_m" in
-        i386)
-          config_arch=x86
-          ;;
-        x86_64)
-          config_arch=x86_64
-          ;;
-      esac
       config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
       config_os_vminor=`echo -n "$uname_r" | sed 's/^[0-9]*\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
     aros)
       config_os=aros
-      case "$uname_m" in
-        i*86)
-          config_arch=x86
-        ;;
-      esac
       ;;
     vmkernel)
       config_os=esx
-      case "$uname_m" in
-        x86_64)
-          config_arch=x86_64
-        ;;
-      esac
       ;;
   esac
+
+
+  if test $config_arch = unknown; then
+    case "$uname_m:$uname_r" in
+      i*86:*)
+        config_arch=x86
+        ;;
+      TSUNAMI:2.*)
+        config_arch=sparc
+        ;;
+      PowerPC:2.* | PowerPC:3.[01]* | PowerPC:4.[02]*)
+        config_arch=powerpc
+        ;;
+    esac
+  fi
+
+  if test $config_arch = unknown; then
+    case "$uname_p" in
+      alpha)
+        config_arch=alpha
+        ;;
+      amd64)
+        config_arch=x86_64
+        ;;
+      arm)
+        config_arch=arm
+        ;;
+      hppa)
+        config_arch=hppa
+        ;;
+      i386)
+        config_arch=x86
+        ;;
+      mipseb | mipsel)
+        config_arch=mips
+        ;;
+      powerpc)
+        config_arch=powerpc
+        ;;
+      sh5*)
+        config_arch=superh
+        ;;
+      sh3eb | sh3el)
+        config_arch=superh
+        ;;
+      sparc)
+        config_arch=sparc
+        ;;
+      sparc64)
+        config_arch=sparc64
+        ;;
+      x86_64)
+        config_arch=x86_64
+        ;;
+      x86)
+        config_arch=x86
+        ;;
+    esac
+  fi
+
+  if test $config_arch = unknown; then
+    case "$uname_m" in
+      8664)
+        config_arch=x86_64
+        ;;
+      aarch64 | aarch64_be)
+        config_arch=arm64
+        ;;
+      alpha)
+        config_arch=alpha
+        ;;
+      amd64)
+        config_arch=x86_64
+        ;;
+      arc | arceb)
+        config_arch=arc
+        ;;
+      arm*)
+        config_arch=arm
+        ;;
+      avr32*)
+        config_arch=avr32
+        ;;
+      authenticamd | genuineintel | EM64T)
+        config_arch=x86_64
+        ;;
+      cris | crisv32)
+        config_arch=cris
+        ;;
+      frv)
+        config_arch=frv
+        ;;
+      hexagon)
+        config_arch=hexagon
+        ;;
+      i*86)
+        config_arch=x86
+        ;;
+      ia64 | IA64)
+        config_arch=ia64
+        ;;
+      m32r*)
+        config_arch=m32r
+        ;;
+      macppc)
+        config_arch=powerpc
+        ;;
+      mips)
+        config_arch=mips
+        ;;
+      mips64)
+        config_arch=mips64
+        ;;
+      or1k|or32)
+        config_arch=or1k
+        ;;
+      padre)
+        config_arch=sparc
+        ;;
+      parisc64 | hppa64)
+        config_arch=hppa64
+        ;;
+      parisc | hppa)
+        config_arch=hppa
+        ;;
+      ppc64 | ppc64le)
+        config_arch=powerpc
+        ;;
+      ppc | ppcle)
+        config_arch=powerpc
+        ;;
+      sh64*)
+        config_arch=superh
+        ;;
+      sh*)
+        config_arch=superh
+        ;;
+      sparc)
+        config_arch=sparc
+        ;;
+      sparc64)
+        config_arch=sparc64
+        ;;
+      tile*)
+        config_arch=tile
+        ;;
+      x86)
+        config_arch=x86
+        ;;
+      x86_64)
+        config_arch=x86_64
+        ;;
+      xtensa*)
+        config_arch=xtensa
+        ;;
+      i*)
+        case "$config_os" in
+          mingw | mingw64 | cygwin)
+            config_arch=x86
+            ;;
+        esac
+        ;;
+      p*)
+        if test "$config_os" = cygwin; then
+          config_arch=powerpc
+        fi
+        ;;
+    esac
+  fi
+
 
   if test x$have_lsb_release = x1; then
     if lsb_release -id | grep -i fedora >/dev/null; then
