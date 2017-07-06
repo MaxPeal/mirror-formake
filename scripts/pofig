@@ -140,10 +140,7 @@ zvm               IBM z/VM
 
 KERNELS
 --------------------------------------------------------------------------------
-dragonfly         DragonFly BSD
-linux             Linux
-netbsd            NetBSD
-openbsd           OpenBSD
+generic           Generic kernel for current operating system
 
 DISTRIBUTIONS
 --------------------------------------------------------------------------------
@@ -214,7 +211,7 @@ perform_probe() {
   distro_version=
   config_os=unknown
   config_os_version=unknown
-  config_kernel=unknown
+  config_kernel=generic
   config_kernel_version=unknown
   config_distro=unknown
   config_distro_version=unknown
@@ -300,7 +297,6 @@ perform_probe() {
       esac
       config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
       config_os_vminor=`echo -n "$uname_r" | sed 's/^[0-9]*\.//' | sed 's/\..*//'`
-      config_kernel=netbsd
       ;;
     bitrig)
       config_os=bitrig
@@ -317,7 +313,6 @@ perform_probe() {
       esac
       config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
       config_os_vminor=`echo -n "$uname_r" | sed 's/^[0-9]*\.//' | sed 's/\..*//'`
-      config_kernel=openbsd
       ;;
     mirbsd)
       config_os=mirbsd
@@ -486,7 +481,6 @@ perform_probe() {
       esac
       ;;
     linux)
-      config_kernel=linux
       uname_o=`uname -o 2>/dev/null`
       case "x$uname_o" in
         xGNU/Linux)
@@ -639,7 +633,6 @@ perform_probe() {
       esac
       config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
       config_os_vminor=`echo -n "$uname_r" | sed 's/^[0-9]*\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
-      config_kernel=dragonfly
       ;;
     aros)
       config_os=aros
