@@ -31,4 +31,5 @@ Formake v0.11
   * pofig: updated support of Gentoo
   * pofig: added Slackware detection
   * pofig: added Arch Linux detection
+  * pofig: updated support of NetBSD
 

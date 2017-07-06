@@ -37,43 +37,45 @@
 
 
 # TESTED ON:
-#   Arch Linux x86-64
-#   CentOS 5 i386
-#   CentOS 6.5 i686
-#   CentOS 7.2 i686
-#   Debian 3.0 r6 i386
-#   Debian 4.0 r9 x86-64
-#   Debian 5.0 x86-64
-#   Debian 6.0 x86-64
-#   Debian 7.11 x86-64
-#   Debian 8.7 x86-64
-#   Debian 9.0 x86-64
-#   Devuan 1.0 x86-64
-#   Fedora 14 i386
-#   Fedora 20 x86-64
-#   Fedora 25 x86-64
-#   Gentoo Live 20160704 x86-64
-#   OpenSUSE 11.4 x86-64
-#   OpenSUSE 13.2 i586
-#   OpenSUSE 42.2 x86-64
-#   Red Hat 7.1 i386
-#   Red Hat 8.0 i386
-#   RHEL 3 i386
-#   RHEL 4.6 x86-64
-#   RHEL 5.8 x86-64 server
-#   RHEL 6.8 x86-64
-#   RHEL 7.3 x86-64
-#   Slackware 12.0 i386
-#   Slackware 13.37 i386
-#   Slackware 14.02 x86-64
-#   Suse Linux Enterprise Desktop 10 i386
-#   Suse Linux Enterprise Server 10 i386
-#   Suse Linux Enterprise Server 10 x86-64
-#   Suse Linux Enterprise Desktop 11 x86-64
-#   Suse Linux Enterprise Desktop 12 x86-64
-#   Ubuntu 12.04 x86-64
-#   Ubuntu 14.04 x86-64
-#   Ubuntu 17.04 x86-64
+#   GNU Linux:
+#     Arch Linux x86-64
+#     CentOS 5 i386
+#     CentOS 6.5 i686
+#     CentOS 7.2 i686
+#     Debian 3.0 r6 i386
+#     Debian 4.0 r9 x86-64
+#     Debian 5.0 x86-64
+#     Debian 6.0 x86-64
+#     Debian 7.11 x86-64
+#     Debian 8.7 x86-64
+#     Debian 9.0 x86-64
+#     Devuan 1.0 x86-64
+#     Fedora 14 i386
+#     Fedora 20 x86-64
+#     Fedora 25 x86-64
+#     Gentoo Live 20160704 x86-64
+#     OpenSUSE 11.4 x86-64
+#     OpenSUSE 13.2 i586
+#     OpenSUSE 42.2 x86-64
+#     Red Hat 7.1 i386
+#     Red Hat 8.0 i386
+#     RHEL 3 i386
+#     RHEL 4.6 x86-64
+#     RHEL 5.8 x86-64 server
+#     RHEL 6.8 x86-64
+#     RHEL 7.3 x86-64
+#     Slackware 12.0 i386
+#     Slackware 13.37 i386
+#     Slackware 14.02 x86-64
+#     Suse Linux Enterprise Desktop 10 i386
+#     Suse Linux Enterprise Server 10 i386
+#     Suse Linux Enterprise Server 10 x86-64
+#     Suse Linux Enterprise Desktop 11 x86-64
+#     Suse Linux Enterprise Desktop 12 x86-64
+#     Ubuntu 12.04 x86-64
+#     Ubuntu 14.04 x86-64
+#     Ubuntu 17.04 x86-64
+#  NetBSD 6.0.4 i386
 
 
 version_string="Formake pofig 0.14"
@@ -134,6 +136,7 @@ zvm               IBM z/VM
 KERNELS
 --------------------------------------------------------------------------------
 linux             Linux
+netbsd            NetBSD
 
 DISTRIBUTIONS
 --------------------------------------------------------------------------------
@@ -263,6 +266,9 @@ perform_probe() {
         hppa)
           config_arch=hppa
           ;;
+	i386)
+          config_arch=x86
+	  ;;
         mipseb | mipsel)
           config_arch=mips
           ;;
@@ -285,6 +291,9 @@ perform_probe() {
           config_arch=x86_64
           ;;
       esac
+      config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
+      config_os_vminor=`echo -n "$uname_r" | sed 's/^[0-9]*\.//' | sed 's/\..*//'`
+      config_kernel=netbsd
       ;;
     bitrig)
       config_os=bitrig
