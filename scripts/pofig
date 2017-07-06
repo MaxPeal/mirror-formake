@@ -37,6 +37,7 @@
 
 
 # TESTED ON:
+#   DragonFly BSD 3.8 i386
 #   GNU Linux:
 #     Arch Linux x86-64
 #     CentOS 5 i386
@@ -138,6 +139,7 @@ zvm               IBM z/VM
 
 KERNELS
 --------------------------------------------------------------------------------
+dragonfly         DragonFly BSD
 linux             Linux
 netbsd            NetBSD
 openbsd           OpenBSD
@@ -623,6 +625,14 @@ perform_probe() {
       ;;
     dragonfly)
       config_os=dragonfly
+      case "$uname_m" in
+        i386)
+          config_arch=x86
+          ;;
+      esac
+      config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
+      config_os_vminor=`echo -n "$uname_r" | sed 's/^[0-9]*\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      config_kernel=dragonfly
       ;;
     aros)
       config_os=aros
