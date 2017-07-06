@@ -78,6 +78,7 @@
 #  NetBSD 6.0.4 i386
 #  NetBSD 7.1 x86-64
 #  OpenBSD 4.9 i386
+#  OpenBSD 6.1 x86-64
 
 
 version_string="Formake pofig 0.14"
@@ -306,6 +307,9 @@ perform_probe() {
       case "$uname_m" in
         i386)
           config_arch=x86
+          ;;
+        amd64)
+          config_arch=x86_64
           ;;
       esac
       config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
