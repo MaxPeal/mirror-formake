@@ -27,14 +27,6 @@
 #
 # --------------------------------------------------------------------------------
 #
-# pofig info NOTE: if kernel name and OS name are same than config_is_<name> means OS name. If some OSes explore kernel that has
-# the name as it's native OS than for that custom OSes config_is_<name> is not used for indicating kernel. For example,
-# there are some OSes based on FreeBSd kernel. We should not indicated kernel name with prop_os_freebsd for DragonflyBSD,
-# for example, since this name indicates FreeBSD OS name.
-
-# NOTE: Linux is a kernel name. It is not OS name. Generally all GNU-based Linux distributions are GNU/Linux OS. So this is
-# the name of linux kernel based OS. Since there is no OS named Linux we can use prop_kernel_linux to indicate kernel name.
-
 
 # TESTED ON:
 #   DragonFly BSD 3.8 i386
@@ -93,7 +85,6 @@ $script_name [OPTIONS]
 
  -os          print OS
  -osver       print OS version
- -kernel      print kernel
  -kernver     print kernel version
  -distro      print distro
  -distver     print distro version
@@ -137,10 +128,6 @@ riscos            RISC OS
 solaris           Solaris
 syllable          Syllable Desktop
 zvm               IBM z/VM
-
-KERNELS
---------------------------------------------------------------------------------
-generic           Generic kernel for current operating system
 
 DISTRIBUTIONS
 --------------------------------------------------------------------------------
@@ -211,7 +198,6 @@ perform_probe() {
   distro_version=
   config_os=unknown
   config_os_version=unknown
-  config_kernel=generic
   config_kernel_version=unknown
   config_distro=unknown
   config_distro_version=unknown
@@ -809,7 +795,7 @@ for arg in "$@"; do
 done
 
 if test $# -eq 0; then
-  print_string="$config_os $config_os_version $config_kernel $config_kernel_version $config_distro $config_distro_version $config_arch"
+  print_string="$config_os $config_os_version $config_kernel_version $config_distro $config_distro_version $config_arch"
 fi
 
 while test $# -gt 0; do
@@ -821,10 +807,6 @@ while test $# -gt 0; do
     -osver)
       print_string="$print_string $config_os_version"
       op_osver=1
-      ;;
-    -kernel)
-      print_string="$print_string $config_kernel"
-      op_kernel=1
       ;;
     -kernver)
       print_string="$print_string $config_kernel_version"
@@ -856,10 +838,9 @@ while test $# -gt 0; do
 done
 
 if test x$op_verbose = x1; then
-  if test -z "$op_os$op_osver$op_kernel$op_kernver$op_distro$op_distver$op_arch$op_id"; then
+  if test -z "$op_os$op_osver$op_kernver$op_distro$op_distver$op_arch$op_id"; then
     op_os=1
     op_osver=1
-    op_kernel=1
     op_kernver=1
     op_distro=1
     op_distver=1
@@ -870,9 +851,6 @@ if test x$op_verbose = x1; then
   fi
   if test x$op_osver = x1; then
     echo "OS Version        ${config_os_version:-'-'}"
-  fi
-  if test x$op_kernel = x1; then
-    echo "Kernel            ${config_kernel:-'-'}"
   fi
   if test x$op_kernver = x1; then
     echo "Kernel version    ${config_kernel_version:-'-'}"
