@@ -75,6 +75,7 @@
 #  NetBSD 7.1 x86-64
 #  OpenBSD 4.9 i386
 #  OpenBSD 6.1 x86-64
+#  Solaris 11.3 x86-64
 
 
 version_string="Formake pofig 0.15"
@@ -276,23 +277,21 @@ perform_probe() {
       config_os=riscos
       ;;
     sunos)
-      case "$uname_m:$uname_r" in
-        sun4*:5.* | tadpole*:5.* | sun4*:6*)
-          config_os=solaris
-          config_arch=sparc
+      config_os=solaris
+      uname_v=`uname -v`
+      case x"$uname_v" in
+        x[0-9]*.[0-9])
+          config_os_vmajor=`echo "$uname_v" | sed 's/\..*//'`
+          config_os_vminor=`echo "$uname_v" | sed 's/^[0-9]*\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
           ;;
-        prep*:5.*)
-          config_arch=powerpc
-          config_os=solaris
+        *)
+          case "$uname_r" in
+            5.*)
+              config_os_vmajor=`echo $uname_r | /usr/bin/sed 's/.*\.\([0-9]*\)/\1/g'`
+              ;;
+          esac
           ;;
       esac
-
-      case "$uname_r" in
-        5.*)
-          config_os_vmajor=`echo $uname_r | /usr/bin/sed 's/.*\.\([0-9]*\)/\1/g'`
-          ;;
-      esac
-
       ;;
     irix*)
       config_os=irix
@@ -421,7 +420,7 @@ perform_probe() {
       hppa)
         config_arch=hppa
         ;;
-      i386)
+      i*86)
         config_arch=x86
         ;;
       mipseb | mipsel)
@@ -487,6 +486,9 @@ perform_probe() {
         config_arch=hexagon
         ;;
       i*86)
+        config_arch=x86
+        ;;
+      i86pc)
         config_arch=x86
         ;;
       ia64 | IA64)
