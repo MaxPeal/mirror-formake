@@ -506,7 +506,7 @@ read_cc_props() {
   probe_h_out="/tmp/cstem_$$_out"
   $cc_cmd $CXXFLAGS $CPP_FLAG $probe_h 2>/dev/null > $probe_h_out
   probe_sh="/tmp/cstem_$$.sh"
-  cat $probe_h_out | grep "^D[SV][EA][TL]" | sed 's/=\(.*\)$/="\1"/' | sed 's/""*/"/g' > $probe_sh
+  cat $probe_h_out | grep "^D[SV][EA][TL]" | sed 's/=\(.*\)$/="\1"/' | sed 's/""*/"/g' | sed 's/ *= */=/' > $probe_sh
   . $probe_sh
   rm -f $probe_sh
   rm -f $probe_h_out
