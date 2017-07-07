@@ -75,8 +75,9 @@
 #  NetBSD 7.1 x86-64
 #  OpenBSD 4.9 i386
 #  OpenBSD 6.1 x86-64
-#  Solaris 11.3 x86-64
+#  Solaris 9 x86-64
 #  Solaris 10 x86-64
+#  Solaris 11.3 x86-64
 
 
 version_string="Formake pofig 0.15"
