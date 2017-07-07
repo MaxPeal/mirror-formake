@@ -37,4 +37,5 @@ Formake v0.11
   * minor fixes for compatibility with older sh
   * pofig: highly improved arch detection
   * pofig: updated support of FreeBSD
+  * cstem: many fixes for Solaris
 
