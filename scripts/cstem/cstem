@@ -837,18 +837,19 @@ read_cc_props() {
 
     if test -n "$version_string"; then
       tbuf=`echo "$version_string" | sed 's/0[xX]\(.\).*/\1/g'`
-      prop_vmajor=`expr "0$tbuf" + 0`
+      test -n "$tbuf" || tbuf=0
+      prop_vmajor=`expr $tbuf + 0`
       nchars=`echo "$version_string" | wc -c`
       if test "$nchars" -gt 5; then
         tbuf=`echo "$version_string" | sed 's/0[xX].\(..\).*/\1/g'`
-        prop_vminor=`expr "0$tbuf" + 0`
+        prop_vminor=`expr $tbuf + 0`
         tbuf=`echo "$version_string" | sed 's/0[xX]...\(.\).*/\1/g'`
-        prop_vrevision=`expr "0$tbuf" + 0`
+        prop_vrevision=`expr $tbuf + 0`
       else
         tbuf=`echo "$version_string" | sed 's/0[xX].\(.\).*/\1/g'`
-        prop_vminor=`expr "0$tbuf" + 0`
+        prop_vminor=`expr $tbuf + 0`
         tbuf=`echo "$version_string" | sed 's/0[xX]..\(.\).*/\1/g'`
-        prop_vrevision=`expr "0$tbuf" + 0`
+        prop_vrevision=`expr $tbuf + 0`
       fi
     fi
   fi
