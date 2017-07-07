@@ -214,13 +214,13 @@ perform_probe() {
   gen_system_id
   config_system_id=$system_id
 
-  (uname >/dev/null) 2>/dev/null
-  if test $? -ne 0; then
+  uname >/dev/null 2>&1
+  if test $? -eq 127; then
     return
   fi
 
-  (lsb_release >/dev/null) 2>/dev/null
-  if test $? -eq 0; then
+  lsb_release >/dev/null 2>&1
+  if test $? -ne 127; then
     have_lsb_release=1
   else
     have_lsb_release=
@@ -741,7 +741,7 @@ abs_path() {
   else
     _arg=$1
   fi
-  if test -f "$_arg" || test -d "$_arg"; then
+  if test -e "$_arg"; then
     if test -d $_arg; then
       _file=
     else
