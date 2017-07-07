@@ -87,7 +87,7 @@ out_format=
 config_file="$script_dir/cstem.conf"
 ext="c"
 tmp_dir=/tmp/cstem_$$
-version_string="0.3"
+version_string="0.4"
 
 
 ################################################################################
