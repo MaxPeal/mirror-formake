@@ -36,10 +36,10 @@ abs_path() {
   if test $# = 2; then
     _arg_orig_dir=$1
     _arg=$2
-    if echo -n "$_arg" | grep "^/" > /dev/null; then
+    if echo "$_arg" | grep "^/" > /dev/null; then
       :
     else
-      _arg=`echo -n "$_arg_orig_dir/$_arg" | sed 's!//*!/!g'`
+      _arg=`echo "$_arg_orig_dir/$_arg" | sed 's!//*!/!g'`
     fi
   else
     _arg=$1
@@ -48,7 +48,7 @@ abs_path() {
     if test -d $_arg; then
       _file=
     else
-      _file=`basename -- $_arg`
+      _file=`basename $_arg`
       _arg=`dirname -- $_arg`
     fi
 
@@ -60,21 +60,21 @@ abs_path() {
 
     cd $_cd_param $_sub_orig_dir
   else
-    if echo -n "$_arg" | grep "^/" > /dev/null; then
+    if echo "$_arg" | grep "^/" > /dev/null; then
       abs_path_ret="$_arg"
     else
       abs_path_ret="$_sub_orig_dir/$_arg"
     fi
-    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#//*#/#g'`
-    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/*$#/#'`
+    abs_path_ret=`echo "$abs_path_ret" | sed 's#//*#/#g'`
+    abs_path_ret=`echo "$abs_path_ret" | sed 's#/*$#/#'`
     string_prev=
     while test "x$abs_path_ret" != "x$string_prev" ; do
       string_prev=$abs_path_ret
-      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/[^/][^/][^/][^/]*/\.\./#/#g' | sed 's#/[^/][^/.]/\.\./#/#g' | sed 's#/[^/.][^/]/\.\./#/#g' | sed 's#/[^/.]/\.\./#/#g'`
-      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#^/\.\./#/#' | sed 's#^/\.\.$#/#'`
-      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/\./#/#g' | sed 's#/\.$#/#'`
+      abs_path_ret=`echo "$abs_path_ret" | sed 's#/[^/][^/][^/][^/]*/\.\./#/#g' | sed 's#/[^/][^/.]/\.\./#/#g' | sed 's#/[^/.][^/]/\.\./#/#g' | sed 's#/[^/.]/\.\./#/#g'`
+      abs_path_ret=`echo "$abs_path_ret" | sed 's#^/\.\./#/#' | sed 's#^/\.\.$#/#'`
+      abs_path_ret=`echo "$abs_path_ret" | sed 's#/\./#/#g' | sed 's#/\.$#/#'`
     done
-    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/$##' | sed 's#^$#/#'`
+    abs_path_ret=`echo "$abs_path_ret" | sed 's#/$##' | sed 's#^$#/#'`
   fi
 }
 
@@ -472,8 +472,8 @@ EOF
   $cc_cmd $check_cflags $CPP_FLAG $test_h >/dev/null 2>&1
   ret_code=$?
   if test $ret_code -ne 0; then
-    rm -rf $test_dir
     cd $orig_dir
+    rm -rf $test_dir
     return
   fi
 
@@ -496,13 +496,13 @@ EOF
     cc_is_ok=1
   fi
 
-  rm -rf $test_dir
   cd $orig_dir
+  rm -rf $test_dir
 }
 
 read_cc_props() {
   probe_h="/tmp/cstem_$$.cpp"
-  cat $script_abs | grep -A 10000 "/\* *COMPILER DEFINES *\*/" | grep -v "^EOF" > $probe_h
+  cat $script_abs | sed -n -e '/\* COMPILER DEFINES \*/,$p' | grep -v "^EOF" > $probe_h
   probe_h_out="/tmp/cstem_$$_out"
   $cc_cmd $CXXFLAGS $CPP_FLAG $probe_h 2>/dev/null > $probe_h_out
   probe_sh="/tmp/cstem_$$.sh"
@@ -784,7 +784,7 @@ read_cc_props() {
     if test -n "$version_string"; then
       tbuf=`echo "$version_string" | sed 's/0[xX]\(.\).*/\1/g'`
       prop_vmajor=`expr "0$tbuf" + 0`
-      nchars=`echo -n "$version_string" | wc -c`
+      nchars=`echo "$version_string" | wc -c`
       if test "$nchars" -gt 5; then
         tbuf=`echo "$version_string" | sed 's/0[xX].\(..\).*/\1/g'`
         prop_vminor=`expr "0$tbuf" + 0`
@@ -818,7 +818,7 @@ read_cc_props() {
       prop_vmajor=`printf "%d" "0x$tbuf"`
       tbuf=`echo "$version_string" | sed 's/0[xX]..\(..\).*/\1/g'`
       prop_vminor=`printf "%d" "0x$tbuf"`
-      nchars=`echo -n "$version_string" | wc -c`
+      nchars=`echo "$version_string" | wc -c`
       if test "$nchars" -gt 6; then
         tbuf=`echo "$version_string" | sed 's/0[xX]....\(..\).*/\1/g'`
         prop_vrevision=`printf "%d" "0x$tbuf"`
@@ -1273,7 +1273,7 @@ clean_exit() {
     fi
   fi
   cd $orig_dir
-  rm -Rf $tmp_dir
+  rm -rf $tmp_dir
   rm -f $cstem_log
 
   exit $exit_status
@@ -1355,16 +1355,16 @@ if test x$mode_config = x1; then
     have_params=1
     case "$1" in
       CXX=*)
-        param_cc=`echo -n "$1" | sed 's/^[^=]*=//'`
+        param_cc=`echo "$1" | sed 's/^[^=]*=//'`
         ;;
       CXXFLAGS=*)
-        param_cflags=`echo -n "$1" | sed 's/^[^=]*=//'`
+        param_cflags=`echo "$1" | sed 's/^[^=]*=//'`
         ;;
       LD=*)
-        param_ld=`echo -n "$param" | sed 's/^[^=]*=//'`
+        param_ld=`echo "$param" | sed 's/^[^=]*=//'`
         ;;
       LDFLAGS=*)
-        param_ldflags=`echo -n "$1" | sed 's/^[^=]*=//'`
+        param_ldflags=`echo "$1" | sed 's/^[^=]*=//'`
         ;;
       *)
         printf "%s\n" "$script_name: invalid parameter $1" >&2
@@ -1418,13 +1418,13 @@ if test x$mode_probe = x1; then
   while test $# -gt 0; do
     case "$1" in
       CXX=*)
-        CXX=`echo -n "$1" | sed 's/^[^=]*=//'`
+        CXX=`echo "$1" | sed 's/^[^=]*=//'`
         ;;
       CXXFLAGS=*)
-        CXXFLAGS=`echo -n "$1" | sed 's/^[^=]*=//'`
+        CXXFLAGS=`echo "$1" | sed 's/^[^=]*=//'`
         ;;
       CXXFLAGS_ADD=*)
-        CXXFLAGS_ADD=`echo -n "$param" | sed 's/^[^=]*=//'`
+        CXXFLAGS_ADD=`echo "$param" | sed 's/^[^=]*=//'`
         ;;
       -cxxflags)
         print_string="$print_string cxxflags"
@@ -1433,10 +1433,10 @@ if test x$mode_probe = x1; then
         :
         ;;
       LDFLAGS=*)
-        LDFLAGS=`echo -n "$1" | sed 's/^[^=]*=//'`
+        LDFLAGS=`echo "$1" | sed 's/^[^=]*=//'`
         ;;
       LDFLAGS_ADD=*)
-        LDFLAGS_ADD=`echo -n "$param" | sed 's/^[^=]*=//'`
+        LDFLAGS_ADD=`echo "$param" | sed 's/^[^=]*=//'`
         ;;
       -ldflags)
         print_string="$print_string ldflags"
@@ -1475,7 +1475,7 @@ if test x$mode_probe = x1; then
         print_string="$print_string data_model"
         ;;
       -f1|-f2|-f3)
-        out_format=`echo -n "$1" | sed 's/^-f//'`
+        out_format=`echo "$1" | sed 's/^-f//'`
         ;;
       *)
         printf "%s\n" "$script_name: invalid parameter $1" >&2
@@ -1485,8 +1485,8 @@ if test x$mode_probe = x1; then
     shift
   done
 
-  CXXFLAGS=`echo -n "$CXXFLAGS $CXXFLAGS_ADD" | sed 's/^ *//' | sed 's/ *$//'`
-  LDFLAGS=`echo -n "$LDFLAGS $LDFLAGS_ADD" | sed 's/^ *//' | sed 's/ *$//'`
+  CXXFLAGS=`echo "$CXXFLAGS $CXXFLAGS_ADD" | sed 's/^ *//' | sed 's/ *$//'`
+  LDFLAGS=`echo "$LDFLAGS $LDFLAGS_ADD" | sed 's/^ *//' | sed 's/ *$//'`
 
   perform_probe
 
@@ -1547,18 +1547,18 @@ if test x$mode_test = x1; then
   def_num=0
   type_num=0
   while test $# -gt 0; do
-    param=`echo -n "$1" | sed 's/^ *//' | sed 's/^# */#/'`
+    param=`echo "$1" | sed 's/^ *//' | sed 's/^# */#/'`
     case "$param" in
       CXX=*)
-        CXX=`echo -n "$param" | sed 's/^[^=]*=//'`
+        CXX=`echo "$param" | sed 's/^[^=]*=//'`
         current_opt=
         ;;
       CXXFLAGS=*)
-        CXXFLAGS=`echo -n "$param" | sed 's/^[^=]*=//'`
+        CXXFLAGS=`echo "$param" | sed 's/^[^=]*=//'`
         current_opt=
         ;;
       CXXFLAGS_ADD=*)
-        CXXFLAGS_ADD=`echo -n "$param" | sed 's/^[^=]*=//'`
+        CXXFLAGS_ADD=`echo "$param" | sed 's/^[^=]*=//'`
         current_opt=
         ;;
       -cxx)
@@ -1566,23 +1566,23 @@ if test x$mode_test = x1; then
         current_opt=cxx
         ;;
       -cxxflags=*)
-        op_test_flags=`echo -n "$param" | sed 's/^[^=]*=//'`
+        op_test_flags=`echo "$param" | sed 's/^[^=]*=//'`
         current_opt=
         ;;
       LD=*)
-        LD=`echo -n "$param" | sed 's/^[^=]*=//'`
+        LD=`echo "$param" | sed 's/^[^=]*=//'`
         current_opt=
         ;;
       LDFLAGS=*)
-        LDFLAGS=`echo -n "$param" | sed 's/^[^=]*=//'`
+        LDFLAGS=`echo "$param" | sed 's/^[^=]*=//'`
         current_opt=
         ;;
       LDFLAGS_ADD=*)
-        LDFLAGS_ADD=`echo -n "$param" | sed 's/^[^=]*=//'`
+        LDFLAGS_ADD=`echo "$param" | sed 's/^[^=]*=//'`
         current_opt=
         ;;
       INC=*)
-        op_with_inc=`echo -n "$param" | sed 's/^[^=]*=//'`
+        op_with_inc=`echo "$param" | sed 's/^[^=]*=//'`
         current_opt=
         ;;
       -n)
@@ -1601,15 +1601,15 @@ if test x$mode_test = x1; then
         current_opt=
         ;;
       -out=*)
-        op_out=`echo -n "$param" | sed 's/^[^=]*=//'`
+        op_out=`echo "$param" | sed 's/^[^=]*=//'`
         current_opt=
         ;;
       -def-out=*)
-        op_def_out=`echo -n "$param" | sed 's/^[^=]*=//'`
+        op_def_out=`echo "$param" | sed 's/^[^=]*=//'`
         current_opt=
         ;;
       -status=*)
-        op_status_id=`echo -n "$param" | sed 's/^[^=]*=//' | sed 's/[^a-zA-Z0-9_]//g'`
+        op_status_id=`echo "$param" | sed 's/^[^=]*=//' | sed 's/[^a-zA-Z0-9_]//g'`
         current_opt=
         ;;
       -no-break)
@@ -1622,7 +1622,7 @@ if test x$mode_test = x1; then
         current_opt=ld
         ;;
       -ldflags=*)
-        op_test_ldflags=`echo -n "$param" | sed 's/^[^=]*=//'`
+        op_test_ldflags=`echo "$param" | sed 's/^[^=]*=//'`
         current_opt=
         ;;
       -lib)
@@ -1660,7 +1660,7 @@ if test x$mode_test = x1; then
         current_opt=
         ;;
       -log=*)
-        op_log_file=`echo -n "$param" | sed 's/^[^=]*=//'`
+        op_log_file=`echo "$param" | sed 's/^[^=]*=//'`
         current_opt=
         ;;
       -l*)
@@ -1717,7 +1717,7 @@ if test x$mode_test = x1; then
             current_opt=
             ;;
           lib)
-            param=`echo -n "$param" | sed 's/^lib//'`
+            param=`echo "$param" | sed 's/^lib//'`
             if test -n "$param"; then
               op_libs="$op_libs -l$param"
             fi
@@ -1770,17 +1770,17 @@ if test x$mode_test = x1; then
   op_with_inc=`echo "$op_with_inc" | sed 's/^ *//' | sed 's/ *$//'`
 
   if test -n "$op_log_file"; then
-    if echo -n "$op_log_file" | grep "^/" > /dev/null; then : ; else
+    if echo "$op_log_file" | grep "^/" > /dev/null; then : ; else
       op_log_file="$orig_dir/$op_log_file"
     fi
   fi
   if test -n "$op_out"; then
-    if echo -n "$op_out" | grep "^/" > /dev/null; then : ; else
+    if echo "$op_out" | grep "^/" > /dev/null; then : ; else
       op_out="$orig_dir/$op_out"
     fi
   fi
   if test -n "$op_def_out"; then
-    if echo -n "$op_def_out" | grep "^/" > /dev/null; then : ; else
+    if echo "$op_def_out" | grep "^/" > /dev/null; then : ; else
       op_def_out="$orig_dir/$op_def_out"
     fi
   fi
@@ -2061,7 +2061,7 @@ EOF
       else
         echo_status "%s\n" "OK"
         if test -n "$op_out$op_def_out"; then
-          out_var=`echo -n "SC_HAVE_INC_$inc" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
+          out_var=`echo "SC_HAVE_INC_$inc" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
           if test -n "$op_out"; then
             echo "$out_var=1" >>$op_out
           fi
@@ -2086,7 +2086,7 @@ EOF
 
     if_directive=0
     eval def_string=\$def$def_idx
-    def_string=`echo -n "$def_string" | sed 's/^ *//'`
+    def_string=`echo "$def_string" | sed 's/^ *//'`
     echo_status -l "%s" "checking define $def_string ... "
     case "$def_string" in
       '#if'*)
@@ -2103,14 +2103,14 @@ $def_string
 
 EOF
     else
-      def_name=`echo -n "$def_string" | sed 's/[^a-zA-Z0-9_].*//'`
+      def_name=`echo "$def_string" | sed 's/[^a-zA-Z0-9_].*//'`
       case "$def_name" in
         [0-9]*)
           echo "$script_name: error invalid macro $def_name" >&2
           clean_exit 1
           ;;
       esac
-      rpart=`echo -n "$def_string" | sed 's/[a-zA-Z0-9_]*//'`
+      rpart=`echo "$def_string" | sed 's/[a-zA-Z0-9_]*//'`
       if test "x$rpart" = x; then
         cat >>$test_src <<EOF
 #ifndef $def_name
@@ -2119,8 +2119,8 @@ EOF
 
 EOF
       else
-        opstr=`echo -n "$rpart" | sed 's/^\([=><!]*\).*/\1/'`
-        rval=`echo -n "$rpart" | sed 's/^[=><!]*//'`
+        opstr=`echo "$rpart" | sed 's/^\([=><!]*\).*/\1/'`
+        rval=`echo "$rpart" | sed 's/^[=><!]*//'`
         case x$opstr in
           'x=='|'x!='|'x>'|'x<'|'x>='|'x<=')
             :
@@ -2168,7 +2168,7 @@ EOF
       cat $test_src_base > $test_src
 
       eval type_string=\$type$type_idx
-      type_string=`echo -n "$type_string" | sed 's/^ *//'`
+      type_string=`echo "$type_string" | sed 's/^ *//'`
 
       type_base=`echo "$type_string" | sed 's/\**$//'`
       var_name=`echo "cstem_$type_base" | sed 's/[^a-zA-Z0-9_]/_/g'`
@@ -2188,7 +2188,7 @@ EOF
       else
         echo_status "%s\n" "OK"
         if test -n "$op_out$op_def_out"; then
-          out_var=`echo -n "SC_HAVE_TYPE_$type_string" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
+          out_var=`echo "SC_HAVE_TYPE_$type_string" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
           if test -n "$op_out"; then
             echo "$out_var=1" >>$op_out
           fi
@@ -2225,7 +2225,7 @@ EOF
       else
         echo_status "%s\n" "OK"
         if test -n "$op_out$op_def_out"; then
-          out_var=`echo -n "SC_HAVE_ENUM_$enum" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
+          out_var=`echo "SC_HAVE_ENUM_$enum" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
           if test -n "$op_out"; then
             echo "$out_var=1" >>$op_out
           fi
@@ -2389,7 +2389,7 @@ EOF
       if test x$test_failed = x; then
         echo_status "%s\n" "OK"
         if test -n "$op_out$op_def_out"; then
-          out_var=`echo -n "SC_HAVE_VAR_$var" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
+          out_var=`echo "SC_HAVE_VAR_$var" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
           if test -n "$op_out"; then
             echo "$out_var=1" >>$op_out
           fi
@@ -2444,7 +2444,7 @@ EOF
       if test x$test_failed = x; then
         echo_status "%s\n" "OK"
         if test -n "$op_out$op_def_out"; then
-          out_var=`echo -n "SC_HAVE_SYM_$sym" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
+          out_var=`echo "SC_HAVE_SYM_$sym" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
           if test -n "$op_out"; then
             echo "$out_var=1" >>$op_out
           fi
@@ -2499,7 +2499,7 @@ EOF
       if test x$test_failed = x; then
         echo_status "%s\n" "OK"
         if test -n "$op_out$op_def_out"; then
-          out_var=`echo -n "SC_HAVE_RVAL_$var" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
+          out_var=`echo "SC_HAVE_RVAL_$var" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
           if test -n "$op_out"; then
             echo "$out_var=1" >>$op_out
           fi
@@ -2555,7 +2555,7 @@ EOF
       if test x$test_failed = x; then
         echo_status "%s\n" "OK"
         if test -n "$op_out$op_def_out"; then
-          out_var=`echo -n "SC_HAVE_FUNC_$func" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
+          out_var=`echo "SC_HAVE_FUNC_$func" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
           if test -n "$op_out"; then
             echo "$out_var=1" >>$op_out
           fi
@@ -2576,7 +2576,7 @@ EOF
     log_title "TEST SOURCE FILES"
     for src in $op_src; do
       test_failed=
-      if echo -n "$src" | grep "^/" > /dev/null; then 
+      if echo "$src" | grep "^/" > /dev/null; then 
         src_full=$src
       else
         src_full="$orig_dir/$src"
@@ -2651,22 +2651,22 @@ if test x$mode_def = x1; then
   while test $# -gt 0; do
     case "$1" in
       CXX=*)
-        CXX=`echo -n "$1" | sed 's/^[^=]*=//'`
+        CXX=`echo "$1" | sed 's/^[^=]*=//'`
         current_opt=
         ;;
       CXXFLAGS=*)
-        CXXFLAGS=`echo -n "$1" | sed 's/^[^=]*=//'`
+        CXXFLAGS=`echo "$1" | sed 's/^[^=]*=//'`
         current_opt=
         ;;
       CXXFLAGS_ADD=*)
-        CXXFLAGS_ADD=`echo -n "$1" | sed 's/^[^=]*=//'`
+        CXXFLAGS_ADD=`echo "$1" | sed 's/^[^=]*=//'`
         current_opt=
         ;;
       -cxx)
         current_opt=cxx
         ;;
       -cxxflags=*)
-        CXXFLAGS=`echo -n "$1" | sed 's/^[^=]*=//'`
+        CXXFLAGS=`echo "$1" | sed 's/^[^=]*=//'`
         current_opt=
         ;;
       *.h|*.H|*.[Hh]++|*.[Hh][Hh]|*.[Hh][Xx][Xx]|*.[Hh][Pp][Pp])
@@ -2674,7 +2674,7 @@ if test x$mode_def = x1; then
         current_opt=
         ;;
       INC=*)
-        op_with_inc=`echo -n "$1" | sed 's/^[^=]*=//'`
+        op_with_inc=`echo "$1" | sed 's/^[^=]*=//'`
         current_opt=
         ;;
       -inc)
@@ -3532,6 +3532,14 @@ DSET__sun=1
 
 #ifdef __sun__
 DSET__sun__=1
+#endif
+
+#ifdef __SVR4
+DSET__SVR4=1
+#endif
+
+#ifdef __svr4__
+DSET__svr4__=1
 #endif
 
 #ifdef __SunOS
