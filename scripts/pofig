@@ -76,6 +76,7 @@
 #  OpenBSD 4.9 i386
 #  OpenBSD 6.1 x86-64
 #  Solaris 11.3 x86-64
+#  Solaris 10 x86-64
 
 
 version_string="Formake pofig 0.15"
@@ -210,13 +211,13 @@ perform_probe() {
   gen_system_id
   config_system_id=$system_id
 
-  uname >/dev/null 2>&1
-  if test $? -eq 127; then
+  (uname >/dev/null) 2>/dev/null
+  if test $? -ne 0; then
     return
   fi
 
-  lsb_release >/dev/null 2>&1
-  if test $? -ne 127; then
+  (lsb_release >/dev/null) 2>/dev/null
+  if test $? -eq 0; then
     have_lsb_release=1
   else
     have_lsb_release=
@@ -357,7 +358,6 @@ perform_probe() {
       ;;
     linux)
       config_os=gnulinux
-      uname_r=`uname -r 2>/dev/null`
       kernel_version=`uname -r 2>/dev/null | sed 's/\([0-9]*\.[0-9]*\.[0-9]*\).*/\1/'`
       config_kernel_vmajor=`echo $kernel_version | sed 's/\([0-9]*\)\..*/\1/'`
       config_kernel_vminor=`echo $kernel_version | sed 's/^.*\.\([0-9]*\)\.[0-9]*.*/\1/'`
@@ -738,7 +738,7 @@ abs_path() {
   else
     _arg=$1
   fi
-  if test -e "$_arg"; then
+  if test -f "$_arg" || test -d "$_arg"; then
     if test -d $_arg; then
       _file=
     else
