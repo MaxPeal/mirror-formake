@@ -39,4 +39,5 @@ Formake v0.11
   * pofig: updated support of FreeBSD
   * cstem: many fixes for Solaris
   * portability feature: jump on modern shell when script runs under old /bin/sh that misses many standard features
+  * portability fixes for QNX /bin/sh
 
