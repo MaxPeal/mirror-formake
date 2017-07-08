@@ -75,6 +75,7 @@
 #  NetBSD 7.1 x86-64
 #  OpenBSD 4.9 i386
 #  OpenBSD 6.1 x86-64
+#  QNX 6.5.0 x86
 #  SmartOS 2017xxxx x86-64
 #  Solaris 9 x86-64
 #  Solaris 10 sparc
@@ -239,12 +240,12 @@ perform_probe() {
   config_system_id=$system_id
 
   uname >/dev/null 2>&1
-  if test $? -eq 127; then
+  if test $? -ge 126; then
     return
   fi
 
   lsb_release >/dev/null 2>&1
-  if test $? -ne 127; then
+  if test $? -eq 0; then
     have_lsb_release=1
   else
     have_lsb_release=
