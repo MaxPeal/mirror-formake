@@ -402,6 +402,8 @@ perform_probe() {
       ;;
     procnto* | qnx)
       config_os=qnx
+      config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
+      config_os_vminor=`echo -n "$uname_r" | sed 's/^[0-9]*\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
     dragonfly)
       config_os=dragonfly
@@ -564,7 +566,7 @@ perform_probe() {
       tile*)
         config_arch=tile
         ;;
-      x86)
+      x86 | x86pc)
         config_arch=x86
         ;;
       x86_64)
