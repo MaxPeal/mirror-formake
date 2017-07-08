@@ -41,4 +41,5 @@ Formake v0.11
   * portability feature: jump on modern shell when script runs under old /bin/sh that misses many standard features
   * portability fixes for QNX /bin/sh
   * pofig: updated support of MirOS
+  * pofig: updated support of Minix
 
