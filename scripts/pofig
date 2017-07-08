@@ -279,7 +279,7 @@ perform_probe() {
     netbsd)
       config_os=netbsd
       config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
-      config_os_vminor=`echo -n "$uname_r" | sed 's/^[0-9]*\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      config_os_vminor=`echo -n "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
     bitrig)
       config_os=bitrig
@@ -287,10 +287,12 @@ perform_probe() {
     openbsd)
       config_os=openbsd
       config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
-      config_os_vminor=`echo -n "$uname_r" | sed 's/^[0-9]*\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      config_os_vminor=`echo -n "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
     mirbsd)
       config_os=miros
+      config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
+      config_os_vminor=`echo -n "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
     amigaos)
       config_os=amiga
@@ -311,7 +313,7 @@ perform_probe() {
       case x"$uname_v" in
         x[0-9]*.[0-9])
           config_os_vmajor=`echo "$uname_v" | sed 's/\..*//'`
-          config_os_vminor=`echo "$uname_v" | sed 's/^[0-9]*\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+          config_os_vminor=`echo -n "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
           ;;
         *)
           case "$uname_r" in
@@ -357,7 +359,7 @@ perform_probe() {
     freebsd)
       config_os=freebsd
       config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
-      config_os_vminor=`echo -n "$uname_r" | sed 's/^[0-9]*\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      config_os_vminor=`echo -n "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
     cygwin)
       config_os=cygwin
@@ -403,12 +405,12 @@ perform_probe() {
     procnto* | qnx)
       config_os=qnx
       config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
-      config_os_vminor=`echo -n "$uname_r" | sed 's/^[0-9]*\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      config_os_vminor=`echo -n "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
     dragonfly)
       config_os=dragonfly
       config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
-      config_os_vminor=`echo -n "$uname_r" | sed 's/^[0-9]*\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      config_os_vminor=`echo -n "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
     aros)
       config_os=aros
