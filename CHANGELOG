@@ -38,4 +38,5 @@ Formake v0.11
   * pofig: highly improved arch detection
   * pofig: updated support of FreeBSD
   * cstem: many fixes for Solaris
+  * portability feature: jump on modern shell when script runs under old /bin/sh that misses many standard features
 
