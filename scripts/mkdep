@@ -179,7 +179,7 @@ else
   cstem_cmd="cstem"
 fi
 
-$cstem_cmd -h >/dev/null 2>&1
+($cstem_cmd -h >/dev/null) 2>/dev/null
 if test $? -ge 126; then
   if test -f $script_dir/$cstem_cmd; then
     cstem_cmd=$script_dir/$cstem_cmd

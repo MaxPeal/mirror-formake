@@ -545,7 +545,7 @@ print_version() {
 probe_os() {
   config_os=unknown
 
-  uname >/dev/null 2>&1
+  (uname >/dev/null) 2>/dev/null
   if test $? -ge 126; then
     return
   fi
@@ -651,7 +651,7 @@ probe_os() {
 check_cc() {
   cc_is_ok=
 
-  $cc_cmd >/dev/null 2>&1
+  ($cc_cmd >/dev/null) 2>/dev/null
   if test $? -ge 126; then
     return
   fi
@@ -678,7 +678,7 @@ check_cc() {
   #define CPP_OK
 #endif
 EOF
-  $cc_cmd $check_cflags $CPP_FLAG $test_h >/dev/null 2>&1
+  ($cc_cmd $check_cflags $CPP_FLAG $test_h >/dev/null) 2>/dev/null
   ret_code=$?
   if test $ret_code -ne 0; then
     cd $orig_dir
@@ -711,7 +711,7 @@ int main(int argc, char** argv)
 EOF
 ########## BLOCK_END
 
-  if $cc_cmd $check_cflags -c $test_src >/dev/null 2>&1; then
+  if ($cc_cmd $check_cflags -c $test_src >/dev/null) 2>/dev/null; then
     cc_is_ok=1
   fi
 
@@ -1764,7 +1764,7 @@ if test x$mode_config = x1; then
         exit 1
       fi
     else
-      touch $config_file >/dev/null 2>&1
+      (touch $config_file >/dev/null) 2>/dev/null
       if test -f $config_file; then
         :
       else
@@ -1795,7 +1795,7 @@ if test x$mode_config = x1; then
       echo "LD=\"$param_ld\"" >>$config_file
     fi
   else
-    rm -f $config_file >/dev/null 2>&1
+    (rm -f $config_file >/dev/null) 2>/dev/null
   fi
 
   exit 0

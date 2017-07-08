@@ -221,35 +221,35 @@ if test -f $HOME/.bashrc; then
   cat $HOME/.bashrc >>$tmp_rc
 fi
 
-command -v ls >/dev/null 2>&1
+(command -v ls >/dev/null) 2>/dev/null
 if test $? -eq 0; then
   have_command_v=1
 fi
-hash ls >/dev/null 2>&1
+(hash ls >/dev/null) 2>/dev/null
 if test $? -eq 0; then
   have_hash=1
 fi
-type -P ls >/dev/null 2>&1
+(type -P ls >/dev/null) 2>/dev/null
 if test $? -eq 0; then
   have_type_p=1
 fi
-whence -p ls >/dev/null 2>&1
+(whence -p ls >/dev/null) 2>/dev/null
 if test $? -eq 0; then
   have_whence_p=1
 fi
 
 bash_cmd=
 if test x$have_command_v = x1; then
-  command -v bash >/dev/null 2>&1
+  (command -v bash >/dev/null) 2>/dev/null
   bash_cmd=bash
 elif test x$have_hash = x1; then
-  hash bash >/dev/null 2>&1
+  (hash bash >/dev/null) 2>/dev/null
   bash_cmd=bash
 elif test x$have_type_p = x1; then
-  type -P bash >/dev/null 2>&1
+  (type -P bash >/dev/null) 2>/dev/null
   bash_cmd=bash
 elif test x$have_whence_p = x1; then
-  whence -p bash >/dev/null 2>&1
+  (whence -p bash >/dev/null) 2>/dev/null
   bash_cmd=bash
 else
   IFS_save=$IFS

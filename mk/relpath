@@ -217,7 +217,7 @@ esac
 
 cd_param=
 orig_dir=`pwd`
-cd -P / >/dev/null 2>&1
+(cd -P / >/dev/null) 2>/dev/null
 if test $? -eq 0; then
   cd_param="-P"
 fi

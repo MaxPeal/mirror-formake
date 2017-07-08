@@ -209,7 +209,7 @@ xstem=cstem
 ########## CX_BLOCK_START
 xstem=cstem+
 ########## BLOCK_END
-$xstem -h >/dev/null 2>&1
+($xstem -h >/dev/null) 2>/dev/null
 if test $? -ge 126; then
 ########## CC_BLOCK_START
   if test -f $script_dir/cstem; then

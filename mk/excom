@@ -100,19 +100,19 @@ for param in "$@"; do
   esac
 done
 
-command -v ls >/dev/null 2>&1
+(command -v ls >/dev/null) 2>/dev/null
 if test $? -eq 0; then
   have_command_v=1
 fi
-hash ls >/dev/null 2>&1
+(hash ls >/dev/null) 2>/dev/null
 if test $? -eq 0; then
   have_hash=1
 fi
-type -P ls >/dev/null 2>&1
+(type -P ls >/dev/null) 2>/dev/null
 if test $? -eq 0; then
   have_type_p=1
 fi
-whence -p ls >/dev/null 2>&1
+(whence -p ls >/dev/null) 2>/dev/null
 if test $? -eq 0; then
   have_whence_p=1
 fi
@@ -128,25 +128,25 @@ while test $# -gt 0; do
     *)
       echo_status "%s" "checking $1 ... "
       if test x$have_command_v = x1; then
-        command -v $1 >/dev/null 2>&1
+        (command -v $1 >/dev/null) 2>/dev/null
         if test $? != 0; then
           echo_status "%s\n" "Failed"
           clean_exit 1
         fi
       elif test x$have_hash = x1; then
-        hash $1 >/dev/null 2>&1
+        (hash $1 >/dev/null) 2>/dev/null
         if test $? != 0; then
           echo_status "%s\n" "Failed"
           clean_exit 1
         fi
       elif test x$have_type_p = x1; then
-        type -P $1 >/dev/null 2>&1
+        (type -P $1 >/dev/null) 2>/dev/null
         if test $? != 0; then
           echo_status "%s\n" "Failed"
           clean_exit 1
         fi
       elif test x$have_whence_p = x1; then
-        whence -p $1 >/dev/null 2>&1
+        (whence -p $1 >/dev/null) 2>/dev/null
         if test $? != 0; then
           echo_status "%s\n" "Failed"
           clean_exit 1

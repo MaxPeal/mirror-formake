@@ -109,7 +109,7 @@ test -n "$PACKAGE_DOCDIR"      || PACKAGE_DOCDIR=$SHAREDIR/doc/$PACKAGE_NAME$PAC
 
 cd_param=
 orig_dir=`pwd`
-cd -P / >/dev/null 2>&1
+(cd -P / >/dev/null) 2>/dev/null
 if test $? -eq 0; then
   cd_param="-P"
 fi
@@ -338,11 +338,11 @@ rel_path() {
 }
 
 get_pofig() {
-  pofig -h >/dev/null 2>&1
+  (pofig -h >/dev/null) 2>/dev/null
   if test $? -eq 0; then
     POFIG=pofig
   else
-    $script_dir/pofig -h >/dev/null 2>&1
+    ($script_dir/pofig -h >/dev/null) 2>/dev/null
     if test $? -eq 0; then
       POFIG=$script_dir/pofig
     else
@@ -359,7 +359,7 @@ get_cstem() {
     xstem=cstem+
   fi
   
-  $xstem -h >/dev/null 2>&1
+  ($xstem -h >/dev/null) 2>/dev/null
   if test $? -eq 0; then
     CSTEM=$xstem
   elif test -f $script_dir/$xstem; then
@@ -374,7 +374,7 @@ get_mkdep() {
   if test -n "$op_mkdep_cmd"; then
     MKDEP=$op_mkdep_cmd
   else
-    $script_dir/mkdep -h >/dev/null 2>&1
+    ($script_dir/mkdep -h >/dev/null) 2>/dev/null
     if test $? -eq 0; then
       if test -n "$op_builddir"; then
         rel_path $op_builddir $script_dir/mkdep
@@ -383,7 +383,7 @@ get_mkdep() {
       fi
       MKDEP=$rel_path_ret
     else
-      mkdep -h >/dev/null 2>&1
+      (mkdep -h >/dev/null) 2>/dev/null
       if test $? -eq 0; then
         MKDEP=mkdep
       else
@@ -398,11 +398,11 @@ get_random() {
 # RANDOM METHOD 1
   if test -z "$RANDOM"; then
     if test -f /dev/urandom; then
-      fold --help >/dev/null 2>&1
+      (fold --help >/dev/null) 2>/dev/null
       if test $? -lt 126; then
         have_fold=1
       fi
-      head --help >/dev/null 2>&1
+      (head --help >/dev/null) 2>/dev/null
       if test $? -lt 126; then
         have_head=1
       fi
@@ -414,7 +414,7 @@ get_random() {
 
 # RANDOM METHOD 2
   if test -z "$RANDOM"; then
-    shuf --help >/dev/null 2>&1
+    (shuf --help >/dev/null) 2>/dev/null
     if test $? -lt 126; then
       RANDOM=`shuf -i 0-999999 -n 1`
     fi
@@ -422,7 +422,7 @@ get_random() {
 
 # RANDOM METHOD 3
   if test -z "$RANDOM"; then
-      mktemp --help >/dev/null 2>&1
+      (mktemp --help >/dev/null) 2>/dev/null
       if test $? -lt 126; then
         RANDOM=`mktemp -u "XXXXXX"`
       fi
@@ -431,7 +431,7 @@ get_random() {
 
 get_ldlwrap() {
   LDLWRAP=
-  ldlwrap -help >/dev/null 2>&1
+  (ldlwrap -help >/dev/null) 2>/dev/null
   if test $? -eq 0; then
     LDLWRAP=ldlwrap
   elif test -f $script_dir/ldlwrap; then
@@ -767,11 +767,11 @@ mklib() {
       ;;
   esac
     
-  libro -h >/dev/null 2>&1
+  (libro -h >/dev/null) 2>/dev/null
   if test $? -eq 0; then
     libro_cmd=libro
   else
-    $script_dir/libro -h >/dev/null 2>&1
+    ($script_dir/libro -h >/dev/null) 2>/dev/null
     if test $? -eq 0; then
       libro_cmd=$script_dir/libro
     else

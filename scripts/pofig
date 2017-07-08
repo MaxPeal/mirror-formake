@@ -240,12 +240,12 @@ perform_probe() {
   gen_system_id
   config_system_id=$system_id
 
-  uname >/dev/null 2>&1
+  (uname >/dev/null) 2>/dev/null
   if test $? -ge 126; then
     return
   fi
 
-  lsb_release >/dev/null 2>&1
+  (lsb_release >/dev/null) 2>/dev/null
   if test $? -eq 0; then
     have_lsb_release=1
   else

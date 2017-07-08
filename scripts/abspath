@@ -70,7 +70,7 @@ fi
 
 
 _cd_param=
-cd -P / >/dev/null 2>&1
+(cd -P / >/dev/null) 2>/dev/null
 if test $? -eq 0; then
   _cd_param="-P"
 fi
