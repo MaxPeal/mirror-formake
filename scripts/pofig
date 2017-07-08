@@ -151,7 +151,7 @@ lynxos            LynxOS RTOS
 mingw             MinGW
 mingw64           MinGW-w64
 minix             MINIX
-mirbsd            MirOS BSD
+miros             MirOS
 mks               MKS Toolkit
 morphos           MorphOS
 netbsd            NetBSD
@@ -290,7 +290,7 @@ perform_probe() {
       config_os_vminor=`echo -n "$uname_r" | sed 's/^[0-9]*\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
     mirbsd)
-      config_os=mirbsd
+      config_os=miros
       ;;
     amigaos)
       config_os=amiga

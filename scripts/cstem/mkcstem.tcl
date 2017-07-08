@@ -568,7 +568,7 @@ probe_os() {
       config_os=openbsd
       ;;
     mirbsd)
-      config_os=mirbsd
+      config_os=miros
       ;;
     amigaos)
       config_os=amiga
