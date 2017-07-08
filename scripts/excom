@@ -101,7 +101,7 @@ for param in "$@"; do
 done
 
 command -v ls >/dev/null 2>&1
-if test $? -ne 127; then
+if test $? -eq 0; then
   have_command_v=1
 fi
 hash ls >/dev/null 2>&1

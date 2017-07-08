@@ -546,7 +546,7 @@ probe_os() {
   config_os=unknown
 
   uname >/dev/null 2>&1
-  if test $? -eq 127; then
+  if test $? -ge 126; then
     return
   fi
 
@@ -652,7 +652,7 @@ check_cc() {
   cc_is_ok=
 
   $cc_cmd >/dev/null 2>&1
-  if test $? -eq 127; then
+  if test $? -ge 126; then
     return
   fi
 

@@ -113,7 +113,7 @@ EOF
 mkstatic() {
   if test x$op_print = x; then
     $AR -h >dev/null 2>&1
-    if test $? -eq 127; then
+    if test $? -ge 126; then
       echo "$script_name: $AR not found" >&2
       exit 1
     fi
@@ -143,11 +143,11 @@ mkshared() {
   fi
   
   $xstem -h >/dev/null 2>&1
-  if test $? -ne 127; then
+  if test $? -eq 0; then
     CSTEM=$xstem
   else
     $script_dir/$xstem -h >/dev/null 2>&1
-    if test $? -ne 127; then
+    if test $? -eq 0; then
       CSTEM=$script_dir/$xstem
     else
       echo "$script_name: error: $xstem not found" >&2

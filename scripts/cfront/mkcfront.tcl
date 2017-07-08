@@ -210,7 +210,7 @@ xstem=cstem
 xstem=cstem+
 ########## BLOCK_END
 $xstem -h >/dev/null 2>&1
-if test $? -eq 127; then
+if test $? -ge 126; then
 ########## CC_BLOCK_START
   if test -f $script_dir/cstem; then
     xstem=$script_dir/cstem

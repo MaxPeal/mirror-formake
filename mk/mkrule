@@ -339,11 +339,11 @@ rel_path() {
 
 get_pofig() {
   pofig -h >/dev/null 2>&1
-  if test $? -ne 127; then
+  if test $? -eq 0; then
     POFIG=pofig
   else
     $script_dir/pofig -h >/dev/null 2>&1
-    if test $? -ne 127; then
+    if test $? -eq 0; then
       POFIG=$script_dir/pofig
     else
       echo "$script_name: error: pofig not found" >&2
@@ -360,7 +360,7 @@ get_cstem() {
   fi
   
   $xstem -h >/dev/null 2>&1
-  if test $? -ne 127; then
+  if test $? -eq 0; then
     CSTEM=$xstem
   elif test -f $script_dir/$xstem; then
       CSTEM=$script_dir/$xstem
@@ -375,7 +375,7 @@ get_mkdep() {
     MKDEP=$op_mkdep_cmd
   else
     $script_dir/mkdep -h >/dev/null 2>&1
-    if test $? -ne 127; then
+    if test $? -eq 0; then
       if test -n "$op_builddir"; then
         rel_path $op_builddir $script_dir/mkdep
       else
@@ -384,7 +384,7 @@ get_mkdep() {
       MKDEP=$rel_path_ret
     else
       mkdep -h >/dev/null 2>&1
-      if test $? -ne 127; then
+      if test $? -eq 0; then
         MKDEP=mkdep
       else
         echo "$script_name: error: mkdep not found" >&2
@@ -399,11 +399,11 @@ get_random() {
   if test -z "$RANDOM"; then
     if test -f /dev/urandom; then
       fold --help >/dev/null 2>&1
-      if test $? -ne 127; then
+      if test $? -lt 126; then
         have_fold=1
       fi
       head --help >/dev/null 2>&1
-      if test $? -ne 127; then
+      if test $? -lt 126; then
         have_head=1
       fi
       if test x$have_fold$have_head = x11; then
@@ -415,7 +415,7 @@ get_random() {
 # RANDOM METHOD 2
   if test -z "$RANDOM"; then
     shuf --help >/dev/null 2>&1
-    if test $? -ne 127; then
+    if test $? -lt 126; then
       RANDOM=`shuf -i 0-999999 -n 1`
     fi
   fi
@@ -423,7 +423,7 @@ get_random() {
 # RANDOM METHOD 3
   if test -z "$RANDOM"; then
       mktemp --help >/dev/null 2>&1
-      if test $? -ne 127; then
+      if test $? -lt 126; then
         RANDOM=`mktemp -u "XXXXXX"`
       fi
   fi
@@ -432,7 +432,7 @@ get_random() {
 get_ldlwrap() {
   LDLWRAP=
   ldlwrap -help >/dev/null 2>&1
-  if test $? -ne 127; then
+  if test $? -eq 0; then
     LDLWRAP=ldlwrap
   elif test -f $script_dir/ldlwrap; then
     LDLWRAP=$script_dir/ldlwrap
@@ -768,11 +768,11 @@ mklib() {
   esac
     
   libro -h >/dev/null 2>&1
-  if test $? -ne 127; then
+  if test $? -eq 0; then
     libro_cmd=libro
   else
     $script_dir/libro -h >/dev/null 2>&1
-    if test $? -ne 127; then
+    if test $? -eq 0; then
       libro_cmd=$script_dir/libro
     else
       echo "$script_name: error: libro not found" >&2

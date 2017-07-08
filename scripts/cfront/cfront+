@@ -105,7 +105,7 @@ op_params=`echo -n "$op_params" | sed 's/^ *//'`
 
 xstem=cstem+
 $xstem -h >/dev/null 2>&1
-if test $? -eq 127; then
+if test $? -ge 126; then
   if test -f $script_dir/cstem+; then
     xstem=$script_dir/cstem+
   else
