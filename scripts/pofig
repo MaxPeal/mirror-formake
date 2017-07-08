@@ -71,6 +71,7 @@
 #     Ubuntu 12.04 x86-64
 #     Ubuntu 14.04 x86-64
 #     Ubuntu 17.04 x86-64
+#  Minix 3.3.0 x86
 #  NetBSD 6.0.4 i386
 #  NetBSD 7.1 x86-64
 #  OpenBSD 4.9 i386
@@ -385,6 +386,8 @@ perform_probe() {
       ;;
     minix)
       config_os=minix
+      config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
+      config_os_vminor=`echo -n "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
     linux)
       config_os=gnulinux
