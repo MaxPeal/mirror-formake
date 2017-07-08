@@ -158,7 +158,6 @@ openbsd           OpenBSD
 qnx               QNX
 riscos            RISC OS
 solaris           Solaris
-syllable          Syllable Desktop
 zvm               IBM z/VM
 
 DISTRIBUTIONS
@@ -390,9 +389,6 @@ perform_probe() {
       config_kernel_vmajor=`echo $kernel_version | sed 's/\([0-9]*\)\..*/\1/'`
       config_kernel_vminor=`echo $kernel_version | sed 's/^.*\.\([0-9]*\)\.[0-9]*.*/\1/'`
       config_kernel_vrevision=`echo $kernel_version | sed 's/^.*\.[0-9]*\.\([0-9]*\).*/\1/'`
-      ;;
-    syllable)
-      config_os=syllable
       ;;
     lynxos)
       config_os=lynxos
