@@ -1068,6 +1068,21 @@ read_cc_props() {
       prop_vmajor=$DVAL__MINGW32_MAJOR_VERSION
       prop_vminor=$DVAL__MINGW32_MINOR_VERSION
     fi
+
+    if test -n "$DSET__GNUC__"; then
+      prop_id=gcc
+
+      if test -n "$DVAL__GNUC_VERSION__"; then
+        prop_vmajor=`expr "0$DVAL__GNUC_VERSION__" / 10000`
+        tbuf=`expr "0$DVAL__GNUC_VERSION__" % 10000`
+        prop_vminor=`expr "0$tbuf" / 100`
+        prop_vrevision=`expr "0$DVAL__GNUC_VERSION__" % 100`
+      else
+        prop_vmajor=$DVAL__GNUC__
+        prop_vminor=$DVAL__GNUC_MINOR__
+        prop_vrevision=$DVAL__GNUC_PATCHLEVEL__
+      fi
+    fi
   fi
 
   if test -n "$DSET__sgi" || test -n "$DSETsgi"; then
