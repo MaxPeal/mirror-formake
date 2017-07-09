@@ -54,4 +54,5 @@ Formake v0.11
   * pofig: updated support of Cygwin
   * pofig: removed Bitrig support
   * pofig: removed AROS support
+  * pofig: removed AmigaOS support
 
