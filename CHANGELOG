@@ -46,4 +46,5 @@ Formake v0.11
   * pofig: updated support of Msys
   * cstem: different bug fixes
   * cstem: updated detection of MinGW GCC
+  * pofig: changed output format
 
