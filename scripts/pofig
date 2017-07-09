@@ -348,8 +348,10 @@ perform_probe() {
       config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
       config_os_vminor=`echo -n "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
-    cygwin)
+    cygwin*)
       config_os=cygwin
+      config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
+      config_os_vminor=`echo -n "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
     windows_95 | windows_98 | windows_nt)
       case "$uname_m" in
