@@ -319,13 +319,8 @@ perform_probe() {
           config_arch=mips64
           ;;
       esac
-
-      case "$uname_r" in
-        *.*)
-          config_os_vmajor=`echo $uname_r | sed 's/\([0-9]*\)\..*/\1/g'`
-          config_os_vminor=`echo $uname_r | sed 's/.*\.\([0-9]*\)/\1/g'`
-          ;;
-      esac
+      config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
+      config_os_vminor=`echo -n "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
     aix)
       config_os=aix
