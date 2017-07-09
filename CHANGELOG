@@ -48,4 +48,5 @@ Formake v0.11
   * cstem: updated detection of MinGW GCC
   * pofig: changed output format
   * pofig: updated support of IRIX
+  * pofig: removed Interix support
 
