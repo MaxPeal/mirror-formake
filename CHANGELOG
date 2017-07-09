@@ -51,4 +51,5 @@ Formake v0.11
   * pofig: removed Interix support
   * pofig: updated support of HP-UX
   * pofig: removed Darwin OS
+  * porig: updated support of Cygwin
 
