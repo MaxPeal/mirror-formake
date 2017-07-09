@@ -53,4 +53,5 @@ Formake v0.11
   * pofig: removed Darwin OS
   * pofig: updated support of Cygwin
   * pofig: removed Bitrig support
+  * pofig: removed AROS support
 
