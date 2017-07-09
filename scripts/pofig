@@ -137,7 +137,6 @@ cat <<EOF
 OPERATING SYSTEMS
 --------------------------------------------------------------------------------
 aix               IBM AIX
-amiga             AmigaOS
 cygwin            Cygwin
 dragonfly         DragonFly BSD
 esx               VMware ESXi
@@ -273,9 +272,6 @@ perform_probe() {
       config_os=miros
       config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
       config_os_vminor=`echo -n "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
-      ;;
-    amigaos)
-      config_os=amiga
       ;;
     morphos)
       config_os=morphos
