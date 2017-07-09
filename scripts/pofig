@@ -141,7 +141,6 @@ amiga             AmigaOS
 aros              AROS Research Operating System
 bitrig            Bitrig
 cygwin            Cygwin
-darwin            Darwin
 dragonfly         DragonFly BSD
 esx               VMware ESXi
 freebsd           FreeBSD
@@ -376,9 +375,6 @@ perform_probe() {
       ;;
     haiku)
       config_os=haiku
-      ;;
-    darwin)
-      config_os=darwin
       ;;
     procnto* | qnx)
       config_os=qnx
