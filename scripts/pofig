@@ -148,7 +148,6 @@ freebsd           FreeBSD
 gnulinux          GNU/Linux
 haiku             Haiku
 hpux              HP-UX
-interix           Interix
 irix              IRIX
 lynxos            LynxOS RTOS
 msys              Msys
@@ -345,9 +344,6 @@ perform_probe() {
       ;;
     cygwin)
       config_os=cygwin
-      ;;
-    interix)
-      config_os=interix
       ;;
     windows_95 | windows_98 | windows_nt)
       case "$uname_m" in
