@@ -139,7 +139,6 @@ OPERATING SYSTEMS
 aix               IBM AIX
 amiga             AmigaOS
 aros              AROS Research Operating System
-bitrig            Bitrig
 cygwin            Cygwin
 dragonfly         DragonFly BSD
 esx               VMware ESXi
@@ -265,9 +264,6 @@ perform_probe() {
       config_os=netbsd
       config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
       config_os_vminor=`echo -n "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
-      ;;
-    bitrig)
-      config_os=bitrig
       ;;
     openbsd)
       config_os=openbsd
