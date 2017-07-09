@@ -42,6 +42,7 @@ Formake v0.11
   * portability fixes for QNX /bin/sh
   * pofig: updated support of MirOS
   * pofig: updated support of Minix
+  * changed MinGW on Msys
   * pofig: updated support of Msys
   * cstem: different bug fixes
   * cstem: updated detection of MinGW GCC
