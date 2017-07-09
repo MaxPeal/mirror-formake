@@ -56,4 +56,5 @@ Formake v0.11
   * pofig: removed AROS support
   * pofig: removed AmigaOS support
   * pofig: added support of Apple macOS
+  * cstem: added better support of Apple macOS and clang
 
