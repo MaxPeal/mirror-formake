@@ -271,8 +271,6 @@ ghs               Green Hill C/C++
 iar               IAR C/C++
 intel             Intel C/C++
 metaware          MetaWare C/C++
-mingw             MinGW
-mingw64           Mingw-w64
 mipspro           SGI MIPSPro
 mri               Microtec C/C++
 msc               Microsoft Visual C/C++
@@ -430,14 +428,11 @@ probe_os() {
     cygwin)
       config_os=cygwin
       ;;
-    mingw64)
-      config_os=mingw64
-      ;;
     mingw*)
-      config_os=mingw
+      config_os=msys
       ;;
     windows32*)
-      config_os=mingw
+      config_os=msys
       ;;
     interix)
       config_os=interix
@@ -816,36 +811,20 @@ read_cc_props() {
   fi
 
   if test -n "$DSET__MINGW32__"; then
-    if test -n "$DSET__MINGW64_VERSION_MAJOR"; then
-      prop_id=mingw64
-      prop_vmajor=$DVAL__MINGW64_VERSION_MAJOR
-      prop_vminor=$DVAL__MINGW64_VERSION_MINOR
+#    if test -n "$DSET__MINGW64_VERSION_MAJOR"; then
+#      prop_id=mingw64
+#      prop_vmajor=$DVAL__MINGW64_VERSION_MAJOR
+#      prop_vminor=$DVAL__MINGW64_VERSION_MINOR
+#    else
+#      prop_id=mingw
+#      prop_vmajor=$DVAL__MINGW32_MAJOR_VERSION
+#      prop_vminor=$DVAL__MINGW32_MINOR_VERSION
+#    fi
+    prop_bitness=32
+  fi
 
-      if test -n "$DSET__MINGW64__"; then
-        prop_bitness=64
-      else
-        prop_bitness=32
-      fi
-    else
-      prop_id=mingw
-      prop_vmajor=$DVAL__MINGW32_MAJOR_VERSION
-      prop_vminor=$DVAL__MINGW32_MINOR_VERSION
-    fi
-
-    if test -n "$DSET__GNUC__"; then
-      prop_id=gcc
-
-      if test -n "$DVAL__GNUC_VERSION__"; then
-        prop_vmajor=`expr "0$DVAL__GNUC_VERSION__" / 10000`
-        tbuf=`expr "0$DVAL__GNUC_VERSION__" % 10000`
-        prop_vminor=`expr "0$tbuf" / 100`
-        prop_vrevision=`expr "0$DVAL__GNUC_VERSION__" % 100`
-      else
-        prop_vmajor=$DVAL__GNUC__
-        prop_vminor=$DVAL__GNUC_MINOR__
-        prop_vrevision=$DVAL__GNUC_PATCHLEVEL__
-      fi
-    fi
+  if test -n "$DSET__MINGW64__"; then
+    prop_bitness=64
   fi
 
   if test -n "$DSET__sgi" || test -n "$DSETsgi"; then
