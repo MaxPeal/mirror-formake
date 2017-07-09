@@ -71,7 +71,8 @@
 #     Ubuntu 12.04 x86-64
 #     Ubuntu 14.04 x86-64
 #     Ubuntu 17.04 x86-64
-#  MinGW32 1.0
+#  Msys 1.x
+#  Msys 2.x
 #  Minix 3.3.0 x86
 #  NetBSD 6.0.4 i386
 #  NetBSD 7.1 x86-64
@@ -150,8 +151,7 @@ hpux              HP-UX
 interix           Interix
 irix              IRIX
 lynxos            LynxOS RTOS
-mingw             MinGW
-mingw64           MinGW-w64
+msys              Msys
 minix             MINIX
 miros             MirOS
 mks               MKS Toolkit
@@ -258,22 +258,7 @@ perform_probe() {
   uname_s=`(uname -s) 2>/dev/null` || uname_s=unknown
   uname_v=`(uname -v) 2>/dev/null` || uname_v=unknown
   uname_p=`(uname -p) 2>/dev/null` || uname_p=unknown
-
-  if test "x$uname_m" = x; then
-    uname_m=unknown
-  fi
-  if test "x$uname_r" = x; then
-    uname_r=unknown
-  fi
-  if test "x$uname_s" = x; then
-    uname_s=unknown
-  fi
-  if test "x$uname_v" = x; then
-    uname_v=unknown
-  fi
-  if test "x$uname_p" = x; then
-    uname_p=unknown
-  fi
+  uname_o=`(uname -o) 2>/dev/null` || uname_o=unknown
 
   uname_s_lc=`echo "$uname_s" | tr [A-Z] [a-z]`
 
@@ -366,17 +351,6 @@ perform_probe() {
     cygwin)
       config_os=cygwin
       ;;
-    mingw64)
-      config_os=mingw64
-      ;;
-    mingw*)
-      config_os=mingw
-      config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
-      config_os_vminor=`echo -n "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
-      ;;
-    windows32*)
-      config_os=mingw
-      ;;
     interix)
       config_os=interix
       ;;
@@ -426,6 +400,16 @@ perform_probe() {
       ;;
   esac
 
+  if test $config_os = unknown; then
+    uname_o_lc=`echo "$uname_o" | tr [A-Z] [a-z]`
+    case "$uname_o_lc" in
+      msys*)
+        config_os=msys
+        config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
+        config_os_vminor=`echo -n "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+        ;;
+    esac
+  fi
 
   if test $config_arch = unknown; then
     case "$uname_m:$uname_r" in
@@ -585,7 +569,7 @@ perform_probe() {
         ;;
       i*)
         case "$config_os" in
-          mingw | mingw64 | cygwin)
+          msys | cygwin)
             config_arch=x86
             ;;
         esac
