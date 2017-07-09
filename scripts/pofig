@@ -75,6 +75,7 @@
 #     Ubuntu 17.04 x86-64
 #  HP-UX 11.11 PA-RISC
 #  IRIX 6.5 MIPS64
+#  macOS 10.12 x86-64
 #  Msys 1.x x86
 #  Msys 2.x x86-64
 #  Minix 3.3.0 x86
@@ -116,7 +117,7 @@ export FORMAKE_BASH_REDIRECTED
 ################################################################################
 
 
-version_string="Formake pofig 1.0"
+version_string="Formake pofig 1.1"
 
 print_help() {
 cat <<EOF
@@ -151,6 +152,7 @@ haiku             Haiku
 hpux              HP-UX
 irix              IRIX
 lynxos            LynxOS RTOS
+macos             Apple macOS
 msys              Msys
 minix             MINIX
 miros             MirOS
@@ -344,6 +346,19 @@ perform_probe() {
       config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
       config_os_vminor=`echo -n "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
+    darwin)
+      sw_vers >/dev/null 2>&1
+      if test $? -eq 0; then
+        sw_vers_prod_name=`sw_vers -productName | sed 's/ //g' | tr '[A-Z]' '[a-z]'`
+        case "$sw_vers_prod_name" in
+          macos*)
+            config_os=macos
+            ;;
+        esac
+        config_os_vmajor=`sw_vers -productVersion | sed 's/\..*//'`
+        config_os_vminor=`sw_vers -productVersion | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      fi
+      ;;
     cygwin*)
       config_os=cygwin
       config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
@@ -410,50 +425,6 @@ perform_probe() {
         ;;
       PowerPC:2.* | PowerPC:3.[01]* | PowerPC:4.[02]*)
         config_arch=powerpc
-        ;;
-    esac
-  fi
-
-  if test x$config_arch = x; then
-    case "$uname_p" in
-      alpha)
-        config_arch=alpha
-        ;;
-      amd64)
-        config_arch=x86_64
-        ;;
-      arm)
-        config_arch=arm
-        ;;
-      hppa)
-        config_arch=hppa
-        ;;
-      i*86)
-        config_arch=x86
-        ;;
-      mipseb | mipsel)
-        config_arch=mips
-        ;;
-      powerpc)
-        config_arch=powerpc
-        ;;
-      sh5*)
-        config_arch=superh
-        ;;
-      sh3eb | sh3el)
-        config_arch=superh
-        ;;
-      sparc)
-        config_arch=sparc
-        ;;
-      sparc64)
-        config_arch=sparc64
-        ;;
-      x86_64)
-        config_arch=x86_64
-        ;;
-      x86)
-        config_arch=x86
         ;;
     esac
   fi
@@ -567,6 +538,50 @@ perform_probe() {
         if test "$config_os" = cygwin; then
           config_arch=powerpc
         fi
+        ;;
+    esac
+  fi
+
+  if test x$config_arch = x; then
+    case "$uname_p" in
+      alpha)
+        config_arch=alpha
+        ;;
+      amd64)
+        config_arch=x86_64
+        ;;
+      arm)
+        config_arch=arm
+        ;;
+      hppa)
+        config_arch=hppa
+        ;;
+      i*86)
+        config_arch=x86
+        ;;
+      mipseb | mipsel)
+        config_arch=mips
+        ;;
+      powerpc)
+        config_arch=powerpc
+        ;;
+      sh5*)
+        config_arch=superh
+        ;;
+      sh3eb | sh3el)
+        config_arch=superh
+        ;;
+      sparc)
+        config_arch=sparc
+        ;;
+      sparc64)
+        config_arch=sparc64
+        ;;
+      x86_64)
+        config_arch=x86_64
+        ;;
+      x86)
+        config_arch=x86
         ;;
     esac
   fi
