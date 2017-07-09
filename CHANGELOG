@@ -55,4 +55,5 @@ Formake v0.11
   * pofig: removed Bitrig support
   * pofig: removed AROS support
   * pofig: removed AmigaOS support
+  * pofig: added support of Apple macOS
 
