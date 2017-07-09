@@ -29,6 +29,8 @@
 #
 
 # TESTED ON:
+#   AIX 7.1 powerpc
+#   Cygwin 2.x x86-64
 #   DragonFly BSD 3.8 i386
 #   DragonFly BSD 4.8.0 x86-64
 #   FreeBSD 11.0 i386
@@ -71,9 +73,12 @@
 #     Ubuntu 12.04 x86-64
 #     Ubuntu 14.04 x86-64
 #     Ubuntu 17.04 x86-64
-#  Msys 1.x
-#  Msys 2.x
+#  HP-UX 11.11 PA-RISC
+#  IRIX 6.5 MIPS64
+#  Msys 1.x x86
+#  Msys 2.x x86-64
 #  Minix 3.3.0 x86
+#  MirOS 10semel i386
 #  NetBSD 6.0.4 i386
 #  NetBSD 7.1 x86-64
 #  OpenBSD 4.9 i386
