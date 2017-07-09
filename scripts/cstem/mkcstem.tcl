@@ -1526,6 +1526,10 @@ get_cc() {
   probe_os
 
   case "$config_os" in
+    darwin)
+      cc_list="clang cc c99 gcc"   ###CC_LINE
+      cc_list="clang++ c++ CC g++"    ###CX_LINE
+      ;;
     aix)
       cc_list="cc xlc gcc c99"   ###CC_LINE
       cc_list="xlc++ xlC c++ CC g++"    ###CX_LINE
