@@ -138,7 +138,6 @@ OPERATING SYSTEMS
 --------------------------------------------------------------------------------
 aix               IBM AIX
 amiga             AmigaOS
-aros              AROS Research Operating System
 cygwin            Cygwin
 dragonfly         DragonFly BSD
 esx               VMware ESXi
@@ -383,9 +382,6 @@ perform_probe() {
       config_os=dragonfly
       config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
       config_os_vminor=`echo -n "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
-      ;;
-    aros)
-      config_os=aros
       ;;
     vmkernel)
       config_os=esx
