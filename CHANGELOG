@@ -70,4 +70,5 @@ Formake v0.12
   * pofig: added support of UnixWare
   * pofig: added support of GNU Hurd
   * pofig: improved debian version detection
+  * pofig: fixed arch detection on macos
 
