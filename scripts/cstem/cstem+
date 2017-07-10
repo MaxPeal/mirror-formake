@@ -548,6 +548,15 @@ read_cc_props() {
     fi
   fi
 
+  if test -n "$DSET__EDG__"; then
+    prop_id=edg
+
+    if test -n "$DVAL__EDG_VERSION__"; then
+      prop_vmajor=`expr "0$DVAL__EDG_VERSION__" / 100`
+      prop_vminor=`expr "0$DVAL__EDG_VERSION__" % 100`
+    fi
+  fi
+
 
   if test -n "$DSET__CC_ARM"; then
     prop_id=armc
@@ -614,15 +623,6 @@ read_cc_props() {
       buf=`expr "0$DVAL__SYSC_VER__" % 10000`
       prop_vminor=`expr "0$buf" / 100`
       prop_vrevision=`expr "0$DVAL__SYSC_VER__" % 100`
-    fi
-  fi
-
-  if test -n "$DSET__EDG__"; then
-    prop_id=edg
-
-    if test -n "$DVAL__EDG_VERSION__"; then
-      prop_vmajor=`expr "0$DVAL__EDG_VERSION__" / 100`
-      prop_vminor=`expr "0$DVAL__EDG_VERSION__" % 100`
     fi
   fi
 
@@ -874,7 +874,7 @@ read_cc_props() {
     fi
   fi
 
-  if test -n "$DSET__GNUC__" && test -z "$prop_id"; then
+  if test -n "$DSET__GNUC__"; then
     prop_id=gcc
 
     if test -n "$DVAL__GNUC_VERSION__"; then
