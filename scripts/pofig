@@ -296,9 +296,9 @@ perform_probe() {
       config_os=solaris
       uname_v=`uname -v`
       case x"$uname_v" in
-        x[0-9]*.[0-9])
+        x[0-9]*.[0-9]*)
           config_os_vmajor=`echo "$uname_v" | sed 's/\..*//'`
-          config_os_vminor=`echo -n "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+          config_os_vminor=`echo -n "$uname_v" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
           ;;
         *)
           case "$uname_r" in
