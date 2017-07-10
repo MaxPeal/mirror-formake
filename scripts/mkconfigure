@@ -38,6 +38,8 @@ if test $? -ne 127; then
       exec /usr/bin/bash "$0" ${1+"$@"}
     elif test -x /usr/local/bin/bash; then
       exec /usr/local/bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/pkg/bin/bash; then
+      exec /usr/pkg/bin/bash "$0" ${1+"$@"}
     else
       (bash -c "pwd" >/dev/null) 2>/dev/null
       if test $? -eq 0; then
@@ -220,7 +222,7 @@ TOP_EOF
 cat <<"TOP_EOF" >>$out_file
 ################################################################################
 # PACKAGE PATHES
-SRCROOT=`dirname $0`
+SRCROOT=`dirname "$0"`
 PATH=`pwd`/mk:$SRCROOT/mk:$PATH
 
 TOP_EOF
@@ -239,7 +241,7 @@ cat <<"TOP_EOF" >>$out_file
 ################################################################################
 # IMPORTANT VARIABLES
 #
-SRCROOT=`dirname $0 | xargs relpath ./`
+SRCROOT=`dirname "$0" | xargs relpath ./`
 ABS_SRCROOT=`pwd`/$SRCROOT
 TOP_EOF
 
@@ -375,7 +377,7 @@ fi
 ################################################################################
 # VPATH
 VPATH_ON=
-test ! -f `basename $0` && VPATH_ON=1
+test ! -f `basename "$0"` && VPATH_ON=1
 
 ################################################################################
 # INIT BUILD ROOT

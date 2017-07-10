@@ -38,6 +38,8 @@ if test $? -ne 127; then
       exec /usr/bin/bash "$0" ${1+"$@"}
     elif test -x /usr/local/bin/bash; then
       exec /usr/local/bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/pkg/bin/bash; then
+      exec /usr/pkg/bin/bash "$0" ${1+"$@"}
     else
       (bash -c "pwd" >/dev/null) 2>/dev/null
       if test $? -eq 0; then
@@ -55,7 +57,7 @@ version_string="mkrule 1.0"
 
 script_name=`basename "$0"`
 script_options="$@"
-script_dir=`dirname $0`
+script_dir=`dirname "$0"`
 op_srcdir=
 op_buildroot=
 
@@ -288,8 +290,8 @@ abs_path() {
     if test -d $_arg; then
       _file=
     else
-      _file=`basename -- $_arg`
-      _arg=`dirname -- $_arg`
+      _file=`basename "$_arg"`
+      _arg=`dirname "$_arg"`
     fi
 
     cd $_cd_param $_arg
@@ -507,7 +509,7 @@ EOF
   echo "" >$tmp_file_base
   echo "" >$tmp_file_full
   for src in $op_src; do
-    src_base=`basename -- $src`
+    src_base=`basename "$src"`
     if grep -F -x "$src_base" $tmp_file_base > /dev/null; then
       if grep -F -x "$src" $tmp_file_full > /dev/null; then
         :
@@ -702,7 +704,7 @@ EOF
     if test -z "$op_install_path"; then
       op_install_path=$BINDIR
     fi
-    file_base=`basename $prog_local`
+    file_base=`basename "$prog_local"`
     cat <<EOF
 install: install-$op_target
 install-$op_target: $prog_local
@@ -905,7 +907,7 @@ install: install-$op_target
 install-$op_target: $lib_targets
 EOF
     for file in $lib_regular; do
-      file_base=`basename $file`
+      file_base=`basename "$file"`
       if test x$op_shared = x1; then
 	    echo "	$INSTALL -m 0755 -D $file \$(DESTDIR)$op_install_path/$file_base"
       else
@@ -926,7 +928,7 @@ uninstall: uninstall-$op_target
 uninstall-$op_target:
 EOF
     for file in $lib_regular $lib_symbolic; do
-      file_base=`basename $file`
+      file_base=`basename "$file"`
 	  echo "	rm -f \$(DESTDIR)$op_install_path/$file_base"
     done
     case "$os_type" in
@@ -1149,7 +1151,7 @@ EOF
   esac
 
   if test -n "$op_ofile"; then
-    dir=`dirname $op_ofile`
+    dir=`dirname "$op_ofile"`
   else
     test -z "$op_dir" || dir=$op_dir
     if test "$dir" != '/'; then
@@ -1165,7 +1167,7 @@ EOF
     printf "\t%s\n" "$INSTALL -m $perm -D $op_files \$(DESTDIR)$op_ofile"
   else
     for file in $op_files; do
-      file_base=`basename $file`
+      file_base=`basename "$file"`
       printf "\t%s\n" "$INSTALL -m $perm -D $file \$(DESTDIR)$dir/$file_base"
     done
   fi
@@ -1177,14 +1179,14 @@ EOF
     printf "\t%s\n" "rm -f \$(DESTDIR)$op_ofile"
   else
     for file in $op_files; do
-      file_base=`basename $file`
+      file_base=`basename "$file"`
       printf "\t%s\n" "rm -f \$(DESTDIR)$dir/$file_base"
     done
   fi
   if test $op_type = doc || test $op_type = data; then
     printf "\t%s\n" "-test \`find \$(DESTDIR)$dir ! -type d -print | wc -l\` -eq 0 && rm -Rf \$(DESTDIR)$dir"
   elif test $op_type = inc; then
-    dir_base=`basename $dir`
+    dir_base=`basename "$dir"`
     if test "$dir_base" != include; then
       printf "\t%s\n" "-test \`find \$(DESTDIR)$dir ! -type d -print | wc -l\` -eq 0 && rm -Rf \$(DESTDIR)$dir"
     fi
@@ -1232,7 +1234,7 @@ EOF
       if test -d $op_srcdir$file; then
         dist_dirs="$dist_dirs $dir"
       else
-        dir=`dirname $file`
+        dir=`dirname "$file"`
         dist_dirs="$dist_dirs $dir"
         dist_files="$dist_files $file"
       fi
@@ -1791,7 +1793,7 @@ while test $# -gt 0; do
   shift
 done
 
-abs_path `dirname $0`
+abs_path `dirname "$0"`
 script_dir=$abs_path_ret
 
 op_dirs=`echo -n "$op_dirs" | sed 's/^ *//'`

@@ -38,6 +38,8 @@ if test $? -ne 127; then
       exec /usr/bin/bash "$0" ${1+"$@"}
     elif test -x /usr/local/bin/bash; then
       exec /usr/local/bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/pkg/bin/bash; then
+      exec /usr/pkg/bin/bash "$0" ${1+"$@"}
     else
       (bash -c "pwd" >/dev/null) 2>/dev/null
       if test $? -eq 0; then
@@ -52,8 +54,8 @@ export FORMAKE_BASH_REDIRECTED
 
 
 version=1.0
-script_name=`basename $0`
-script_dir=`dirname $0`
+script_name=`basename "$0"`
+script_dir=`dirname "$0"`
 nl='
 '
 op_ext='o'
@@ -170,7 +172,7 @@ for file in $list; do
   file=`echo -n "$file" | sed 's/\.[^./]*$//'`
   file="${file}.$op_ext"
   if test -n "$op_objdir"; then
-    file=`basename $file`
+    file=`basename "$file"`
     file="$op_objdir$file"
   elif test -n "$op_srcdir"; then
     case "$file" in

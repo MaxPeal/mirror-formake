@@ -38,6 +38,8 @@ if test $? -ne 127; then
       exec /usr/bin/bash "$0" ${1+"$@"}
     elif test -x /usr/local/bin/bash; then
       exec /usr/local/bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/pkg/bin/bash; then
+      exec /usr/pkg/bin/bash "$0" ${1+"$@"}
     else
       (bash -c "pwd" >/dev/null) 2>/dev/null
       if test $? -eq 0; then
@@ -51,8 +53,8 @@ export FORMAKE_BASH_REDIRECTED
 ################################################################################
 
 
-script_name=`basename $0`
-script_dir=`dirname $0`
+script_name=`basename "$0"`
+script_dir=`dirname "$0"`
 orig_dir=`pwd`
 nl='
 '
@@ -101,8 +103,8 @@ abs_path() {
     if test -d $_arg; then
       _file=
     else
-      _file=`basename -- $_arg`
-      _arg=`dirname -- $_arg`
+      _file=`basename "$_arg"`
+      _arg=`dirname "$_arg"`
     fi
 
     cd $_cd_param $_arg

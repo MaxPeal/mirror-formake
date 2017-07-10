@@ -38,6 +38,8 @@ if test $? -ne 127; then
       exec /usr/bin/bash "$0" ${1+"$@"}
     elif test -x /usr/local/bin/bash; then
       exec /usr/local/bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/pkg/bin/bash; then
+      exec /usr/pkg/bin/bash "$0" ${1+"$@"}
     else
       (bash -c "pwd" >/dev/null) 2>/dev/null
       if test $? -eq 0; then
@@ -51,7 +53,7 @@ export FORMAKE_BASH_REDIRECTED
 ################################################################################
 
 
-script_name=`basename $0`
+script_name=`basename "$0"`
 tmp_buf="/tmp/iftool_$$_buf.txt"
 rm -f $tmp_buf
 
