@@ -723,7 +723,7 @@ read_cc_props() {
   $cc_cmd $CXXFLAGS $CPP_FLAG $probe_h 2>/dev/null > $probe_h_out
 ########## BLOCK_END
   probe_sh="/tmp/cstem_$$.sh"
-  cat $probe_h_out | grep "^D[SV][EA][TL]" | sed 's/=\(.*\)$/="\1"/' | sed 's/""*/"/g' | sed 's/ *= */=/' | sed 's/="*$/=/' > $probe_sh
+  cat $probe_h_out | grep "^D[SV][EA][TL]" | sed 's/= */=/' | sed 's/ *$//' | sed 's/=\(.*\)$/="\1"/' | sed 's/""*/"/g' | sed 's/ *= */=/' | sed 's/="*$/=/' > $probe_sh
   . $probe_sh
   rm -f $probe_sh
   rm -f $probe_h_out
