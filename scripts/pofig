@@ -85,11 +85,13 @@
 #  OpenBSD 4.9 i386
 #  OpenBSD 6.1 x86-64
 #  QNX 6.5.0 x86
+#  SCO OpenServer 6.0.0 i386
 #  SmartOS 2017xxxx x86-64
 #  Solaris 9 x86-64
 #  Solaris 10 sparc
 #  Solaris 10 x86-64
 #  Solaris 11.3 x86-64
+#  UnixWare 7.1 i386
 
 ################################################################################
 # JUMP TO MODERN SHELL IF POSSIBLE
@@ -166,6 +168,7 @@ qnx               QNX
 riscos            RISC OS
 sco               SCO UNIX
 solaris           Solaris
+unixware          UnixWare
 zvm               IBM z/VM
 
 DISTRIBUTIONS
@@ -414,6 +417,16 @@ perform_probe() {
       ;;
     vmkernel)
       config_os=esx
+      ;;
+    unixware)
+      config_os=unixware
+      uname_v=`uname -v`
+      case x"$uname_v" in
+        x[0-9]*.[0-9]*)
+          config_os_vmajor=`echo "$uname_v" | sed 's/\..*//'`
+          config_os_vminor=`echo "$uname_v" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+          ;;
+      esac
       ;;
   esac
 
