@@ -69,4 +69,5 @@ Formake v0.12
   * cstem: fixed detection of gcc 2.95
   * pofig: added support of UnixWare
   * pofig: added support of GNU Hurd
+  * pofig: improved debian version detection
 
