@@ -64,4 +64,5 @@ Formake v0.12
   * cstem: removed kernel property as redundant
   * added better support of Minix
   * added better support of older Shells
+  * pofig: fixed solaris version detection
 
