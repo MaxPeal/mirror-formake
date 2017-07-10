@@ -131,6 +131,8 @@ if test $? -ne 127; then
       exec /usr/bin/bash "$0" ${1+"$@"}
     elif test -x /usr/local/bin/bash; then
       exec /usr/local/bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/pkg/bin/bash; then
+      exec /usr/pkg/bin/bash "$0" ${1+"$@"}
     else
       (bash -c "pwd" >/dev/null) 2>/dev/null
       if test $? -eq 0; then
@@ -165,8 +167,8 @@ abs_path() {
     if test -d $_arg; then
       _file=
     else
-      _file=`basename $_arg`
-      _arg=`dirname -- $_arg`
+      _file=`basename "$_arg"`
+      _arg=`dirname "$_arg"`
     fi
 
     cd $_cd_param $_arg
@@ -195,11 +197,11 @@ abs_path() {
   fi
 }
 
-script_name=`basename $0`
+script_name=`basename "$0"`
 orig_dir=`pwd`
 abs_path $0
 script_abs=$abs_path_ret
-script_dir=`dirname $script_abs`
+script_dir=`dirname "$script_abs"`
 out_format=
 ########## CC_BLOCK_START
 config_file="$script_dir/cstem.conf"
@@ -241,7 +243,6 @@ version
 std
 os
 os_version
-kernel
 arch
 bitness
 endianess
@@ -278,7 +279,6 @@ PROBE MODE (DEFAULT). PROBE COMPILER PROPERTIES
  -std                  get %C% language standard
  -os                   get target OS
  -osver                get target OS version
- -kernel               get target kernel
  -arch                 get target architecture
  -bits                 get target bitness
  -endian               get target endianess
@@ -490,11 +490,6 @@ vxworks           VxWorks
 windows           Windows
 zos               IBM z/OS
 
-TARGET KERNELS
---------------------------------------------------------------------------------
-freebsd           FreeBSD
-linux             Linux
-
 TARGET ARCHITECTURES
 --------------------------------------------------------------------------------
 alpha             Alpha
@@ -651,7 +646,7 @@ check_cc() {
     return
   fi
 
-  cc_cmd_base=`basename $cc_cmd`
+  cc_cmd_base=`basename "$cc_cmd"`
   case $cc_cmd_base in
     gcc*|g++*)
       CPP_FLAG=-E
@@ -1189,7 +1184,7 @@ read_cc_props() {
     fi
   fi
 
-  if test -n "$DSET__GNUC__" && test -z "$prop_id"; then
+  if test -z "$prop_id" && (test -n "$DSET__GNUC__" || test -n "$DSET__GNUG__"); then
     prop_id=gcc
 
     if test -n "$DVAL__GNUC_VERSION__"; then
@@ -1274,10 +1269,6 @@ read_cc_props() {
     prop_os_vmajor=$DVAL__FreeBSD__
   fi
 
-  if test -n "$DSET__FreeBSD_kernel__"; then
-    prop_kernel=freebsd
-  fi
-
   if test -n "$DSET__NetBSD__"; then
     prop_os=netbsd
   fi
@@ -1304,11 +1295,10 @@ read_cc_props() {
 
   if test -n "$DSET__gnu_linux__" || test -n "$DSET__gnu_linux"; then
     prop_os=gnulinux
-    prop_kernel=linux
   fi
 
   if test -n "$DSET__linux__" || test -n "$DSETlinux" || test -n "$DSET__linux"; then
-    prop_kernel=linux
+    prop_os=gnulinux
   fi
 
   if test -n "$DSET_hpux" || test -n "$DSEThpux" || test -n "$DSET__hpux"; then
@@ -1486,7 +1476,7 @@ read_cc_props() {
     prop_endianess=big
   fi
 
-  if test x"$DVAL__BYTE_ORDER__" = "x__ORDER_BIG_ENDIAN__" || test x"$DVAL__FLOAT_WORD_ORDER__" = "x__ORDER_BIG_ENDIAN__"; then
+  if test x"$DVAL__BYTE_ORDER__" = x"$DVAL__ORDER_BIG_ENDIAN__" || test x"$DVAL__FLOAT_WORD_ORDER__" = x"$DVAL__ORDER_BIG_ENDIAN__"; then
     prop_endianess=big
   fi
 
@@ -1494,7 +1484,7 @@ read_cc_props() {
     prop_endianess=little
   fi
 
-  if test x"$DVAL__BYTE_ORDER__" = "x__ORDER_LITTLE_ENDIAN__" || test x"$DVAL__FLOAT_WORD_ORDER__" = "x__ORDER_LITTLE_ENDIAN__"; then
+  if test x"$DVAL__BYTE_ORDER__" = x"$DVAL__ORDER_LITTLE_ENDIAN__" || test x"$DVAL__FLOAT_WORD_ORDER__" = x"$DVAL__ORDER_LITTLE_ENDIAN__"; then
     prop_endianess=little
   fi
 
@@ -1860,9 +1850,6 @@ if test x$mode_probe = x1; then
       -osver)
         print_string="$print_string os_version"
         ;;
-      -kernel)
-        print_string="$print_string kernel"
-        ;;
       -arch)
         print_string="$print_string arch"
         ;;
@@ -1909,7 +1896,6 @@ ldflags:            ${prop_ldflags:--}
 language standard:  ${prop_std:--}
 target os:          ${prop_os:--}
 target os version:  ${prop_os_version:--}
-target kernel:      ${prop_kernel:--}
 target arch:        ${prop_arch:--}
 bitness:            ${prop_bitness:--}
 endianess:          ${prop_endianess:--}
@@ -1918,9 +1904,9 @@ EOF
   else
     if test -z "$print_string"; then
 ########## CC_BLOCK_START
-      print_string="cmd cflags id version std os os_version kernel arch bitness endianess data_model"
+      print_string="cmd cflags id version std os os_version arch bitness endianess data_model"
 ########## CX_BLOCK_START
-      print_string="cmd cxxflags id version std os os_version kernel arch bitness endianess data_model"
+      print_string="cmd cxxflags id version std os os_version arch bitness endianess data_model"
 ########## BLOCK_END
     fi
     print_space=
@@ -3053,7 +3039,7 @@ EOF
         clean_exit 1
       fi
       cp $src_full .
-      src_base=`basename $src_full`
+      src_base=`basename "$src_full"`
     
       log_src $src_base
       echo "$CC_CMD $op_with_flags $op_test_flags -c -o test.o $src_base" >> $cstem_log
@@ -3486,6 +3472,11 @@ DSET__GNUC__=1
 DVAL__GNUC__=__GNUC__
 #endif
 
+#ifdef __GNUG__
+DSET__GNUG__=1
+DVAL__GNUG__=__GNUG__
+#endif
+
 #ifdef __GNUC_MINOR__
 DSET__GNUC_MINOR__=1
 DVAL__GNUC_MINOR__=__GNUC_MINOR__
@@ -3886,10 +3877,6 @@ DSET__amigaos__=1
 #ifdef __FreeBSD__
 DSET__FreeBSD__=1
 DVAL__FreeBSD__=__FreeBSD__
-#endif
-
-#ifdef __FreeBSD_kernel__
-DSET__FreeBSD_kernel__=1
 #endif
 
 #ifdef __NetBSD__
@@ -4516,6 +4503,16 @@ DVAL__BYTE_ORDER__=__BYTE_ORDER__
 #ifdef __FLOAT_WORD_ORDER__
 DSET__FLOAT_WORD_ORDER__=1
 DVAL__FLOAT_WORD_ORDER__=__FLOAT_WORD_ORDER__
+#endif
+
+#ifdef __ORDER_LITTLE_ENDIAN__
+DSET__ORDER_LITTLE_ENDIAN__=1
+DVAL__ORDER_LITTLE_ENDIAN__=__ORDER_LITTLE_ENDIAN__
+#endif
+
+#ifdef __ORDER_BIG_ENDIAN__
+DSET__ORDER_BIG_ENDIAN__=1
+DVAL__ORDER_BIG_ENDIAN__=__ORDER_BIG_ENDIAN__
 #endif
 
 #ifdef __LITTLE_ENDIAN__
