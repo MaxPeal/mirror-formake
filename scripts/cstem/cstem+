@@ -1190,19 +1190,19 @@ get_cc() {
       cc_list="clang++ c++ CC g++"
       ;;
     aix)
-      cc_list="xlc++ xlC c++ CC g++"
+      cc_list="xlc++ xlC c++ CC g++ clang++"
       ;;
     solaris)
-      cc_list="CC g++ c++"
+      cc_list="CC g++ c++ clang++"
       ;;
     irix)
-      cc_list="CC g++"
+      cc_list="CC c++ g++ clang++"
       ;;
     gnulinux)
-      cc_list="g++ c++ CC"
+      cc_list="g++ c++ CC clang++"
       ;;
     *)
-      cc_list="g++ CC c++"
+      cc_list="g++ CC c++ clang++"
       ;;
   esac
 }

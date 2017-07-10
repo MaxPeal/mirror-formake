@@ -1272,19 +1272,19 @@ get_cc() {
       cc_list="clang cc c99 gcc"
       ;;
     aix)
-      cc_list="cc xlc gcc c99"
+      cc_list="cc xlc gcc c99 clang"
       ;;
     solaris)
-      cc_list="cc gcc c99"
+      cc_list="cc gcc c99 clang"
       ;;
     irix)
-      cc_list="cc c99 gcc c89"
+      cc_list="cc c99 gcc c89 clang"
       ;;
     gnulinux)
-      cc_list="gcc cc c99"
+      cc_list="gcc cc c99 clang"
       ;;
     *)
-      cc_list="gcc cc c99"
+      cc_list="gcc cc c99 clang"
       ;;
   esac
 }

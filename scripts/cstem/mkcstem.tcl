@@ -1518,24 +1518,24 @@ get_cc() {
       cc_list="clang++ c++ CC g++"    ###CX_LINE
       ;;
     aix)
-      cc_list="cc xlc gcc c99"   ###CC_LINE
-      cc_list="xlc++ xlC c++ CC g++"    ###CX_LINE
+      cc_list="cc xlc gcc c99 clang"   ###CC_LINE
+      cc_list="xlc++ xlC c++ CC g++ clang++"    ###CX_LINE
       ;;
     solaris)
-      cc_list="cc gcc c99"   ###CC_LINE
-      cc_list="CC g++ c++"    ###CX_LINE
+      cc_list="cc gcc c99 clang"   ###CC_LINE
+      cc_list="CC g++ c++ clang++"    ###CX_LINE
       ;;
     irix)
-      cc_list="cc c99 gcc c89"   ###CC_LINE
-      cc_list="CC g++"    ###CX_LINE
+      cc_list="cc c99 gcc c89 clang"   ###CC_LINE
+      cc_list="CC c++ g++ clang++"    ###CX_LINE
       ;;
     gnulinux)
-      cc_list="gcc cc c99"   ###CC_LINE
-      cc_list="g++ c++ CC"    ###CX_LINE
+      cc_list="gcc cc c99 clang"   ###CC_LINE
+      cc_list="g++ c++ CC clang++"    ###CX_LINE
       ;;
     *)
-      cc_list="gcc cc c99"    ###CC_LINE
-      cc_list="g++ CC c++"    ###CX_LINE
+      cc_list="gcc cc c99 clang"    ###CC_LINE
+      cc_list="g++ CC c++ clang++"    ###CX_LINE
       ;;
   esac
 }
