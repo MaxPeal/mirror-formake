@@ -35,6 +35,8 @@
 #   DragonFly BSD 4.8.0 x86-64
 #   FreeBSD 11.0 i386
 #   FreeBSD 11.0 x86-64
+#   GNU Hurd:
+#     Debian GNU/Hurd 9.0 "Stretch" i386
 #   GNU Linux:
 #     Arch Linux x86-64
 #     CentOS 5 i386
@@ -151,6 +153,7 @@ cygwin            Cygwin
 dragonfly         DragonFly BSD
 esx               VMware ESXi
 freebsd           FreeBSD
+gnuhurd           GNU/Hurd
 gnulinux          GNU/Linux
 haiku             Haiku
 hpux              HP-UX
@@ -392,6 +395,16 @@ perform_probe() {
       config_os_vmajor=`echo "$uname_r" | sed 's/\..*//'`
       config_os_vminor=`echo "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
+    gnu)
+      config_os=gnuhurd
+      uname_r=`uname -r`
+      case x"$uname_r" in
+        x[0-9]*.[0-9]*)
+          config_kernel_vmajor=`echo "$uname_r" | sed 's/\..*//'`
+          config_kernel_vminor=`echo "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+          ;;
+      esac
+      ;;
     linux)
       config_os=gnulinux
       kernel_version=`uname -r 2>/dev/null | sed 's/\([0-9]*\.[0-9]*\.[0-9]*\).*/\1/'`
@@ -443,9 +456,6 @@ perform_probe() {
 
   if test x$config_arch = x; then
     case "$uname_m:$uname_r" in
-      i*86:*)
-        config_arch=x86
-        ;;
       TSUNAMI:2.*)
         config_arch=sparc
         ;;
@@ -490,7 +500,7 @@ perform_probe() {
       hexagon)
         config_arch=hexagon
         ;;
-      i*86)
+      i?86*)
         config_arch=x86
         ;;
       i86pc)
