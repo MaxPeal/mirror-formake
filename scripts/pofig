@@ -697,11 +697,15 @@ perform_probe() {
     fi
   fi
 
-  if test x$config_distro = x; then
+  if test x$config_distro = x || test x$config_distro = xdebian; then
     if test -f /etc/debian_version; then
       config_distro=debian
       distro_version=`cat /etc/debian_version | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
-    elif test -f /etc/devuan_version; then
+    fi
+  fi
+
+  if test x$config_distro = x; then
+    if test -f /etc/devuan_version; then
       config_distro=devuan
       if test x$have_lsb_release = x1; then
         distro_version=`lsb_release -r | sed 's/^Release[^0-9]*//' | sed 's/[^0-9]*$//'`
