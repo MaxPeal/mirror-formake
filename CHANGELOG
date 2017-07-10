@@ -66,4 +66,5 @@ Formake v0.12
   * added better support of older Shells
   * pofig: fixed solaris version detection
   * pofig: added detection of SCO UNIX
+  * cstem: fixed detection of gcc 2.95
 
