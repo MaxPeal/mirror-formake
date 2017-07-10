@@ -164,6 +164,7 @@ netbsd            NetBSD
 openbsd           OpenBSD
 qnx               QNX
 riscos            RISC OS
+sco               SCO UNIX
 solaris           Solaris
 zvm               IBM z/VM
 
@@ -291,6 +292,16 @@ perform_probe() {
       ;;
     riscos)
       config_os=riscos
+      ;;
+    sco*)
+      config_os=sco
+      uname_v=`uname -v`
+      case x"$uname_v" in
+        x[0-9]*.[0-9]*)
+          config_os_vmajor=`echo "$uname_v" | sed 's/\..*//'`
+          config_os_vminor=`echo "$uname_v" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+          ;;
+      esac
       ;;
     sunos)
       config_os=solaris
