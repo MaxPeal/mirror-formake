@@ -255,56 +255,56 @@ params="PACKAGE_NAME PACKAGE_VERSION PREFIX EXEC_PREFIX BINDIR SBINDIR LIBEXECDI
 
 cat <<"TOP_EOF" >>$out_file
 while test $# -gt 0; do
-  param=`echo -n "$1" | sed 's/^--*/-/'`
+  param=`echo "$1" | sed 's/^--*/-/'`
   case $param in
     -h|-help)
       op_help=1
       ;;
     -prefix=*)
-      PREFIX=`echo -n "$param" | sed 's/^[^=]*=//'`
+      PREFIX=`echo "$param" | sed 's/^[^=]*=//'`
       ;;
     -exec-prefix=*)
-      EXEC_PREFIX=`echo -n "$param" | sed 's/^[^=]*=//'`
+      EXEC_PREFIX=`echo "$param" | sed 's/^[^=]*=//'`
       ;;
     -bindir=*)
-      BINDIR=`echo -n "$param" | sed 's/^[^=]*=//'`
+      BINDIR=`echo "$param" | sed 's/^[^=]*=//'`
       ;;
     -sbindir=*)
-      SBINDIR=`echo -n "$param" | sed 's/^[^=]*=//'`
+      SBINDIR=`echo "$param" | sed 's/^[^=]*=//'`
       ;;
     -libexecdir=*)
-      LIBEXECDIR=`echo -n "$param" | sed 's/^[^=]*=//'`
+      LIBEXECDIR=`echo "$param" | sed 's/^[^=]*=//'`
       ;;
     -libdir=*)
-      LIBDIR=`echo -n "$param" | sed 's/^[^=]*=//'`
+      LIBDIR=`echo "$param" | sed 's/^[^=]*=//'`
       ;;
     -incdir=*)
-      INCDIR=`echo -n "$param" | sed 's/^[^=]*=//'`
+      INCDIR=`echo "$param" | sed 's/^[^=]*=//'`
       ;;
     -etcdir=*)
-      ETCDIR=`echo -n "$param" | sed 's/^[^=]*=//'`
+      ETCDIR=`echo "$param" | sed 's/^[^=]*=//'`
       ;;
     -vardir=*)
-      VARDIR=`echo -n "$param" | sed 's/^[^=]*=//'`
+      VARDIR=`echo "$param" | sed 's/^[^=]*=//'`
       ;;
     -sharedir=*)
-      SHAREDIR=`echo -n "$param" | sed 's/^[^=]*=//'`
+      SHAREDIR=`echo "$param" | sed 's/^[^=]*=//'`
       ;;
     -mandir=*)
-      MANDIR=`echo -n "$param" | sed 's/^[^=]*=//'`
+      MANDIR=`echo "$param" | sed 's/^[^=]*=//'`
       ;;
     -docdir=*)
-      DOCDIR=`echo -n "$param" | sed 's/^[^=]*=//'`
+      DOCDIR=`echo "$param" | sed 's/^[^=]*=//'`
       ;;
 TOP_EOF
 if test x$op_cc = x1; then
   params="$params CC CFLAGS"
   cat <<"TOP_EOF" >>$out_file
     CC=*)
-      CC=`echo -n "$param" | sed 's/^[^=]*=//'`
+      CC=`echo "$param" | sed 's/^[^=]*=//'`
       ;;
     CFLAGS=*)
-      CFLAGS=`echo -n "$param" | sed 's/^[^=]*=//'`
+      CFLAGS=`echo "$param" | sed 's/^[^=]*=//'`
       ;;
 TOP_EOF
 fi
@@ -312,10 +312,10 @@ if test x$op_cxx = x1; then
   params="$params CXX CXXFLAGS"
   cat <<"TOP_EOF" >>$out_file
     CXX=*)
-      CXX=`echo -n "$param" | sed 's/^[^=]*=//'`
+      CXX=`echo "$param" | sed 's/^[^=]*=//'`
       ;;
     CXXFLAGS=*)
-      CXXFLAGS=`echo -n "$param" | sed 's/^[^=]*=//'`
+      CXXFLAGS=`echo "$param" | sed 's/^[^=]*=//'`
       ;;
 TOP_EOF
 fi
@@ -323,7 +323,7 @@ if test -n "$op_cc$op_cxx"; then
   params="$params LDFLAGS"
   cat <<"TOP_EOF" >>$out_file
     LDFLAGS=*)
-      LDFLAGS=`echo -n "$param" | sed 's/^[^=]*=//'`
+      LDFLAGS=`echo "$param" | sed 's/^[^=]*=//'`
       ;;
 TOP_EOF
 fi

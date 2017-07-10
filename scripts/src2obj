@@ -123,15 +123,15 @@ while test $# -gt 0; do
     *)
       case x$current_opt in
         xobjdir)
-          op_objdir=`echo -n "$1" | sed 's#/*$#/#'`
+          op_objdir=`echo "$1" | sed 's#/*$#/#'`
           current_opt=
           ;;
         xsrcdir)
-          op_srcdir=`echo -n "$1" | sed 's#/*$#/#'`
+          op_srcdir=`echo "$1" | sed 's#/*$#/#'`
           current_opt=
           ;;
         xext)
-          op_ext=`echo -n "$1" | sed 's/^\.*//'`
+          op_ext=`echo "$1" | sed 's/^\.*//'`
           current_opt=
           ;;
         x)
@@ -169,7 +169,7 @@ if test -z "$list"; then
 fi
 
 for file in $list; do
-  file=`echo -n "$file" | sed 's/\.[^./]*$//'`
+  file=`echo "$file" | sed 's/\.[^./]*$//'`
   file="${file}.$op_ext"
   if test -n "$op_objdir"; then
     file=`basename "$file"`

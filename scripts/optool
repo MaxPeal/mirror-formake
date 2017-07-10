@@ -139,7 +139,7 @@ EOF
                   echo "$script_name: error: Parameter -p requires argument" >&2
                   exit 1
                 fi
-                op_prefix=`echo -n "$1" | sed 's/[^a-zA-Z0-9_]//g'`
+                op_prefix=`echo "$1" | sed 's/[^a-zA-Z0-9_]//g'`
                 if test -z "$op_prefix"; then 
                   echo "$script_name: error: invalid prefix '$1'" >&2
                   exit 1
@@ -158,16 +158,16 @@ EOF
                 disable_special=1
                 ;;
               *)
-                sbs_param=`echo -n "$1" | sed "s/^-*//" | sed 's/=.*//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g'`
+                sbs_param=`echo "$1" | sed "s/^-*//" | sed 's/=.*//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g'`
                 sbs_param="$op_prefix$sbs_param"
                 if test -z $no_case_change; then
-                  sbs_param=`echo -n "$sbs_param" | tr '[a-z]' '[A-Z]'`
+                  sbs_param=`echo "$sbs_param" | tr '[a-z]' '[A-Z]'`
                 fi
                 sbs_param_val=
                 sbs_param_set=
                 case "$1" in
                   *=*)
-                    sbs_param_val=`echo -n "$1" | sed 's/^[^=]*=//'`
+                    sbs_param_val=`echo "$1" | sed 's/^[^=]*=//'`
                     sbs_param_set=1
                     ;;
                 esac
@@ -216,7 +216,7 @@ EOF
     while test $# -gt 0; do
       param=$1
       if test x$op_xh = x1; then
-        param=`echo -n "$param" | sed 's/^--*/-/'`
+        param=`echo "$param" | sed 's/^--*/-/'`
       fi
       if test -z "$op_delim"; then
         case "$param" in
@@ -224,14 +224,14 @@ EOF
             op_delim=1
             ;;
           *)
-            sbs_param=`echo -n "$param" | sed 's/=.*//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g' | tr '[a-z]' '[A-Z]'`
+            sbs_param=`echo "$param" | sed 's/=.*//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g' | tr '[a-z]' '[A-Z]'`
             eval SBS_VALID_$sbs_param=1
             ;;
         esac
       else
         case "$param" in
           -*|*=*)
-            sbs_param=`echo -n "$param" | sed 's/=.*//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g' | tr '[a-z]' '[A-Z]'`
+            sbs_param=`echo "$param" | sed 's/=.*//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g' | tr '[a-z]' '[A-Z]'`
             eval is_valid=\$SBS_VALID_$sbs_param
             if test x$is_valid != x1; then
               echo "invalid parameter: $param" >&2
@@ -279,7 +279,7 @@ EOF
             ;;
         esac
       else
-        sbs_param=`echo -n "$1" | sed 's/=.*//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g' | tr '[a-z]' '[A-Z]'`
+        sbs_param=`echo "$1" | sed 's/=.*//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g' | tr '[a-z]' '[A-Z]'`
         eval SBS_SET_$sbs_param=1
       fi
       shift
@@ -288,7 +288,7 @@ EOF
     test -z "$if_ops" && exit 0
 
     for ifop in $if_ops; do
-      sbs_param=`echo -n "$ifop" | sed 's/=.*//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g' | tr '[a-z]' '[A-Z]'`
+      sbs_param=`echo "$ifop" | sed 's/=.*//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g' | tr '[a-z]' '[A-Z]'`
       eval is_set=\$SBS_SET_$sbs_param
       if test $mode = all; then
         test x$is_set = x1 || exit $ret_false

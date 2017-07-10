@@ -103,7 +103,7 @@ while test $# -gt 0; do
   shift
 done
 
-op_params=`echo -n "$op_params" | sed 's/^ *//'`
+op_params=`echo "$op_params" | sed 's/^ *//'`
 
 xstem=cstem
 ($xstem -h >/dev/null) 2>/dev/null

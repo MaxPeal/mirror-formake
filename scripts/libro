@@ -248,7 +248,7 @@ while test $# -gt 0; do
       current_opt=obj
       ;;
     -ldflags=*)
-      op_ldflags=`echo -n "$1" | sed 's/^[^=]*=//'`
+      op_ldflags=`echo "$1" | sed 's/^[^=]*=//'`
       current_opt=
       ;;
     -c++)
@@ -280,11 +280,11 @@ while test $# -gt 0; do
           current_opt=
           ;;
         ver)
-          _current=`echo -n "$1" | sed 's/\..*//'`
-          rest=`echo -n "$1" | sed 's/^[^.]*\.*//'`
-          _revision=`echo -n "$rest" | sed 's/\..*//'`
-          rest=`echo -n "$rest" | sed 's/^[^.]*\.*//'`
-          _age=`echo -n "$rest" | sed 's/\..*//'`
+          _current=`echo "$1" | sed 's/\..*//'`
+          rest=`echo "$1" | sed 's/^[^.]*\.*//'`
+          _revision=`echo "$rest" | sed 's/\..*//'`
+          rest=`echo "$rest" | sed 's/^[^.]*\.*//'`
+          _age=`echo "$rest" | sed 's/\..*//'`
           op_ver=$1
           op_current=$_current
           op_revision=$_revision

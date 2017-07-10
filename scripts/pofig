@@ -270,18 +270,18 @@ perform_probe() {
   case "$uname_s_lc" in
     netbsd)
       config_os=netbsd
-      config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
-      config_os_vminor=`echo -n "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      config_os_vmajor=`echo "$uname_r" | sed 's/\..*//'`
+      config_os_vminor=`echo "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
     openbsd)
       config_os=openbsd
-      config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
-      config_os_vminor=`echo -n "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      config_os_vmajor=`echo "$uname_r" | sed 's/\..*//'`
+      config_os_vminor=`echo "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
     mirbsd)
       config_os=miros
-      config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
-      config_os_vminor=`echo -n "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      config_os_vmajor=`echo "$uname_r" | sed 's/\..*//'`
+      config_os_vminor=`echo "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
     morphos)
       config_os=morphos
@@ -309,7 +309,7 @@ perform_probe() {
       case x"$uname_v" in
         x[0-9]*.[0-9]*)
           config_os_vmajor=`echo "$uname_v" | sed 's/\..*//'`
-          config_os_vminor=`echo -n "$uname_v" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+          config_os_vminor=`echo "$uname_v" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
           ;;
         *)
           case "$uname_r" in
@@ -328,8 +328,8 @@ perform_probe() {
           config_arch=mips64
           ;;
       esac
-      config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
-      config_os_vminor=`echo -n "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      config_os_vmajor=`echo "$uname_r" | sed 's/\..*//'`
+      config_os_vminor=`echo "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
     aix)
       config_os=aix
@@ -346,8 +346,8 @@ perform_probe() {
       ;;
     hp-ux)
       config_os=hpux
-      config_os_vmajor=`echo -n "$uname_r" | sed 's/^[^0-9]*//' | sed 's/\..*//'`
-      config_os_vminor=`echo -n "$uname_r" | sed 's/^[^0-9]*//' | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      config_os_vmajor=`echo "$uname_r" | sed 's/^[^0-9]*//' | sed 's/\..*//'`
+      config_os_vminor=`echo "$uname_r" | sed 's/^[^0-9]*//' | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       case "$uname_m" in
 	9000/*)
 	  config_arch=hppa
@@ -356,8 +356,8 @@ perform_probe() {
       ;;
     freebsd)
       config_os=freebsd
-      config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
-      config_os_vminor=`echo -n "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      config_os_vmajor=`echo "$uname_r" | sed 's/\..*//'`
+      config_os_vminor=`echo "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
     darwin)
       sw_vers >/dev/null 2>&1
@@ -374,8 +374,8 @@ perform_probe() {
       ;;
     cygwin*)
       config_os=cygwin
-      config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
-      config_os_vminor=`echo -n "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      config_os_vmajor=`echo "$uname_r" | sed 's/\..*//'`
+      config_os_vminor=`echo "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
     windows_95 | windows_98 | windows_nt)
       case "$uname_m" in
@@ -386,8 +386,8 @@ perform_probe() {
       ;;
     minix)
       config_os=minix
-      config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
-      config_os_vminor=`echo -n "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      config_os_vmajor=`echo "$uname_r" | sed 's/\..*//'`
+      config_os_vminor=`echo "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
     linux)
       config_os=gnulinux
@@ -404,13 +404,13 @@ perform_probe() {
       ;;
     procnto* | qnx)
       config_os=qnx
-      config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
-      config_os_vminor=`echo -n "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      config_os_vmajor=`echo "$uname_r" | sed 's/\..*//'`
+      config_os_vminor=`echo "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
     dragonfly)
       config_os=dragonfly
-      config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
-      config_os_vminor=`echo -n "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      config_os_vmajor=`echo "$uname_r" | sed 's/\..*//'`
+      config_os_vminor=`echo "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
     vmkernel)
       config_os=esx
@@ -422,8 +422,8 @@ perform_probe() {
     case "$uname_o_lc" in
       msys*)
         config_os=msys
-        config_os_vmajor=`echo -n "$uname_r" | sed 's/\..*//'`
-        config_os_vminor=`echo -n "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+        config_os_vmajor=`echo "$uname_r" | sed 's/\..*//'`
+        config_os_vminor=`echo "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
         ;;
     esac
   fi
@@ -720,9 +720,9 @@ perform_probe() {
   fi
 
   if test -n "$distro_version"; then
-    distro_version=`echo -n "$distro_version" | sed 's/[^0-9.]//g' | sed '/^\s*$/d'`
-    config_distro_vmajor=`echo -n "$distro_version" | sed 's/[^0-9].*//'`
-    config_distro_vminor=`echo -n "$distro_version" | sed 's/^[0-9]*//' | sed 's/^[^0-9]*//' | sed 's/[^0-9].*//'`
+    distro_version=`echo "$distro_version" | sed 's/[^0-9.]//g' | sed '/^\s*$/d'`
+    config_distro_vmajor=`echo "$distro_version" | sed 's/[^0-9].*//'`
+    config_distro_vminor=`echo "$distro_version" | sed 's/^[0-9]*//' | sed 's/^[^0-9]*//' | sed 's/[^0-9].*//'`
   fi
 
   if test -n "$config_os_vmajor"; then
@@ -766,10 +766,10 @@ abs_path() {
   if test $# = 2; then
     _arg_orig_dir=$1
     _arg=$2
-    if echo -n "$_arg" | grep "^/" > /dev/null; then
+    if echo "$_arg" | grep "^/" > /dev/null; then
       :
     else
-      _arg=`echo -n "$_arg_orig_dir/$_arg" | sed 's!//*!/!g'`
+      _arg=`echo "$_arg_orig_dir/$_arg" | sed 's!//*!/!g'`
     fi
   else
     _arg=$1
@@ -790,21 +790,21 @@ abs_path() {
 
     cd $_cd_param $_sub_orig_dir
   else
-    if echo -n "$_arg" | grep "^/" > /dev/null; then
+    if echo "$_arg" | grep "^/" > /dev/null; then
       abs_path_ret="$_arg"
     else
       abs_path_ret="$_sub_orig_dir/$_arg"
     fi
-    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#//*#/#g'`
-    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/*$#/#'`
+    abs_path_ret=`echo "$abs_path_ret" | sed 's#//*#/#g'`
+    abs_path_ret=`echo "$abs_path_ret" | sed 's#/*$#/#'`
     string_prev=
     while test "x$abs_path_ret" != "x$string_prev" ; do
       string_prev=$abs_path_ret
-      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/[^/][^/][^/][^/]*/\.\./#/#g' | sed 's#/[^/][^/.]/\.\./#/#g' | sed 's#/[^/.][^/]/\.\./#/#g' | sed 's#/[^/.]/\.\./#/#g'`
-      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#^/\.\./#/#' | sed 's#^/\.\.$#/#'`
-      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/\./#/#g' | sed 's#/\.$#/#'`
+      abs_path_ret=`echo "$abs_path_ret" | sed 's#/[^/][^/][^/][^/]*/\.\./#/#g' | sed 's#/[^/][^/.]/\.\./#/#g' | sed 's#/[^/.][^/]/\.\./#/#g' | sed 's#/[^/.]/\.\./#/#g'`
+      abs_path_ret=`echo "$abs_path_ret" | sed 's#^/\.\./#/#' | sed 's#^/\.\.$#/#'`
+      abs_path_ret=`echo "$abs_path_ret" | sed 's#/\./#/#g' | sed 's#/\.$#/#'`
     done
-    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/$##' | sed 's#^$#/#'`
+    abs_path_ret=`echo "$abs_path_ret" | sed 's#/$##' | sed 's#^$#/#'`
   fi
 }
 

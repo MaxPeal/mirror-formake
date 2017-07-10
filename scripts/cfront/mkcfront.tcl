@@ -204,7 +204,7 @@ while test $# -gt 0; do
   shift
 done
 
-op_params=`echo -n "$op_params" | sed 's/^ *//'`
+op_params=`echo "$op_params" | sed 's/^ *//'`
 
 ########## CC_BLOCK_START
 xstem=cstem

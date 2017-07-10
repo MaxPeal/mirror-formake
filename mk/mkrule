@@ -278,10 +278,10 @@ abs_path() {
   if test $# = 2; then
     _arg_orig_dir=$1
     _arg=$2
-    if echo -n "$_arg" | grep "^/" > /dev/null; then
+    if echo "$_arg" | grep "^/" > /dev/null; then
       :
     else
-      _arg=`echo -n "$_arg_orig_dir/$_arg" | sed 's!//*!/!g'`
+      _arg=`echo "$_arg_orig_dir/$_arg" | sed 's!//*!/!g'`
     fi
   else
     _arg=$1
@@ -302,21 +302,21 @@ abs_path() {
 
     cd $_cd_param $_sub_orig_dir
   else
-    if echo -n "$_arg" | grep "^/" > /dev/null; then
+    if echo "$_arg" | grep "^/" > /dev/null; then
       abs_path_ret="$_arg"
     else
       abs_path_ret="$_sub_orig_dir/$_arg"
     fi
-    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#//*#/#g'`
-    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/*$#/#'`
+    abs_path_ret=`echo "$abs_path_ret" | sed 's#//*#/#g'`
+    abs_path_ret=`echo "$abs_path_ret" | sed 's#/*$#/#'`
     string_prev=
     while test "x$abs_path_ret" != "x$string_prev" ; do
       string_prev=$abs_path_ret
-      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/[^/][^/][^/][^/]*/\.\./#/#g' | sed 's#/[^/][^/.]/\.\./#/#g' | sed 's#/[^/.][^/]/\.\./#/#g' | sed 's#/[^/.]/\.\./#/#g'`
-      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#^/\.\./#/#' | sed 's#^/\.\.$#/#'`
-      abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/\./#/#g' | sed 's#/\.$#/#'`
+      abs_path_ret=`echo "$abs_path_ret" | sed 's#/[^/][^/][^/][^/]*/\.\./#/#g' | sed 's#/[^/][^/.]/\.\./#/#g' | sed 's#/[^/.][^/]/\.\./#/#g' | sed 's#/[^/.]/\.\./#/#g'`
+      abs_path_ret=`echo "$abs_path_ret" | sed 's#^/\.\./#/#' | sed 's#^/\.\.$#/#'`
+      abs_path_ret=`echo "$abs_path_ret" | sed 's#/\./#/#g' | sed 's#/\.$#/#'`
     done
-    abs_path_ret=`echo -n "$abs_path_ret" | sed 's#/$##' | sed 's#^$#/#'`
+    abs_path_ret=`echo "$abs_path_ret" | sed 's#/$##' | sed 's#^$#/#'`
   fi
 }
 
@@ -334,9 +334,9 @@ rel_path() {
   while test `expr "$file_to/" : "^$file_from_tmp/"` -eq 0; do
     file_from_tmp=`dirname "$file_from_tmp"`
   done
-  dir_up=`echo -n "$file_from" | sed "s:^$file_from_tmp::" | sed 's:^/::' | sed 's:[^/][^/]*:..:g'`
-  dir_down=`echo -n "$file_to" | sed "s:^$file_from_tmp::" | sed 's:^/::'`
-  rel_path_ret=`echo -n "$dir_up/$dir_down" | sed 's:^/*$:.:' | sed 's:^/*::' | sed 's:/*$::'`
+  dir_up=`echo "$file_from" | sed "s:^$file_from_tmp::" | sed 's:^/::' | sed 's:[^/][^/]*:..:g'`
+  dir_down=`echo "$file_to" | sed "s:^$file_from_tmp::" | sed 's:^/::'`
+  rel_path_ret=`echo "$dir_up/$dir_down" | sed 's:^/*$:.:' | sed 's:^/*::' | sed 's:/*$::'`
 }
 
 get_pofig() {
@@ -459,11 +459,11 @@ mkobj() {
     exit 1
   fi
 
-  test -z "$op_srcdir" || op_srcdir=`echo -n "$op_srcdir" | sed 's#/*$#/#' | sed 's#^\./$##'`
+  test -z "$op_srcdir" || op_srcdir=`echo "$op_srcdir" | sed 's#/*$#/#' | sed 's#^\./$##'`
   if test -n "$op_srcdir"; then
     sources=
     for file in $op_src; do
-      file=`echo -n "$file" | sed 's#^/*##' | sed 's#^\./##'`
+      file=`echo "$file" | sed 's#^/*##' | sed 's#^\./##'`
       sources="$sources $op_srcdir$file"
     done
     op_src=$sources
@@ -493,10 +493,10 @@ mkobj() {
   esac
   
   if test -n "$op_dir"; then
-    op_dir=`echo -n "$op_dir" | sed 's#/*$#/#'`
+    op_dir=`echo "$op_dir" | sed 's#/*$#/#'`
   fi
 
-  mkdep_cflags=`echo -n "$mkdep_cflags" | sed 's/^ *//' | sed 's/ *$//'`
+  mkdep_cflags=`echo "$mkdep_cflags" | sed 's/^ *//' | sed 's/ *$//'`
   
 
   cat <<EOF
@@ -522,7 +522,7 @@ EOF
     else
       echo "$src_base" >> $tmp_file_base
       echo "$src" >> $tmp_file_full
-      name_base=`echo -n "$src_base" | sed 's/\.[^.]*$//'`
+      name_base=`echo "$src_base" | sed 's/\.[^.]*$//'`
       object="$op_dir${name_base}.$obj_ext"
       object_list="$object_list $object"
       if test x$op_disable_mkdep = x; then
@@ -610,7 +610,7 @@ EOF
   fi
   
   if test -n "$op_rc"; then
-    object_list=`echo -n "$object_list" | sed 's/^ *//'`
+    object_list=`echo "$object_list" | sed 's/^ *//'`
     echo "OBJECTS=\"$object_list\"" > $op_rc
     if test x$cxx_mode = x; then
       echo "LANG=\"c\"" >> $op_rc
@@ -624,20 +624,20 @@ EOF
 mkprog() {
   if test -n "$op_src"; then
     for file in $op_src; do
-      obj=`echo -n "$file" | sed 's/\.[^.]*/.o/'`
+      obj=`echo "$file" | sed 's/\.[^.]*/.o/'`
       op_obj="$op_obj $obj"
     done
   fi
 
   if test -n "$op_objdir"; then
-    op_objdir=`echo -n "$op_objdir" | sed 's#/*$#/#'`
+    op_objdir=`echo "$op_objdir" | sed 's#/*$#/#'`
     objects=
     for obj in $op_obj; do
       objects="$objects $op_objdir$obj"
     done
     op_obj=$objects
   fi
-  op_obj=`echo -n "$op_obj" | sed 's/^ *//'`
+  op_obj=`echo "$op_obj" | sed 's/^ *//'`
 
   if test -z "$op_obj"; then
     echo "$script_name: missing parameters -obj or -src" >&2
@@ -662,7 +662,7 @@ mkprog() {
   esac
     
   if test -n "$op_dir"; then
-    op_dir=`echo -n "$op_dir" | sed 's#/*$#/#'`
+    op_dir=`echo "$op_dir" | sed 's#/*$#/#'`
   fi
 
   if test -z "$op_name"; then
@@ -735,20 +735,20 @@ EOF
 mklib() {
   if test -n "$op_src"; then
     for file in $op_src; do
-      obj=`echo -n "$file" | sed 's/\.[^.]*/.o/'`
+      obj=`echo "$file" | sed 's/\.[^.]*/.o/'`
       op_obj="$op_obj $obj"
     done
   fi
 
   if test -n "$op_objdir"; then
-    op_objdir=`echo -n "$op_objdir" | sed 's#/*$#/#'`
+    op_objdir=`echo "$op_objdir" | sed 's#/*$#/#'`
     objects=
     for obj in $op_obj; do
       objects="$objects $op_objdir$obj"
     done
     op_obj=$objects
   fi
-  op_obj=`echo -n "$op_obj" | sed 's/^ *//'`
+  op_obj=`echo "$op_obj" | sed 's/^ *//'`
 
   if test -z "$op_obj"; then
     echo "$script_name: missing parameters -obj or -src" >&2
@@ -827,30 +827,30 @@ mklib() {
   for line in `eval $libro_cmd`; do
     case x"$line" in
       xTARGETS*)
-        lib_targets=`echo -n "$line" | sed 's/^TARGETS *//'`
+        lib_targets=`echo "$line" | sed 's/^TARGETS *//'`
         ;;
       xCMD*)
-        cmd=`echo -n "$line" | sed 's/^CMD *//'`
+        cmd=`echo "$line" | sed 's/^CMD *//'`
         lib_cmd="$lib_cmd
 $cmd"
         ;;
       xLIB_SO_CRA*)
-        lib_so_cra=`echo -n "$line" | sed 's/^LIB_SO_CRA *//'`
+        lib_so_cra=`echo "$line" | sed 's/^LIB_SO_CRA *//'`
         ;;
       xLIB_SO_C*)
-        lib_so_c=`echo -n "$line" | sed 's/^LIB_SO_C *//'`
+        lib_so_c=`echo "$line" | sed 's/^LIB_SO_C *//'`
         ;;
       xLIB_SO*)
-        lib_so=`echo -n "$line" | sed 's/^LIB_SO *//'`
+        lib_so=`echo "$line" | sed 's/^LIB_SO *//'`
         ;;
       xLIB_A*)
-        lib_a=`echo -n "$line" | sed 's/^LIB_A *//'`
+        lib_a=`echo "$line" | sed 's/^LIB_A *//'`
         ;;
       xREGULAR_FILES*)
-        lib_regular=`echo -n "$line" | sed 's/^REGULAR_FILES*//'`
+        lib_regular=`echo "$line" | sed 's/^REGULAR_FILES*//'`
         ;;
       xSYMLINKS*)
-        lib_symbolic=`echo -n "$line" | sed 's/^SYMLINKS*//'`
+        lib_symbolic=`echo "$line" | sed 's/^SYMLINKS*//'`
         ;;
     esac
   done
@@ -891,7 +891,7 @@ EOF
   IFS="
 "
   for cmd in $lib_cmd; do
-    cmd=`echo -n "$cmd" | sed 's/ *$//'`
+    cmd=`echo "$cmd" | sed 's/ *$//'`
     if test -n "$cmd"; then
       echo "	$cmd"
     fi
@@ -1089,11 +1089,11 @@ EOF
     exit 0
   fi
 
-  test -z "$op_srcdir" || op_srcdir=`echo -n "$op_srcdir" | sed 's#/*$#/#' | sed 's#^\./$##'`
+  test -z "$op_srcdir" || op_srcdir=`echo "$op_srcdir" | sed 's#/*$#/#' | sed 's#^\./$##'`
   if test -n "$op_srcdir"; then
     files=
     for file in $op_files; do
-      file=`echo -n "$file" | sed 's#^/*##' | sed 's#^\./##'`
+      file=`echo "$file" | sed 's#^/*##' | sed 's#^\./##'`
       files="$files $op_srcdir$file"
     done
     op_files=$files
@@ -1137,7 +1137,7 @@ EOF
       ;;
     man[0-9])
       perm="0444"
-      man_index=`echo -n "$op_type" | sed 's/^man//'`
+      man_index=`echo "$op_type" | sed 's/^man//'`
       dir="$MANDIR/man$man_index"
       ;;
     doc)
@@ -1155,7 +1155,7 @@ EOF
   else
     test -z "$op_dir" || dir=$op_dir
     if test "$dir" != '/'; then
-      dir=`echo -n "$dir" | sed 's#/*$##'`
+      dir=`echo "$dir" | sed 's#/*$##'`
     fi
   fi
 
@@ -1201,17 +1201,17 @@ mkdist() {
 # $script_name $script_options
 EOF
 
-  test -z "$op_srcdir" || op_srcdir=`echo -n "$op_srcdir" | sed 's#/*$#/#' | sed 's#^\./$##'`
+  test -z "$op_srcdir" || op_srcdir=`echo "$op_srcdir" | sed 's#/*$#/#' | sed 's#^\./$##'`
   test -n "$op_name" || op_name=package
 
-  if echo -n "$op_buildroot" | grep "^/" > /dev/null; then
+  if echo "$op_buildroot" | grep "^/" > /dev/null; then
     echo "$script_name: warning: build root path must be relative" >&2
   fi
 
   if test -n "$op_buildroot"; then
     rel_path "$op_buildroot" ./
     subdir=$rel_path_ret
-    subdir=`echo -n "$subdir" | sed 's#/*$#/#' | sed 's#^\./$##'`
+    subdir=`echo "$subdir" | sed 's#/*$#/#' | sed 's#^\./$##'`
   else
     echo "$script_name: warning: build root not specified" >&2
   fi
@@ -1219,11 +1219,11 @@ EOF
   dist_dirs=
   dist_files=
   for file in $op_files; do
-    file=`echo -n "$file" | sed 's#^\./##'`
-    if echo -n "$file" | grep "^/" > /dev/null; then
+    file=`echo "$file" | sed 's#^\./##'`
+    if echo "$file" | grep "^/" > /dev/null; then
       echo "$script_name: error: invalid dist file path: $file" >&2
       exit 1
-    elif echo -n "$file" | grep "^\.\./" > /dev/null; then
+    elif echo "$file" | grep "^\.\./" > /dev/null; then
       echo "$script_name: error: invalid dist file path: $file" >&2
       exit 1
     else
@@ -1240,8 +1240,8 @@ EOF
       fi
     fi
   done
-  dist_dirs=`echo -n "$dist_dirs" | tr ' ' '\n' | sort | uniq | grep -v '\.' | tr '\n' ' ' | sed 's/^ *//'`
-  dist_files=`echo -n "$dist_files" | sed 's/^ *//'`
+  dist_dirs=`echo "$dist_dirs" | tr ' ' '\n' | sort | uniq | grep -v '\.' | tr '\n' ' ' | sed 's/^ *//'`
+  dist_files=`echo "$dist_files" | sed 's/^ *//'`
 
   get_random
 
@@ -1276,7 +1276,7 @@ DIST_ID = $RANDOM
 EOF
   fi
   if test -n "$op_buildroot"; then
-    buildroot=`echo -n "$op_buildroot" | sed 's#/*$#/#' | sed 's#^\./$##'`
+    buildroot=`echo "$op_buildroot" | sed 's#/*$#/#' | sed 's#^\./$##'`
     cat <<EOF
 dist-tree: dist-tree-$RANDOM
 dist-tree-$RANDOM:
@@ -1474,7 +1474,7 @@ while test $# -gt 0; do
         echo "$script_name: error: invalid parameter $1 for current mode" >&2
         exit 1
       fi
-      op_cflags=`echo -n "$1" | sed 's/^[^=]*=//'`
+      op_cflags=`echo "$1" | sed 's/^[^=]*=//'`
       current_opt=
       ;;
     -pic)
@@ -1590,7 +1590,7 @@ while test $# -gt 0; do
         echo "$script_name: error: invalid parameter $1 for current mode" >&2
         exit 1
       fi
-      op_ldflags=`echo -n "$1" | sed 's/^[^=]*=//'`
+      op_ldflags=`echo "$1" | sed 's/^[^=]*=//'`
       current_opt=
       ;;
     -disable-ldlw)
@@ -1730,7 +1730,7 @@ while test $# -gt 0; do
           current_opt=
           ;;
         var)
-          op_var_prefix=`echo -n "$1" | sed 's/_$//' | sed 's/$/_/'`
+          op_var_prefix=`echo "$1" | sed 's/_$//' | sed 's/$/_/'`
           current_opt=
           ;;
         src)
@@ -1796,10 +1796,10 @@ done
 abs_path `dirname "$0"`
 script_dir=$abs_path_ret
 
-op_dirs=`echo -n "$op_dirs" | sed 's/^ *//'`
-op_prereq=`echo -n "$op_prereq" | sed 's/^ *//'`
-op_obj=`echo -n "$op_obj" | sed 's/^ *//'`
-op_files=`echo -n "$op_files" | sed 's/^ *//'`
+op_dirs=`echo "$op_dirs" | sed 's/^ *//'`
+op_prereq=`echo "$op_prereq" | sed 's/^ *//'`
+op_obj=`echo "$op_obj" | sed 's/^ *//'`
+op_files=`echo "$op_files" | sed 's/^ *//'`
 
 case $op_mode in
   obj)

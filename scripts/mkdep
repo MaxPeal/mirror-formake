@@ -109,7 +109,7 @@ while test $# -gt 0; do
       current_opt=o
       ;;
     -cflags=*)
-      op_cflags=`echo -n "$1" | sed 's/^-cflags=//'`
+      op_cflags=`echo "$1" | sed 's/^-cflags=//'`
       current_opt=
       ;;
     -I*)
@@ -192,7 +192,7 @@ if test $? -ge 126; then
 fi
 
 cc_cmd=$op_cc
-cc_flags=`echo -n "$cc_flags $op_cflags $op_cflags2" | sed 's/^ *//' | sed 's/ *$//'`
+cc_flags=`echo "$cc_flags $op_cflags $op_cflags2" | sed 's/^ *//' | sed 's/ *$//'`
 if test -z "$cc_cmd$cc_flags"; then
   cc_cmd=`$cstem_cmd -cmd`
   if test -z "$cc_cmd"; then
@@ -229,7 +229,7 @@ for file in $op_sources; do
     object=$op_object
     out_dir=`dirname "$op_object"`
   else
-    object=`echo -n "$file" | sed 's/\.[^.]*$/.o/'`
+    object=`echo "$file" | sed 's/\.[^.]*$/.o/'`
     out_dir="."
   fi
   base_name=`basename "$object" | sed 's/\.[^.]*$//'`
