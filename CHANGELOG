@@ -65,4 +65,5 @@ Formake v0.12
   * added better support of Minix
   * added better support of older Shells
   * pofig: fixed solaris version detection
+  * pofig: added detection of SCO UNIX
 
