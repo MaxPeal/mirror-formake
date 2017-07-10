@@ -57,4 +57,11 @@ Formake v0.11
   * pofig: removed AmigaOS support
   * pofig: added support of Apple macOS
   * cstem: added better support of Apple macOS and clang
+  * pofig: removed kernel property as redundant
+
+Formake v0.12
+  * cstem: fixed endianess detection for gcc
+  * cstem: removed kernel property as redundant
+  * added better support of Minix
+  * added better support of older Shells
 
