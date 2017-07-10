@@ -78,7 +78,9 @@
 #     Ubuntu 17.04 x86-64
 #  HP-UX 11.11 PA-RISC
 #  IRIX 6.5 MIPS64
-#  macOS 10.12 x86-64
+#  MacOS 10.7.5 Lion x86-64
+#  macOS 10.11 El Capitan x86-64
+#  macOS 10.12 Sierra x86-64
 #  Msys 1.x x86
 #  Msys 2.x x86-64
 #  Minix 3.3.0 x86
@@ -377,6 +379,9 @@ perform_probe() {
         esac
         config_os_vmajor=`sw_vers -productVersion | sed 's/\..*//'`
         config_os_vminor=`sw_vers -productVersion | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      fi
+      if file /bin/cat | grep -i x86_64 > /dev/null; then
+        config_arch=x86_64
       fi
       ;;
     cygwin*)
