@@ -127,7 +127,7 @@ export FORMAKE_BASH_REDIRECTED
 ################################################################################
 
 
-version_string="Formake pofig 1.1"
+version_string="Formake pofig 1.2"
 
 print_help() {
 cat <<EOF

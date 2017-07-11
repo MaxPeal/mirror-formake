@@ -211,7 +211,7 @@ config_file="$script_dir/cstem+.conf"
 ext="C"
 ########## BLOCK_END
 tmp_dir=/tmp/cstem_$$
-version_string="0.4"
+version_string="0.5"
 
 
 ################################################################################

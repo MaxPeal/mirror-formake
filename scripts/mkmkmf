@@ -53,7 +53,7 @@ export FORMAKE_BASH_REDIRECTED
 ################################################################################
 
 
-version_string="Formake mkmkmf 1.0"
+version_string="Formake mkmkmf 1.1"
 script_name=`basename "$0"`
 script_options="$@"
 
