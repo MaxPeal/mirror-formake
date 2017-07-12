@@ -73,3 +73,6 @@ Formake v0.12
   * pofig: fixed arch detection on macos
   * cstem: updated compiler search command list
 
+Formake v0.13
+  * pofig: added support of Pidora Linux
+
