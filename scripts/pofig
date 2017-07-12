@@ -90,6 +90,7 @@
 #  NetBSD 7.1 x86-64
 #  OpenBSD 4.9 i386
 #  OpenBSD 6.1 x86-64
+#  Pidora 2014 Arm
 #  QNX 6.5.0 x86
 #  SCO OpenServer 6.0.0 i386
 #  SmartOS 2017xxxx x86-64
@@ -186,6 +187,7 @@ devuan            Devuan
 fedora            Fedora
 gentoo            Gentoo
 opensuse          OpenSUSE
+pidora            Pidora
 redhat            Red Hat
 slackware         Slackware
 suse              Suse Linux Enterprise
@@ -650,7 +652,9 @@ perform_probe() {
     fi
     distro_version=`lsb_release -r | sed 's/^Release[^0-9]*//' | sed 's/[^0-9]*$//'`
   elif test -f /etc/os-release; then
-    if cat /etc/os-release | grep -i fedora >/dev/null; then
+    if cat /etc/os-release | grep -i pidora >/dev/null; then
+      config_distro=pidora
+    elif cat /etc/os-release | grep -i fedora >/dev/null; then
       config_distro=fedora
     elif cat /etc/os-release | grep -i "red *hat" >/dev/null; then
       config_distro=redhat
@@ -680,6 +684,9 @@ perform_probe() {
       distro_version=`cat /etc/issue | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
     elif cat /etc/issue | grep -i "arch linux" >/dev/null; then
       config_distro=arch
+    elif cat /etc/issue | grep -i "pidora" >/dev/null; then
+      config_distro=pidora
+      distro_version=`cat /etc/issue | grep -i "pidora" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
     elif cat /etc/issue | grep -i "fedora" >/dev/null; then
       config_distro=fedora
       distro_version=`cat /etc/issue | grep -i "fedora" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
@@ -724,6 +731,9 @@ perform_probe() {
           esac
         fi
       fi
+    elif test -f /etc/pidora-release; then
+      config_distro=pidora
+      distro_version=`cat /etc/pidora-release | grep -i "pidora" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
     elif test -f /etc/fedora-release; then
       config_distro=fedora
       distro_version=`cat /etc/fedora-release | grep -i "fedora" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
