@@ -98,6 +98,7 @@
 #  Solaris 10 sparc
 #  Solaris 10 x86-64
 #  Solaris 11.3 x86-64
+#  Tru64 UNIX 5.1 Alpha
 #  UnixWare 7.1 i386
 
 ################################################################################
@@ -176,6 +177,7 @@ qnx               QNX
 riscos            RISC OS
 sco               SCO UNIX
 solaris           Solaris
+tru64             Tru64 UNIX
 unixware          UnixWare
 zvm               IBM z/VM
 
@@ -365,6 +367,14 @@ perform_probe() {
 	  config_arch=hppa
 	  ;;
       esac
+      ;;
+    osf1)
+      sizer >/dev/null 2>&1
+      if sizer -v | grep Tru64 > /dev/null; then
+        config_os=tru64
+        config_os_vmajor=`echo "$uname_r" | sed 's/^[^0-9]*//' | sed 's/\..*//'`
+        config_os_vminor=`echo "$uname_r" | sed 's/^[^0-9]*//' | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      fi
       ;;
     freebsd)
       config_os=freebsd
