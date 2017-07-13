@@ -75,4 +75,5 @@ Formake v0.12
 
 Formake v0.13
   * pofig: added support of Pidora Linux
+  * pofig: added support of Tru64 UNIX
 
