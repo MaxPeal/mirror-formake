@@ -1566,8 +1566,8 @@ get_cc() {
       cc_list="g++ c++ CC clang++"    ###CX_LINE
       ;;
     *)
-      cc_list="gcc cc c99 clang"    ###CC_LINE
-      cc_list="g++ CC c++ clang++"    ###CX_LINE
+      cc_list="cc c99 c89 gcc clang"    ###CC_LINE
+      cc_list="CC c++ g++ clang++"    ###CX_LINE
       ;;
   esac
 }

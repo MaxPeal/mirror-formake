@@ -1223,7 +1223,7 @@ get_cc() {
       cc_list="g++ c++ CC clang++"
       ;;
     *)
-      cc_list="g++ CC c++ clang++"
+      cc_list="CC c++ g++ clang++"
       ;;
   esac
 }

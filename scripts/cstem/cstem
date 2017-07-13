@@ -1304,7 +1304,7 @@ get_cc() {
       cc_list="gcc cc c99 clang"
       ;;
     *)
-      cc_list="gcc cc c99 clang"
+      cc_list="cc c99 c89 gcc clang"
       ;;
   esac
 }
