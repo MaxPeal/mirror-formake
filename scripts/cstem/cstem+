@@ -139,7 +139,7 @@ os
 os_version
 arch
 bitness
-endianess
+endianness
 data_model
 "
 
@@ -171,7 +171,7 @@ PROBE MODE (DEFAULT). PROBE COMPILER PROPERTIES
  -osver                get target OS version
  -arch                 get target architecture
  -bits                 get target bitness
- -endian               get target endianess
+ -endian               get target endianness
  -dm                   get target data model
  -f1                   print in format 1> VAR="VALUE"
  -f2                   print in format 2> FIELD: VALUE
@@ -335,7 +335,7 @@ TARGET BITNESS
 32                32-bit CPU
 64                64-bit CPU
 
-TARGET ENDIANESS
+TARGET ENDIANNESS
 --------------------------------------------------------------------------------
 big               Big-endian
 little            Little-endian
@@ -1167,19 +1167,19 @@ read_cc_props() {
   fi
 
   if test -n "$DSET__BIG_ENDIAN__" || test -n "$DSET__ARMEB__" || test -n "$DSET__THUMBEB__" || test -n "$DSET__AARCH64EB__" || test -n "$DSET_MIPSEB" || test -n "$DSET__MIPSEB" || test -n "$DSET__MIPSEB__"; then
-    prop_endianess=big
+    prop_endianness=big
   fi
 
   if test x"$DVAL__BYTE_ORDER__" = x"$DVAL__ORDER_BIG_ENDIAN__" || test x"$DVAL__FLOAT_WORD_ORDER__" = x"$DVAL__ORDER_BIG_ENDIAN__"; then
-    prop_endianess=big
+    prop_endianness=big
   fi
 
   if test -n "$DSET__LITTLE_ENDIAN__" || test -n "$DSET__ARMEL__" || test -n "$DSET__THUMBEL__" || test -n "$DSET__AARCH64EL__" || test -n "$DSET_MIPSEL" || test -n "$DSET__MIPSEL" || test -n "$DSET__MIPSEL__"; then
-    prop_endianess=little
+    prop_endianness=little
   fi
 
   if test x"$DVAL__BYTE_ORDER__" = x"$DVAL__ORDER_LITTLE_ENDIAN__" || test x"$DVAL__FLOAT_WORD_ORDER__" = x"$DVAL__ORDER_LITTLE_ENDIAN__"; then
-    prop_endianess=little
+    prop_endianness=little
   fi
 
   if test -n "$DSET_ILP32" || test -n "$DSET__ILP32__"; then
@@ -1494,7 +1494,7 @@ if test x$mode_probe = x1; then
         print_string="$print_string bitness"
         ;;
       -endian)
-        print_string="$print_string endianess"
+        print_string="$print_string endianness"
         ;;
       -dm)
         print_string="$print_string data_model"
@@ -1527,12 +1527,12 @@ target os:          ${prop_os:--}
 target os version:  ${prop_os_version:--}
 target arch:        ${prop_arch:--}
 bitness:            ${prop_bitness:--}
-endianess:          ${prop_endianess:--}
+endianness:          ${prop_endianness:--}
 data model:         ${prop_data_model:--}
 EOF
   else
     if test -z "$print_string"; then
-      print_string="cmd cxxflags id version std os os_version arch bitness endianess data_model"
+      print_string="cmd cxxflags id version std os os_version arch bitness endianness data_model"
     fi
     print_space=
     for prop in $print_string; do
@@ -4036,7 +4036,7 @@ DSET__zarch__=1
 DSET__SYSC_ZARCH__=1
 #endif
 
-/* ENDIANESS */
+/* ENDIANNESS */
 
 #ifdef __BIG_ENDIAN__
 DSET__BIG_ENDIAN__=1
