@@ -298,6 +298,7 @@ integrity         Integrity
 interix           Interix (POSIX-conformant Unix subsystem for Windows)
 irix              IRIX
 lynxos            LynxOS RTOS
+macos             Apple macOS
 minix             MINIX
 morphos           MorphOS
 netbsd            NetBSD
@@ -305,7 +306,6 @@ nonstop           NonStop
 nucleus           Nucleus RTOS
 openbsd           OpenBSD
 os9               Microware OS-9
-osx               OS X (Mac OS X)
 qnx               QNX
 solaris           Solaris
 syllable          Syllable Desktop
@@ -1054,12 +1054,12 @@ read_cc_props() {
     prop_os=lynxos
   fi
 
-  if test -n "$DSET__APPLE__" && test -n "$DSET__MACH__"; then
-    prop_os=osx
-  fi
-
   if test -n "$DSET__OS9000" || test -n "$DSET_OSK"; then
     prop_os=os9
+  fi
+
+  if test -n "$DSET__APPLE__" && test -n "$DSET__MACH__"; then
+    prop_os=macos
   fi
 
   if test -n "$DSET__minix"; then
