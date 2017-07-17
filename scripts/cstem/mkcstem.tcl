@@ -733,6 +733,52 @@ EOF
   rm -rf $test_dir
 }
 
+get_hdr_defs() {
+  DEF_FLAGS=
+
+  test_src="test.$ext"
+  test_dir=/tmp/cstem_data_$$
+  rm -rf $test_dir
+  mkdir $test_dir
+  cd $test_dir
+
+  cat > $test_src <<EOF
+#include <android/api-level.h>
+int main(int argc, char** argv)
+{
+  return 0;
+}
+EOF
+  if ($cc_cmd $check_cflags -c $test_src >/dev/null) 2>/dev/null; then
+    DEF_FLAGS="$DEF_FLAGS -DANDROID_API_LEVEL_H"
+  fi
+
+  cat > $test_src <<EOF
+#include <sys/neutrino.h>
+int main(int argc, char** argv)
+{
+  return 0;
+}
+EOF
+  if ($cc_cmd $check_cflags -c $test_src >/dev/null) 2>/dev/null; then
+    DEF_FLAGS="$DEF_FLAGS -DSYS_NEUTRINO_H"
+  fi
+
+  cat > $test_src <<EOF
+#include <version.h>
+int main(int argc, char** argv)
+{
+  return 0;
+}
+EOF
+  if ($cc_cmd $check_cflags -c $test_src >/dev/null) 2>/dev/null; then
+    DEF_FLAGS="$DEF_FLAGS -DVERSION_H"
+  fi
+
+  cd $orig_dir
+  rm -rf $test_dir
+}
+
 read_cc_props() {
   prop_id=
   prop_version=
@@ -748,9 +794,9 @@ read_cc_props() {
   cat $script_abs | sed -n -e '/\* COMPILER DEFINES \*/,$p' | grep -v "^EOF" > $probe_h
   probe_h_out="/tmp/cstem_$$_out"
 ########## CC_BLOCK_START
-  $cc_cmd $CFLAGS $CPP_FLAG $probe_h 2>/dev/null > $probe_h_out
+  $cc_cmd $CFLAGS $DEF_FLAGS $CPP_FLAG $probe_h 2>/dev/null > $probe_h_out
 ########## CX_BLOCK_START
-  $cc_cmd $CXXFLAGS $CPP_FLAG $probe_h 2>/dev/null > $probe_h_out
+  $cc_cmd $CXXFLAGS $DEF_FLAGS $CPP_FLAG $probe_h 2>/dev/null > $probe_h_out
 ########## BLOCK_END
   probe_sh="/tmp/cstem_$$.sh"
   cat $probe_h_out | grep "^D[SV][EA][TL]" | sed 's/= */=/' | sed 's/ *$//' | sed 's/=\(.*\)$/="\1"/' | sed 's/""*/"/g' | sed 's/ *= */=/' | sed 's/="*$/=/' > $probe_sh
@@ -1739,6 +1785,8 @@ perform_probe() {
   if test -n "$LDFLAGS"; then
     prop_ldflags=$LDFLAGS
   fi
+
+  get_hdr_defs
   
   read_cc_props
   prop_cmd=$cc_cmd
@@ -3969,10 +4017,12 @@ DSET_AIX91=1
 #ifdef __ANDROID__
 DSET__ANDROID__=1
 
+#ifdef ANDROID_API_LEVEL_H
 #include <android/api-level.h>
 #ifdef __ANDROID_API__
 DSET__ANDROID_API__=1
 DVAL__ANDROID_API__=__ANDROID_API__
+#endif
 #endif
 
 #endif
@@ -4097,10 +4147,12 @@ DSET__QNX__=1
 #ifdef __QNXNTO__
 DSET__QNXNTO__=1
 
+#ifdef SYS_NEUTRINO_H
 #include <sys/neutrino.h>
 #ifdef _NTO_VERSION
 DSET_NTO_VERSION=1
 DVAL_NTO_VERSION=_NTO_VERSION
+#endif
 #endif
 
 #endif
@@ -4170,6 +4222,7 @@ DSET__vxworks=1
 #endif
 
 #if defined(__VXWORKS__) || defined(__vxworks)
+#ifdef VERSION_H
 #include <version.h>
 
 #ifdef _WRS_VXWORKS_MAJOR
@@ -4180,6 +4233,7 @@ DVAL_WRS_VXWORKS_MAJOR=_WRS_VXWORKS_MAJOR
 #ifdef _WRS_VXWORKS_MINOR
 DSET_WRS_VXWORKS_MINOR=1
 DVAL_WRS_VXWORKS_MINOR=_WRS_VXWORKS_MINOR
+#endif
 #endif
 #endif /*__VXWORKS __vxworks */
 
