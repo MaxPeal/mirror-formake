@@ -284,6 +284,7 @@ PROBE MODE (DEFAULT). PROBE COMPILER PROPERTIES
  -bits                 get target bitness
  -endian               get target endianness
  -dm                   get target data model
+ -cross                print 'true' and return 0 if compiler is cross-compiler
  -f1                   print in format 1> VAR="VALUE"
  -f2                   print in format 2> FIELD: VALUE
  -f3                   print in format 3> VALUE
@@ -1740,6 +1741,11 @@ perform_probe() {
   
   read_cc_props
   prop_cmd=$cc_cmd
+  if test $cc_is_cross = 1; then
+    prop_flag_cross="true"
+  else
+    prop_flag_cross="false"
+  fi
 }
 
 echo_status() {
@@ -2007,6 +2013,9 @@ if test x$mode_probe = x1; then
       -dm)
         print_string="$print_string data_model"
         ;;
+      -cross)
+        print_string="$print_string flag_cross"
+        ;;
       -f1|-f2|-f3)
         out_format=`echo "$1" | sed 's/^-f//'`
         ;;
@@ -2045,13 +2054,14 @@ target arch:        ${prop_arch:--}
 bitness:            ${prop_bitness:--}
 endianness:         ${prop_endianness:--}
 data model:         ${prop_data_model:--}
+cross compiler:     $prop_flag_cross
 EOF
   else
     if test -z "$print_string"; then
 ########## CC_BLOCK_START
-      print_string="cmd cflags id version std os os_version arch bitness endianness data_model"
+      print_string="cmd cflags id version std os os_version arch bitness endianness data_model flag_cross"
 ########## CX_BLOCK_START
-      print_string="cmd cxxflags id version std os os_version arch bitness endianness data_model"
+      print_string="cmd cxxflags id version std os os_version arch bitness endianness data_model flag_cross"
 ########## BLOCK_END
     fi
     print_space=
