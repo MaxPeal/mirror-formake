@@ -212,6 +212,7 @@ ext="C"
 ########## BLOCK_END
 tmp_dir=/tmp/cstem_$$
 version_string="0.5"
+cc_is_cross=0
 
 
 ################################################################################
@@ -703,7 +704,13 @@ EOF
 ########## BLOCK_END
 
   if ($cc_cmd $check_cflags -c $test_src >/dev/null) 2>/dev/null; then
-    cc_is_ok=1
+    if ($cc_cmd $check_cflags -o testapp $test_src >/dev/null) 2>/dev/null; then
+      cc_is_ok=1
+      (./testapp >/dev/null) 2>/dev/null
+      if test $? -ne 0; then
+        cc_is_cross=1
+      fi
+    fi
   fi
 
   cd $orig_dir
@@ -711,11 +718,17 @@ EOF
 }
 
 read_cc_props() {
-########## CC_BLOCK_START
-  probe_h="/tmp/cstem_$$.c"
-########## CX_BLOCK_START
-  probe_h="/tmp/cstem_$$.cpp"
-########## BLOCK_END
+  prop_id=
+  prop_version=
+  prop_std=
+  prop_os=
+  prop_os_version=
+  prop_arch=
+  prop_bitness=
+  prop_endianness=
+  prop_data_model=
+
+  probe_h="/tmp/cstem_$$.$ext"
   cat $script_abs | sed -n -e '/\* COMPILER DEFINES \*/,$p' | grep -v "^EOF" > $probe_h
   probe_h_out="/tmp/cstem_$$_out"
 ########## CC_BLOCK_START
@@ -763,6 +776,10 @@ read_cc_props() {
     fi
   fi
 ########## BLOCK_END
+
+
+################################################################################
+# DETECT COMPILER AND VERSION
 
   if test -n "$DSET__EDG__"; then
     prop_id=edg
@@ -1232,6 +1249,17 @@ read_cc_props() {
     fi
   fi
 
+  prop_version=$prop_vmajor
+  if test -n "$prop_vminor"; then
+    prop_version="${prop_version}.${prop_vminor}"
+    if test -n "$prop_vrevision"; then
+      prop_version="${prop_version}.${prop_vrevision}"
+    fi
+  fi
+
+################################################################################
+# DETECT OS AND VERSION
+
   if test -n "$DSET_AIX" || test -n "$DSET__TOS_AIX__"; then
     prop_os=aix
 
@@ -1421,6 +1449,59 @@ read_cc_props() {
     prop_os=tru64
   fi
 
+  prop_os_version=$prop_os_vmajor
+
+
+################################################################################
+# DETECT DATA MODEL
+  if test -n "$DSET_ILP32" || test -n "$DSET__ILP32__"; then
+    prop_data_model=ilp32
+  fi
+
+  if test -n "$DSET_LP64" || test -n "$DSET__LP64__"; then
+    prop_data_model=lp64
+  fi
+
+  if test -z "$prop_data_model" && test $cc_is_cross = 0; then
+    dm_src=/tmp/cstem_dm_$$.$ext
+    dm_exe=/tmp/cstem_dm_$$
+    cat >$dm_src <<"EOF"
+#include <stdio.h>
+
+int main(int argc, char *argv[])
+{
+  int int_sz, long_sz, ptr_sz;
+
+  int_sz = sizeof(int);
+  long_sz = sizeof(long int);
+  ptr_sz = sizeof(int *);
+
+  if (int_sz == 2 && long_sz == 4 && ptr_sz == 4) {
+    printf("lp32\n");
+  } else if (int_sz == 4 && long_sz == 4 && ptr_sz == 4) {
+    printf("ilp32\n");
+  } else if (int_sz == 8 && long_sz == 8 && ptr_sz == 8) {
+    printf("ilp64\n");
+  } else if (int_sz == 4 && long_sz == 4 && ptr_sz == 8) {
+    printf("llp64\n");
+  } else if (int_sz == 4 && long_sz == 8 && ptr_sz == 8) {
+    printf("lp64\n");
+  }
+}
+
+EOF
+########## CC_BLOCK_START
+    $cc_cmd $CFLAGS -o $dm_exe $dm_src 2>/dev/null
+########## CX_BLOCK_START
+    $cc_cmd $CXXFLAGS -o $dm_exe $dm_src 2>/dev/null
+########## BLOCK_END
+    prop_data_model=`$dm_exe`
+    rm -f $dm_src $dm_exe
+  fi
+
+
+################################################################################
+# DETECT ARCH & BITNESS
   if test -n "$DSET__arch64__"; then
     prop_bitness=64
   fi
@@ -1504,6 +1585,20 @@ read_cc_props() {
     prop_bitness=64
   fi
 
+  if test -z "$prop_bitness" && test -n "$prop_data_model"; then
+    case $prop_data_model in
+      lp32 | ilp32)
+        prop_bitness=32
+        ;;
+      ilp64 | llp64 | lp64)
+        prop_bitness=64
+        ;;
+    esac
+  fi
+
+
+################################################################################
+# DETECT ENDIANESS
   if test -n "$DSET__BIG_ENDIAN__" || test -n "$DSET__ARMEB__" || test -n "$DSET__THUMBEB__" || test -n "$DSET__AARCH64EB__" || test -n "$DSET_MIPSEB" || test -n "$DSET__MIPSEB" || test -n "$DSET__MIPSEB__"; then
     prop_endianness=big
   fi
@@ -1520,25 +1615,29 @@ read_cc_props() {
     prop_endianness=little
   fi
 
-  if test -n "$DSET_ILP32" || test -n "$DSET__ILP32__"; then
-    prop_data_model=ilp32
-    prop_bitness=32
-  fi
+  if test -z "$prop_endianness" && test $cc_is_cross = 0; then
+    border_src=/tmp/cstem_border_$$.$ext
+    border_exe=/tmp/cstem_border_$$
+    cat >$border_src <<"EOF"
+#include <stdio.h>
 
-  if test -n "$DSET_LP64" || test -n "$DSET__LP64__"; then
-    prop_data_model=lp64
-    prop_bitness=64
-  fi
+int main(int argc, char *argv[])
+{
+   short int word = 0x0001;
+   char *byte = (char *) &word;
+   if (byte[0]) printf("little\n");
+   else printf("big\n");
+}
 
-  prop_version=$prop_vmajor
-  if test -n "$prop_vminor"; then
-    prop_version="${prop_version}.${prop_vminor}"
-    if test -n "$prop_vrevision"; then
-      prop_version="${prop_version}.${prop_vrevision}"
-    fi
+EOF
+########## CC_BLOCK_START
+    $cc_cmd $CFLAGS -o $border_exe $border_src 2>/dev/null
+########## CX_BLOCK_START
+    $cc_cmd $CXXFLAGS -o $border_exe $border_src 2>/dev/null
+########## BLOCK_END
+    prop_endianness=`$border_exe`
+    rm -f $border_src $border_exe
   fi
-
-  prop_os_version=$prop_os_vmajor
 }
 
 get_cc() {
@@ -1930,7 +2029,7 @@ target os:          ${prop_os:--}
 target os version:  ${prop_os_version:--}
 target arch:        ${prop_arch:--}
 bitness:            ${prop_bitness:--}
-endianness:          ${prop_endianness:--}
+endianness:         ${prop_endianness:--}
 data model:         ${prop_data_model:--}
 EOF
   else
