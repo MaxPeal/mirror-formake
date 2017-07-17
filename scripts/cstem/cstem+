@@ -583,6 +583,29 @@ EOF
     DEF_FLAGS="$DEF_FLAGS -DVERSION_H"
   fi
 
+  cat > $test_src <<EOF
+#include <limits.h>
+int main(int argc, char** argv)
+{
+  return 0;
+}
+EOF
+  if ($cc_cmd $check_cflags -c $test_src >/dev/null) 2>/dev/null; then
+    DEF_FLAGS="$DEF_FLAGS -DLIMITS_H"
+  fi
+
+  cat > $test_src <<EOF
+#include <stdint.h>
+int main(int argc, char** argv)
+{
+  return 0;
+}
+EOF
+  if ($cc_cmd $check_cflags -c $test_src >/dev/null) 2>/dev/null; then
+    DEF_FLAGS="$DEF_FLAGS -DSTDINT_H"
+  fi
+
+
   cd $orig_dir
   rm -rf $test_dir
 }
@@ -1181,50 +1204,6 @@ read_cc_props() {
 
 
 ################################################################################
-# DETECT DATA MODEL
-  if test -n "$DSET_ILP32" || test -n "$DSET__ILP32__"; then
-    prop_data_model=ilp32
-  fi
-
-  if test -n "$DSET_LP64" || test -n "$DSET__LP64__"; then
-    prop_data_model=lp64
-  fi
-
-  if test -z "$prop_data_model" && test $cc_is_cross = 0; then
-    dm_src=/tmp/cstem_dm_$$.$ext
-    dm_exe=/tmp/cstem_dm_$$
-    cat >$dm_src <<"EOF"
-#include <stdio.h>
-
-int main(int argc, char *argv[])
-{
-  int int_sz, long_sz, ptr_sz;
-
-  int_sz = sizeof(int);
-  long_sz = sizeof(long int);
-  ptr_sz = sizeof(int *);
-
-  if (int_sz == 2 && long_sz == 4 && ptr_sz == 4) {
-    printf("lp32\n");
-  } else if (int_sz == 4 && long_sz == 4 && ptr_sz == 4) {
-    printf("ilp32\n");
-  } else if (int_sz == 8 && long_sz == 8 && ptr_sz == 8) {
-    printf("ilp64\n");
-  } else if (int_sz == 4 && long_sz == 4 && ptr_sz == 8) {
-    printf("llp64\n");
-  } else if (int_sz == 4 && long_sz == 8 && ptr_sz == 8) {
-    printf("lp64\n");
-  }
-}
-
-EOF
-    $cc_cmd $CXXFLAGS -o $dm_exe $dm_src 2>/dev/null
-    prop_data_model=`$dm_exe`
-    rm -f $dm_src $dm_exe
-  fi
-
-
-################################################################################
 # DETECT ARCH & BITNESS
   if test -n "$DSET__arch64__"; then
     prop_bitness=64
@@ -1307,6 +1286,114 @@ EOF
   if test -n "$DSET__s390x__" || test -n "$DSET__zarch__" || test -n "$DSET__SYSC_ZARCH__"; then
     prop_arch=zarch
     prop_bitness=64
+  fi
+
+
+################################################################################
+# DETECT DATA MODEL
+  if test -n "$DSET_ILP32" || test -n "$DSET__ILP32__"; then
+    prop_data_model=ilp32
+  fi
+
+  if test -n "$DSET_LP64" || test -n "$DSET__LP64__"; then
+    prop_data_model=lp64
+  fi
+
+  if test -z "$prop_data_model" && test $cc_is_cross = 0; then
+    dm_src=/tmp/cstem_dm_$$.$ext
+    dm_exe=/tmp/cstem_dm_$$
+    cat >$dm_src <<"EOF"
+#include <stdio.h>
+
+int main(int argc, char *argv[])
+{
+  int int_sz, long_sz, ptr_sz;
+
+  int_sz = sizeof(int);
+  long_sz = sizeof(long int);
+  ptr_sz = sizeof(int *);
+
+  if (int_sz == 2 && long_sz == 4 && ptr_sz == 4) {
+    printf("lp32\n");
+  } else if (int_sz == 4 && long_sz == 4 && ptr_sz == 4) {
+    printf("ilp32\n");
+  } else if (int_sz == 8 && long_sz == 8 && ptr_sz == 8) {
+    printf("ilp64\n");
+  } else if (int_sz == 4 && long_sz == 4 && ptr_sz == 8) {
+    printf("llp64\n");
+  } else if (int_sz == 4 && long_sz == 8 && ptr_sz == 8) {
+    printf("lp64\n");
+  }
+}
+
+EOF
+    $cc_cmd $CXXFLAGS -o $dm_exe $dm_src 2>/dev/null
+    prop_data_model=`$dm_exe`
+    rm -f $dm_src $dm_exe
+  fi
+
+  if test -z "$prop_data_model"; then
+    if test -n "$DVAL__SIZEOF_INT__"; then
+      int_sz=$DVAL__SIZEOF_INT__
+    elif test -n "$DVALUINT_MAX"; then
+      case "$DVALUINT_MAX" in
+        6553*)
+          int_sz=2
+          ;;
+        429496*)
+          int_sz=4
+          ;;
+        184467*)
+          int_sz=8
+          ;;
+      esac
+    fi
+
+    if test -n "$DVAL__SIZEOF_LONG__"; then
+      long_sz=$DVAL__SIZEOF_LONG__
+    elif test -n "$DVALULONG_MAX"; then
+      case "$DVALULONG_MAX" in
+        429496*)
+          long_sz=4
+          ;;
+        184467*)
+          long_sz=8
+          ;;
+      esac
+    fi
+
+    if test -n "$DVAL__SIZEOF_POINTER__"; then
+      ptr_sz=$DVAL__SIZEOF_POINTER__
+    elif test -n "$DVALUINTPTR_MAX"; then
+      case "$DVALUINTPTR_MAX" in
+        429496*)
+          ptr_sz=4
+          ;;
+        184467*)
+          ptr_sz=8
+          ;;
+      esac
+    fi
+
+    if test -z "$ptr_sz"; then
+      if test x$prop_bitness = x32; then
+        ptr_sz=4
+      elif test x$prop_bitness = x64; then
+        ptr_sz=8
+      fi
+    fi
+
+    if test x$int_sz = x2 && test x$long_sz = x4 && test x$ptr_sz = x4; then
+      prop_data_model=lp32
+    elif test x$int_sz = x4 && test x$long_sz = x4 && test x$ptr_sz = x4; then
+      prop_data_model=ilp32
+    elif test x$int_sz = x8 && test x$long_sz = x8 && test x$ptr_sz = x8; then
+      prop_data_model=ilp64
+    elif test x$int_sz = x4 && test x$long_sz = x4 && test x$ptr_sz = x8; then
+      prop_data_model=llp64
+    elif test x$int_sz = x4 && test x$long_sz = x8 && test x$ptr_sz = x8; then
+      prop_data_model=lp64
+    fi
   fi
 
   if test -z "$prop_bitness" && test -n "$prop_data_model"; then
@@ -4213,4 +4300,43 @@ DSET_LP64=1
 #ifdef __LP64__
 DSET__LP64__=1
 #endif
+
+#ifdef LIMITS_H
+#include <limits.h>
+#endif
+
+#ifdef STDINT_H
+#include <stdint.h>
+#endif
+
+#ifdef UINT_MAX
+DSETUINT_MAX=1
+DVALUINT_MAX=UINT_MAX
+#endif
+
+#ifdef ULONG_MAX
+DSETULONG_MAX=1
+DVALULONG_MAX=ULONG_MAX
+#endif
+
+#ifdef UINTPTR_MAX
+DSETUINTPTR_MAX=1
+DVALUINTPTR_MAX=UINTPTR_MAX
+#endif
+
+#ifdef __SIZEOF_INT__
+DSET__SIZEOF_INT__=1
+DVAL__SIZEOF_INT__=__SIZEOF_INT__
+#endif
+
+#ifdef __SIZEOF_LONG__
+DSET__SIZEOF_LONG__=1
+DVAL__SIZEOF_LONG__=__SIZEOF_LONG__
+#endif
+
+#ifdef __SIZEOF_POINTER__
+DSET__SIZEOF_POINTER__=1
+DVAL__SIZEOF_POINTER__=__SIZEOF_POINTER__
+#endif
+
 EOF
