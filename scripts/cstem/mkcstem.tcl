@@ -538,35 +538,28 @@ print_version() {
 }
 
 probe_os() {
-  config_os=unknown
+  config_os=
 
   (uname >/dev/null) 2>/dev/null
   if test $? -ge 126; then
     return
   fi
 
-  uname_s=`(uname -s) 2>/dev/null` || uname_s=unknown
+  uname_m=`(uname -m) 2>/dev/null` || uname_m=
+  uname_s=`(uname -s) 2>/dev/null` || uname_s=
+  uname_o=`(uname -o) 2>/dev/null` || uname_o=
 
-  if test "x$uname_s" = x; then
-    uname_s=unknown
-  fi
   uname_s_lc=`echo "$uname_s" | tr [A-Z] [a-z]`
 
   case "$uname_s_lc" in
     netbsd)
       config_os=netbsd
       ;;
-    bitrig)
-      config_os=bitrig
-      ;;
     openbsd)
       config_os=openbsd
       ;;
     mirbsd)
       config_os=miros
-      ;;
-    amigaos)
-      config_os=amiga
       ;;
     morphos)
       config_os=morphos
@@ -576,6 +569,9 @@ probe_os() {
       ;;
     riscos)
       config_os=riscos
+      ;;
+    sco*)
+      config_os=sco
       ;;
     sunos)
       config_os=solaris
@@ -589,32 +585,44 @@ probe_os() {
     hp-ux)
       config_os=hpux
       ;;
+    osf1)
+      sizer >/dev/null 2>&1
+      if sizer -v | grep Tru64 > /dev/null; then
+        config_os=tru64
+      fi
+      ;;
     freebsd)
       config_os=freebsd
       ;;
-    cygwin)
+    darwin)
+      sw_vers >/dev/null 2>&1
+      if test $? -eq 0; then
+        sw_vers_prod_name=`sw_vers -productName | sed 's/ //g' | tr '[A-Z]' '[a-z]'`
+        case "$sw_vers_prod_name" in
+          macos*)
+            config_os=macos
+            ;;
+        esac
+      fi
+      ;;
+    cygwin*)
       config_os=cygwin
       ;;
-    mingw*)
-      config_os=msys
-      ;;
-    windows32*)
-      config_os=msys
-      ;;
-    interix)
-      config_os=interix
-      ;;
     windows_95 | windows_98 | windows_nt)
-      config_os=mks
+      case "$uname_m" in
+        8664)
+          config_os=mks
+          ;;
+      esac
       ;;
     minix)
       config_os=minix
       ;;
+    gnu)
+      config_os=gnuhurd
+      ;;
     linux)
       config_os=gnulinux
-      ;;
-    syllable)
-      config_os=syllable
       ;;
     lynxos)
       config_os=lynxos
@@ -622,22 +630,28 @@ probe_os() {
     haiku)
       config_os=haiku
       ;;
-    darwin)
-      config_os=darwin
-      ;;
     procnto* | qnx)
       config_os=qnx
       ;;
     dragonfly)
       config_os=dragonfly
       ;;
-    aros)
-      config_os=aros
-      ;;
     vmkernel)
       config_os=esx
       ;;
+    unixware)
+      config_os=unixware
+      ;;
   esac
+
+  if test x$config_os = x; then
+    uname_o_lc=`echo "$uname_o" | tr [A-Z] [a-z]`
+    case "$uname_o_lc" in
+      msys*)
+        config_os=msys
+        ;;
+    esac
+  fi
 }
 
 check_cc() {
@@ -1643,24 +1657,24 @@ EOF
 get_cc() {
   probe_os
 
-  case "$config_os" in
-    darwin)
+  case "x$config_os" in
+    xdarwin)
       cc_list="clang cc c99 gcc"   ###CC_LINE
       cc_list="clang++ c++ CC g++"    ###CX_LINE
       ;;
-    aix)
+    xaix)
       cc_list="cc xlc gcc c99 clang"   ###CC_LINE
       cc_list="xlc++ xlC c++ CC g++ clang++"    ###CX_LINE
       ;;
-    solaris)
+    xsolaris)
       cc_list="cc gcc c99 clang"   ###CC_LINE
       cc_list="CC g++ c++ clang++"    ###CX_LINE
       ;;
-    irix)
+    xirix)
       cc_list="cc c99 gcc c89 clang"   ###CC_LINE
       cc_list="CC c++ g++ clang++"    ###CX_LINE
       ;;
-    gnulinux)
+    xgnulinux)
       cc_list="gcc cc c99 clang"   ###CC_LINE
       cc_list="g++ c++ CC clang++"    ###CX_LINE
       ;;
