@@ -319,6 +319,7 @@ nucleus           Nucleus RTOS
 openbsd           OpenBSD
 os9               Microware OS-9
 qnx               QNX
+sco               SCO UNIX
 solaris           Solaris
 syllable          Syllable Desktop
 tru64             Tru64 UNIX
@@ -846,6 +847,10 @@ read_cc_props() {
     if test -n "$DVAL_MSC_VER"; then
       prop_vmajor=`expr "0$DVAL_MSC_VER" / 100`
       prop_vminor=`expr "0$DVAL_MSC_VER" % 100`
+    elif test -n "$DVAL_MSC_FULL_VER"; then
+      tbuf=`echo "$DVAL_MSC_FULL_VER" | sed 's/^\(....\).*/\1/'`
+      prop_vmajor=`expr "0$tbuf" / 100`
+      prop_vminor=`expr "0$tbuf" % 100`
     fi
   fi
 
@@ -854,15 +859,6 @@ read_cc_props() {
   fi
 
   if test -n "$DSET__MINGW32__"; then
-#    if test -n "$DSET__MINGW64_VERSION_MAJOR"; then
-#      prop_id=mingw64
-#      prop_vmajor=$DVAL__MINGW64_VERSION_MAJOR
-#      prop_vminor=$DVAL__MINGW64_VERSION_MINOR
-#    else
-#      prop_id=mingw
-#      prop_vmajor=$DVAL__MINGW32_MAJOR_VERSION
-#      prop_vminor=$DVAL__MINGW32_MINOR_VERSION
-#    fi
     prop_bitness=32
   fi
 
@@ -884,7 +880,7 @@ read_cc_props() {
   if test -n "$DSET__SUNPRO_C" || test -n "$DSET__SUNPRO_CC"; then
     prop_id=sunpro
 
-    version_string=${DVAL__SUNPRO_C:-"$DVAL__SUNPRO_CC"}
+    version_string=${DVAL__SUNPRO_C:-$DVAL__SUNPRO_CC}
     version_string=`echo "$version_string" | sed 's/ *//g'`
 
     if test -n "$version_string"; then
@@ -921,7 +917,7 @@ read_cc_props() {
   if test -n "$DSET__RENESAS__" || test -n "$DSET__HITACHI__"; then
     prop_id=renesas
 
-    version_string=${DVAL__RENESAS_VERSION__:-"$DVAL__HITACHI_VERSION__"}
+    version_string=${DVAL__RENESAS_VERSION__:-$DVAL__HITACHI_VERSION__}
 
     if test -n "$version_string"; then
       tbuf=`echo "$version_string" | sed 's/0[xX]\(..\).*/\1/g'`
@@ -1001,7 +997,7 @@ read_cc_props() {
       prop_vrevision=$DVAL__GNUC_PATCHLEVEL__
     fi
   elif test -n "$DSET__sgi" || test -n "$DSETsgi"; then
-    version_string=${DVAL_SGI_COMPILER_VERSION:-"$DVAL_COMPILER_VERSION"}
+    version_string=${DVAL_SGI_COMPILER_VERSION:-$DVAL_COMPILER_VERSION}
     if test -n "$version_string"; then
       prop_id=mipspro
       prop_vmajor=`expr "0$version_string" / 100`
@@ -1166,15 +1162,17 @@ read_cc_props() {
     fi
   fi
 
-  if test -n "$DSETsun" || test -n "$DSET__sun"; then
+  if test -n "$DSET_XENIX" || test -n "$DSET_SCO_DS"; then
+    prop_os=sco
+  fi
+
+  if test -n "$DSETsun" || test -n "$DSET__sun" || test -n "$DSET__sun__" || test -n "$DSET__SunOS"; then
     if test -n "$DSET__SVR4" || test -n "$DSET__svr4__"; then
       prop_os=solaris
     fi
 
     if test -n "$DSET__SunOS_5_8"; then
       prop_os_vmajor=8
-    elif test -n "$DSET__SunOS_5_9"; then
-      prop_os_vmajor=9
     elif test -n "$DSET__SunOS_5_9"; then
       prop_os_vmajor=9
     elif test -n "$DSET__SunOS_5_10"; then
@@ -1192,14 +1190,17 @@ read_cc_props() {
     prop_os=syllable
   fi
 
-  if test -n "$DSET__VXWORKS__" || test -n "$DSET__vxworks"; then
+  if test -n "$DSET__VXWORKS__" || test -n "$DSET__vxworks" || test -n "$DSET_WRS_KERNEL"; then
     prop_os=vxworks
     if test -n "$DVAL_WRS_VXWORKS_MAJOR"; then
       prop_os_vmajor=$DVAL_WRS_VXWORKS_MAJOR
     fi
+    if test -n "$DVAL_WRS_VXWORKS_MINOR"; then
+      prop_os_vmajor=$DVAL_WRS_VXWORKS_MINOR
+    fi
   fi
 
-  if test -n "$DSET_WIN32" || test -n "$DSET_WIN64" || test -n "$DSET__WIN32__" || test -n "$DSET__TOS_WIN__" || test -n "$DSET__WINDOWS__"; then
+  if test -n "$DSET_WIN32$DSETWIN32$DSET__WIN32__$__WIN32" || test -n "$DSET_WIN64$DSETWIN64$DSET__WIN64$DSET__WIN64__" || test -n "$DSET__TOS_WIN__" || test -n "$DSET__WINDOWS__" || test -n "$DSETWINNT$DSET__WINNT$DSET__WINNT__"; then
     prop_os=windows
   fi
 
@@ -1317,7 +1318,7 @@ EOF
     prop_bitness=64
   fi
 
-  if test -n "$DSET__ia64__" || test -n "$DSET_IA64" || test -n "$DSET__IA64__" || test -n "$DSET__ia64" || test -n "$DSET_M_IA64" || test -n "$DSET__itanium__"; then
+  if test -n "$DSET__ia64__" || test -n "$DSET_IA64" || test -n "$DSET__IA64__" || test -n "$DSET__ia64" || test -n "$DSET_M_IA64" || test -n "$DSET__itanium__" || test -n "$DSETia64"; then
     prop_arch=ia64
     prop_bitness=64
   fi
@@ -3050,8 +3051,8 @@ DVAL__cplusplus=__cplusplus
 #endif
 
 #ifdef __cplusplus_cli
-DSET_cplusplus_cli=1
-DVAL_cplusplus_cli=__cplusplus_cli
+DSET__cplusplus_cli=1
+DVAL__cplusplus_cli=__cplusplus_cli
 #endif
 
 #ifdef __embedded_cplusplus
@@ -3073,11 +3074,6 @@ DVAL__VERSION__=__VERSION__
 #ifdef __REVISION__
 DSET__REVISION__=1
 DVAL__REVISION__=__REVISION__
-#endif
-
-#ifdef __BUILD__
-DSET__BUILD__=1
-DVAL__BUILD__=__BUILD__
 #endif
 
 #ifdef __CHC__
@@ -3180,20 +3176,6 @@ DSET__SYSC_VER__=1
 DVAL__SYSC_VER__=__SYSC_VER__
 #endif
 
-#ifdef __DJGPP__
-DSET__DJGPP__=1
-DVAL__DJGPP__=__DJGPP__
-#endif
-
-#ifdef __DJGPP_MINOR__
-DSET__DJGPP_MINOR__=1
-DVAL__DJGPP_MINOR__=__DJGPP_MINOR__
-#endif
-
-#ifdef __GO32__
-DSET__GO32__=1
-#endif
-
 #ifdef __EDG__
 DSET__EDG__=1
 #endif
@@ -3252,11 +3234,6 @@ DSET__GHS_VERSION_NUMBER__=1
 DVAL__GHS_VERSION_NUMBER__=__GHS_VERSION_NUMBER__
 #endif
 
-#ifdef __GHS_REVISION_DATE__
-DSET__GHS_REVISION_DATE__=1
-DVAL__GHS_REVISION_DATE__=__GHS_REVISION_DATE__
-#endif
-
 #ifdef __HP_cc
 DSET__HP_cc=1
 #endif
@@ -3283,11 +3260,6 @@ DVAL__xlc__=__xlc__
 #ifdef __xlC__
 DSET__xlC__=1
 DVAL__xlC__=__xlC__
-#endif
-
-#ifdef __xlC_ver__
-DSET__xlC_ver__=1
-DVAL__xlC_ver__=__xlC_ver__
 #endif
 
 #ifdef __IBMC__
@@ -3324,11 +3296,6 @@ DSET__ECC=1
 
 #ifdef __ICL
 DSET__ICL=1
-#endif
-
-#ifdef __INTEL_COMPILER_BUILD_DATE
-DSET__INTEL_COMPILER_BUILD_DATE=1
-DVAL__INTEL_COMPILER_BUILD_DATE=__INTEL_COMPILER_BUILD_DATE
 #endif
 
 #ifdef __C166__
@@ -3374,40 +3341,12 @@ DSET_MSC_FULL_VER=1
 DVAL_MSC_FULL_VER=_MSC_FULL_VER
 #endif
 
-#ifdef _MSC_BUILD
-DSET_MSC_BUILD=1
-DVAL_MSC_BUILD=_MSC_BUILD
-#endif
-
 #ifdef _MRI
 DSET_MRI=1
 #endif
 
 #ifdef __MINGW32__
 DSET__MINGW32__=1
-
-#include <stdlib.h>
-
-#ifdef __MINGW32_MAJOR_VERSION
-DSET__MINGW32_MAJOR_VERSION=1
-DVAL__MINGW32_MAJOR_VERSION=__MINGW32_MAJOR_VERSION
-#endif
-
-#ifdef __MINGW32_MINOR_VERSION
-DSET__MINGW32_MINOR_VERSION=1
-DVAL__MINGW32_MINOR_VERSION=__MINGW32_MINOR_VERSION
-#endif
-
-#ifdef __MINGW64_VERSION_MAJOR
-DSET__MINGW64_VERSION_MAJOR=1
-DVAL__MINGW64_VERSION_MAJOR=__MINGW64_VERSION_MAJOR
-#endif
-
-#ifdef __MINGW64_VERSION_MINOR
-DSET__MINGW64_VERSION_MINOR=1
-DVAL__MINGW64_VERSION_MINOR=__MINGW64_VERSION_MINOR
-#endif
-
 #endif
 
 #ifdef __MINGW64__
@@ -3514,7 +3453,6 @@ DSET__SNC__=1
 
 #ifdef __VOSC__
 DSET__VOSC__=1
-DVAL__VOSC__=__VOSC__
 #endif
 
 #ifdef __TenDRA__
@@ -3650,16 +3588,8 @@ DSET__CYGWIN__=1
 DSET__ECOS=1
 #endif
 
-#ifdef __GNU__
-DSET__GNU__=1
-#endif
-
 #ifdef __gnu_hurd__
 DSET__gnu_hurd__=1
-#endif
-
-#ifdef __GLIBC__
-DSET__GLIBC__=1
 #endif
 
 #ifdef __gnu_linux__
@@ -3738,10 +3668,6 @@ DSET__TANDEM=1
 DSET__nucleus__=1
 #endif
 
-#ifdef __palmos__
-DSET__palmos__=1
-#endif
-
 #ifdef __QNX__
 DSET__QNX__=1
 #endif
@@ -3757,12 +3683,12 @@ DVAL_NTO_VERSION=_NTO_VERSION
 
 #endif
 
-#ifdef M_I386
-DSETM_I386=1
-#endif
-
 #ifdef M_XENIX
 DSETM_XENIX=1
+#endif
+
+#ifdef _SCO_DS
+DSET_SCO_DS=1
 #endif
 
 #ifdef sun
@@ -3833,17 +3759,7 @@ DVAL_WRS_VXWORKS_MAJOR=_WRS_VXWORKS_MAJOR
 DSET_WRS_VXWORKS_MINOR=1
 DVAL_WRS_VXWORKS_MINOR=_WRS_VXWORKS_MINOR
 #endif
-
-#ifdef _WRS_VXWORKS_MAINT
-DSET_WRS_VXWORKS_MAINT=1
-DVAL_WRS_VXWORKS_MAINT=_WRS_VXWORKS_MAINT
-#endif
-
 #endif /*__VXWORKS __vxworks */
-
-#ifdef __RTP__
-DSET__RTP__=1
-#endif
 
 #ifdef _WRS_KERNEL
 DSET_WRS_KERNEL=1
@@ -3911,14 +3827,6 @@ DSET__HOS_MVS__=1
 
 #ifdef __TOS_MVS__
 DSET__TOS_MVS__=1
-#endif
-
-#ifdef __MINGW32__
-DSET__MINGW32__=1
-#endif
-
-#ifdef __MINGW64__
-DSET__MINGW64__=1
 #endif
 
 #ifdef __osf__
