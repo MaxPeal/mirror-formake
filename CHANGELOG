@@ -76,4 +76,5 @@ Formake v0.13
   * pofig: added support of Tru64 UNIX
   * cstem: added support of Tru64 UNIX and Compaq C/C++
   * cstem: changed default compiler search list
+  * cstem: implemented additional reliable methods of detecting data model, bitness and endianness
 
