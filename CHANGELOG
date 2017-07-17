@@ -81,4 +81,5 @@ Formake v0.13
   * cstem: added -cross parameter
   * cstem: changed osx on macos
   * cstem: added SCO UNIX target detection. Many minor fixes and improvements
+  * cstem: test all headers that are included in macro-test block
 
