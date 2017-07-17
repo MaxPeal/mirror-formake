@@ -78,4 +78,5 @@ Formake v0.13
   * cstem: changed default compiler search list
   * cstem: implemented additional reliable methods of detecting data model, bitness and endianness
   * cstem: updated host os detection based on latest pofig
+  * cstem: added -cross parameter
 
