@@ -79,4 +79,5 @@ Formake v0.13
   * cstem: implemented additional reliable methods of detecting data model, bitness and endianness
   * cstem: updated host os detection based on latest pofig
   * cstem: added -cross parameter
+  * cstem: changed osx on macos
 
