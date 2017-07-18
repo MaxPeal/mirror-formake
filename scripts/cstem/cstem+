@@ -117,7 +117,8 @@ ext="C"
 tmp_dir=/tmp/cstem_$$
 version_string="0.5"
 cc_is_cross=0
-
+headers=/tmp/cstem_inc_headers_$$
+rm -f $headers
 
 ################################################################################
 # LOAD CONFIG
@@ -128,21 +129,6 @@ if test -f $script_dir/cstem+.conf; then
   . $script_dir/cstem+.conf
 fi
 ################################################################################
-
-prop_list="
-cmd
-cxxflags
-ldflags
-id
-version
-std
-os
-os_version
-arch
-bitness
-endianness
-data_model
-"
 
 print_help() {
 cat <<EOF
@@ -175,6 +161,8 @@ PROBE MODE (DEFAULT). PROBE COMPILER PROPERTIES
  -endian               get target endianness
  -dm                   get target data model
  -cross                print 'true' and return 0 if compiler is cross-compiler
+ -posix                get POSIX support version
+ -sus                  get SUS support version
  -f1                   print in format 1> VAR="VALUE"
  -f2                   print in format 2> FIELD: VALUE
  -f3                   print in format 3> VALUE
@@ -350,6 +338,24 @@ ilp32             ILP32   8   |16   |     |32 |32  |32     |
 ilp64             ILP64   8   |16   |32   |64 |64  |64     |64
 llp64             LLP64   8   |16   |     |32 |32  |64     |64
 lp64              LP64    8   |16   |     |32 |64  |64     |64
+
+POSIX VERSIONS
+--------------------------------------------------------------------------------
+posix1-1988       POSIX.1:1988 | IEEE Std 1003.1-198
+posix1-1990       POSIX.1:1990 | IEEE Std 1003.1-1990 | ISO/IEC 9945-1:1990
+posix1b-1993      POSIX.1b     | IEEE 1003.1b-1993
+posix1-1996       POSIX.1:1996 | IEEE 1003.1-1996     | ISO/IEC 9945-1:1996
+posix1-2001       POSIX.1:2001 | IEEE 1003.1-2001     | ISO/IEC 9945:2002
+posix1-2008       POSIX.1:2008 | IEEE 1003.1-2008     | ISO/IEC 9945:2009
+
+X/OPEN|SUS VERSIONS
+--------------------------------------------------------------------------------
+xpg3              X/Open Portability Guide 3 (1989)
+xpg4              X/Open Portability Guide 4 (1992)
+sus               SUS   | X/Open Single UNIX Specification (UNIX95)
+susv2             SUSv2 | X/Open Single UNIX Specification, Version 2 (UNIX98)
+susv3             SUSv3 | Open Group Single UNIX Specification, Version 3 (UNIX03)
+susv4             SUSv4 | Open Group Single UNIX Specification, Version 4
 EOF
 }
 
@@ -542,69 +548,24 @@ EOF
 }
 
 get_hdr_defs() {
-  DEF_FLAGS=
-
   test_src="test.$ext"
   test_dir=/tmp/cstem_data_$$
   rm -rf $test_dir
   mkdir $test_dir
   cd $test_dir
 
-  cat > $test_src <<EOF
-#include <android/api-level.h>
+  for hdr in "<android/api-level.h>" "<sys/neutrino.h>" "<version.h>" "<limits.h>" "<stdint.h>" "<sys/types.h>" "<sys/cdefs.h>" "<features.h>" "<limits.h>" "<unistd.h>"; do
+    cat > $test_src <<EOF
+#include $hdr
 int main(int argc, char** argv)
 {
   return 0;
 }
 EOF
-  if ($cc_cmd $check_cflags -c $test_src >/dev/null) 2>/dev/null; then
-    DEF_FLAGS="$DEF_FLAGS -DANDROID_API_LEVEL_H"
-  fi
-
-  cat > $test_src <<EOF
-#include <sys/neutrino.h>
-int main(int argc, char** argv)
-{
-  return 0;
-}
-EOF
-  if ($cc_cmd $check_cflags -c $test_src >/dev/null) 2>/dev/null; then
-    DEF_FLAGS="$DEF_FLAGS -DSYS_NEUTRINO_H"
-  fi
-
-  cat > $test_src <<EOF
-#include <version.h>
-int main(int argc, char** argv)
-{
-  return 0;
-}
-EOF
-  if ($cc_cmd $check_cflags -c $test_src >/dev/null) 2>/dev/null; then
-    DEF_FLAGS="$DEF_FLAGS -DVERSION_H"
-  fi
-
-  cat > $test_src <<EOF
-#include <limits.h>
-int main(int argc, char** argv)
-{
-  return 0;
-}
-EOF
-  if ($cc_cmd $check_cflags -c $test_src >/dev/null) 2>/dev/null; then
-    DEF_FLAGS="$DEF_FLAGS -DLIMITS_H"
-  fi
-
-  cat > $test_src <<EOF
-#include <stdint.h>
-int main(int argc, char** argv)
-{
-  return 0;
-}
-EOF
-  if ($cc_cmd $check_cflags -c $test_src >/dev/null) 2>/dev/null; then
-    DEF_FLAGS="$DEF_FLAGS -DSTDINT_H"
-  fi
-
+    if ($cc_cmd $check_cflags -c $test_src >/dev/null) 2>/dev/null; then
+      echo "#include $hdr" >>$headers
+    fi
+  done
 
   cd $orig_dir
   rm -rf $test_dir
@@ -620,11 +581,18 @@ read_cc_props() {
   prop_bitness=
   prop_endianness=
   prop_data_model=
+  prop_posix=
+  prop_sus=
 
   probe_h="/tmp/cstem_$$.$ext"
-  cat $script_abs | sed -n -e '/\* COMPILER DEFINES \*/,$p' | grep -v "^EOF" > $probe_h
+  rm -f $probe_h
+  if test -f $headers; then
+    cat $headers >$probe_h
+    rm -f $headers
+  fi
+  cat $script_abs | sed -n -e '/\* COMPILER DEFINES \*/,$p' | grep -v "^EOF" >> $probe_h
   probe_h_out="/tmp/cstem_$$_out"
-  $cc_cmd $CXXFLAGS $DEF_FLAGS $CPP_FLAG $probe_h 2>/dev/null > $probe_h_out
+  $cc_cmd $CXXFLAGS $CPP_FLAG $probe_h 2>/dev/null > $probe_h_out
   probe_sh="/tmp/cstem_$$.sh"
   cat $probe_h_out | grep "^D[SV][EA][TL]" | sed 's/= */=/' | sed 's/ *$//' | sed 's/=\(.*\)$/="\1"/' | sed 's/""*/"/g' | sed 's/ *= */=/' | sed 's/="*$/=/' > $probe_sh
   . $probe_sh
@@ -1445,6 +1413,59 @@ EOF
     prop_endianness=`$border_exe`
     rm -f $border_src $border_exe
   fi
+
+
+################################################################################
+# DETECT POSIX
+  if test -n "$DSET_POSIX_VERSION"; then
+    case "$DVAL_POSIX_VERSION" in
+      198808L)
+        prop_posix="posix1-1988"
+        ;;
+      199009L)
+        prop_posix="posix1-1990"
+        ;;
+      199309L)
+        prop_posix="posix1b-1993"
+        ;;
+      199506L)
+        prop_posix="posix1-1996"
+        ;;
+      200112L)
+        prop_posix="posix1-2001"
+        ;;
+      200809L)
+        prop_posix="posix1-2008"
+        ;;
+    esac
+  fi
+
+
+################################################################################
+# DETECT XPG
+  if test -n "$DSET_XOPEN_VERSION"; then
+    case "$DVAL_XOPEN_VERSION" in
+      3)
+        prop_sus=xpg3
+        ;;
+      4)
+        if test -n "$DSET_XOPEN_UNIX"; then
+          prop_sus=sus
+        else
+          prop_sus=xpg4
+        fi
+        ;;
+      500)
+        prop_sus=susv2
+        ;;
+      600)
+        prop_sus=susv3
+        ;;
+      700)
+        prop_sus=susv4
+        ;;
+    esac
+  fi
 }
 
 get_cc() {
@@ -1753,6 +1774,12 @@ if test x$mode_probe = x1; then
       -cross)
         print_string="$print_string flag_cross"
         ;;
+      -posix)
+        print_string="$print_string posix"
+        ;;
+      -sus)
+        print_string="$print_string sus"
+        ;;
       -f1|-f2|-f3)
         out_format=`echo "$1" | sed 's/^-f//'`
         ;;
@@ -1784,10 +1811,12 @@ bitness:            ${prop_bitness:--}
 endianness:         ${prop_endianness:--}
 data model:         ${prop_data_model:--}
 cross compiler:     $prop_flag_cross
+posix version:      ${prop_posix:--}
+sus version:        ${prop_sus:--}
 EOF
   else
     if test -z "$print_string"; then
-      print_string="cmd cxxflags id version std os os_version arch bitness endianness data_model flag_cross"
+      print_string="cmd cxxflags id version std os os_version arch bitness endianness data_model flag_cross posix sus"
     fi
     print_space=
     for prop in $print_string; do
@@ -3600,15 +3629,11 @@ DSET_AIX91=1
 
 #ifdef __ANDROID__
 DSET__ANDROID__=1
+#endif
 
-#ifdef ANDROID_API_LEVEL_H
-#include <android/api-level.h>
 #ifdef __ANDROID_API__
 DSET__ANDROID_API__=1
 DVAL__ANDROID_API__=__ANDROID_API__
-#endif
-#endif
-
 #endif
 
 #ifdef AMIGA
@@ -3730,15 +3755,11 @@ DSET__QNX__=1
 
 #ifdef __QNXNTO__
 DSET__QNXNTO__=1
+#endif
 
-#ifdef SYS_NEUTRINO_H
-#include <sys/neutrino.h>
 #ifdef _NTO_VERSION
 DSET_NTO_VERSION=1
 DVAL_NTO_VERSION=_NTO_VERSION
-#endif
-#endif
-
 #endif
 
 #ifdef M_XENIX
@@ -3805,10 +3826,6 @@ DSET__VXWORKS__=1
 DSET__vxworks=1
 #endif
 
-#if defined(__VXWORKS__) || defined(__vxworks)
-#ifdef VERSION_H
-#include <version.h>
-
 #ifdef _WRS_VXWORKS_MAJOR
 DSET_WRS_VXWORKS_MAJOR=1
 DVAL_WRS_VXWORKS_MAJOR=_WRS_VXWORKS_MAJOR
@@ -3818,8 +3835,6 @@ DVAL_WRS_VXWORKS_MAJOR=_WRS_VXWORKS_MAJOR
 DSET_WRS_VXWORKS_MINOR=1
 DVAL_WRS_VXWORKS_MINOR=_WRS_VXWORKS_MINOR
 #endif
-#endif
-#endif /*__VXWORKS __vxworks */
 
 #ifdef _WRS_KERNEL
 DSET_WRS_KERNEL=1
@@ -4301,14 +4316,6 @@ DSET_LP64=1
 DSET__LP64__=1
 #endif
 
-#ifdef LIMITS_H
-#include <limits.h>
-#endif
-
-#ifdef STDINT_H
-#include <stdint.h>
-#endif
-
 #ifdef UINT_MAX
 DSETUINT_MAX=1
 DVALUINT_MAX=UINT_MAX
@@ -4339,4 +4346,17 @@ DSET__SIZEOF_POINTER__=1
 DVAL__SIZEOF_POINTER__=__SIZEOF_POINTER__
 #endif
 
+#ifdef _POSIX_VERSION
+DSET_POSIX_VERSION=1
+DVAL_POSIX_VERSION=_POSIX_VERSION
+#endif
+
+#ifdef _XOPEN_VERSION
+DSET_XOPEN_VERSION=1
+DVAL_XOPEN_VERSION=_XOPEN_VERSION
+#endif
+
+#ifdef _XOPEN_UNIX
+DSET_XOPEN_UNIX=1
+#endif
 EOF
