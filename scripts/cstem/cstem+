@@ -3157,10 +3157,6 @@ DVAL__REVISION__=__REVISION__
 DSET__CHC__=1
 #endif
 
-#ifdef __ACK__
-DSET__ACK__=1
-#endif
-
 #ifdef __CC_ARM
 DSET__CC_ARM=1
 #endif

@@ -387,7 +387,6 @@ cat <<EOF
 ########## CC_BLOCK_START
 COMPILERS
 --------------------------------------------------------------------------------
-ack               Amsterdam Compiler Kit
 altium_chc        Altium C-to-Hardware (CHC) compiler
 altium_cmb        Altium MicroBlaze C
 c166              Keil C166
@@ -859,10 +858,6 @@ read_cc_props() {
     if test -n "$DVAL__REVISION__"; then
       prop_vrevision=`expr "0$DVAL__REVISION__" + 0`
     fi
-  fi
-
-  if test -n "$DSET__ACK__"; then
-    prop_id=ack
   fi
 ########## BLOCK_END
 
@@ -3654,10 +3649,6 @@ DVAL__REVISION__=__REVISION__
 
 #ifdef __CHC__
 DSET__CHC__=1
-#endif
-
-#ifdef __ACK__
-DSET__ACK__=1
 #endif
 
 #ifdef __CC_ARM
