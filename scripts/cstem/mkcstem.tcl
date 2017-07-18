@@ -210,11 +210,19 @@ ext="c"
 config_file="$script_dir/cstem+.conf"
 ext="C"
 ########## BLOCK_END
-tmp_dir=/tmp/cstem_$$
+test_dir=/tmp/cstem_$$
+if test -d $test_dir || test -f $test_dir; then
+  rm -rf $test_dir
+fi
+mkdir $test_dir
+if test ! -d $test_dir; then
+  echo "$script_name: error: could not create temporary directory $test_dir" >&2
+  exit 1
+fi
 version_string="0.5"
 cc_is_cross=0
-headers=/tmp/cstem_inc_headers_$$
-rm -f $headers
+headers=$test_dir/cstem_inc_headers
+cstem_log=$test_dir/cstem.log
 
 ################################################################################
 # LOAD CONFIG
@@ -676,9 +684,7 @@ check_cc() {
       ;;
   esac
 
-  test_dir=/tmp/cstem_data_$$
-  rm -rf $test_dir
-  mkdir $test_dir
+  rm -f $test_dir/*
   cd $test_dir
 
   test_h="cc_test.h"
@@ -692,7 +698,6 @@ EOF
   ret_code=$?
   if test $ret_code -ne 0; then
     cd $orig_dir
-    rm -rf $test_dir
     return
   fi
 
@@ -732,14 +737,11 @@ EOF
   fi
 
   cd $orig_dir
-  rm -rf $test_dir
 }
 
 get_hdr_defs() {
   test_src="test.$ext"
-  test_dir=/tmp/cstem_data_$$
-  rm -rf $test_dir
-  mkdir $test_dir
+  rm -f $test_dir/*
   cd $test_dir
 
   for hdr in "<android/api-level.h>" "<sys/neutrino.h>" "<version.h>" "<limits.h>" "<stdint.h>" "<sys/types.h>" "<sys/cdefs.h>" "<features.h>" "<limits.h>" "<unistd.h>"; do
@@ -756,7 +758,6 @@ EOF
   done
 
   cd $orig_dir
-  rm -rf $test_dir
 }
 
 read_cc_props() {
@@ -772,25 +773,21 @@ read_cc_props() {
   prop_posix=
   prop_sus=
 
-  probe_h="/tmp/cstem_$$.$ext"
+  probe_h="$test_dir/cstem_$$.$ext"
   rm -f $probe_h
   if test -f $headers; then
     cat $headers >$probe_h
-    rm -f $headers
   fi
   cat $script_abs | sed -n -e '/\* COMPILER DEFINES \*/,$p' | grep -v "^EOF" >> $probe_h
-  probe_h_out="/tmp/cstem_$$_out"
+  probe_h_out="$test_dir/cstem_$$_out"
 ########## CC_BLOCK_START
   $cc_cmd $CFLAGS $CPP_FLAG $probe_h 2>/dev/null > $probe_h_out
 ########## CX_BLOCK_START
   $cc_cmd $CXXFLAGS $CPP_FLAG $probe_h 2>/dev/null > $probe_h_out
 ########## BLOCK_END
-  probe_sh="/tmp/cstem_$$.sh"
+  probe_sh="$test_dir/cstem_$$.sh"
   cat $probe_h_out | grep "^D[SV][EA][TL]" | sed 's/= */=/' | sed 's/ *$//' | sed 's/=\(.*\)$/="\1"/' | sed 's/""*/"/g' | sed 's/ *= */=/' | sed 's/="*$/=/' > $probe_sh
   . $probe_sh
-  rm -f $probe_sh
-  rm -f $probe_h_out
-  rm -f $probe_h
 
 ########## CC_BLOCK_START
   if test -n "$DSET__STDC__"; then
@@ -1598,8 +1595,8 @@ read_cc_props() {
   fi
 
   if test -z "$prop_data_model" && test $cc_is_cross = 0; then
-    dm_src=/tmp/cstem_dm_$$.$ext
-    dm_exe=/tmp/cstem_dm_$$
+    dm_src=$test_dir/cstem_dm_$$.$ext
+    dm_exe=$test_dir/cstem_dm_$$
     cat >$dm_src <<"EOF"
 #include <stdio.h>
 
@@ -1729,8 +1726,8 @@ EOF
   fi
 
   if test -z "$prop_endianness" && test $cc_is_cross = 0; then
-    border_src=/tmp/cstem_border_$$.$ext
-    border_exe=/tmp/cstem_border_$$
+    border_src=$test_dir/cstem_border_$$.$ext
+    border_exe=$test_dir/cstem_border_$$
     cat >$border_src <<"EOF"
 #include <stdio.h>
 
@@ -1864,7 +1861,7 @@ perform_probe() {
 
   if test x$cc_is_ok != x1; then
     printf "%s\n" "${script_name}: %C% compiler not found" >&2
-    exit 1
+    clean_exit 1
   fi
 
 ########## CC_BLOCK_START
@@ -1883,7 +1880,7 @@ perform_probe() {
 ########## CX_BLOCK_START
       printf "%s\n" "${script_name}: invalid %C% flags: $CXXFLAGS" >&2
 ########## BLOCK_END
-      exit 1
+      clean_exit 1
     fi
   fi
   if test -n "$LDFLAGS"; then
@@ -1923,7 +1920,6 @@ clean_exit() {
   if test $exit_status != 0 && test x$op_echo_fail = x1 && test -f $tmp_buf; then
     cat $tmp_buf
   fi
-  rm -f $tmp_buf
 
   if test -f $cstem_log; then
     if test x$op_echo_log = x1; then
@@ -1935,9 +1931,9 @@ clean_exit() {
     fi
   fi
   cd $orig_dir
-  rm -rf $tmp_dir
-  rm -f $cstem_log
-
+  if test -d $test_dir; then
+    rm -rf $test_dir
+  fi
   exit $exit_status
 }
 
@@ -1959,9 +1955,8 @@ log_src() {
 }
 
 setup_test_dir() {
-  rm -f $tmp_dir
-  mkdir $tmp_dir
-  cd $tmp_dir
+  rm -f $test_dir/*
+  cd $test_dir
   
   test_src_base=test_src_base.$ext
   
@@ -1977,11 +1972,11 @@ setup_test_dir() {
 case x"$1" in
   x-h|x-help|x--help)
     print_help
-    exit 0
+    clean_exit 0
     ;;
   x-help-props)
     print_help_props
-    exit 0
+    clean_exit 0
     ;;
   xconfig)
     mode_config=1
@@ -2001,7 +1996,7 @@ case x"$1" in
     ;;
   x-v)
     print_version
-    exit 0
+    clean_exit 0
     ;;
   *)
     mode_probe=1
@@ -2039,7 +2034,7 @@ if test x$mode_config = x1; then
         ;;
       *)
         printf "%s\n" "$script_name: invalid parameter $1" >&2
-        exit 1
+        clean_exit 1
         ;;
     esac
     shift
@@ -2050,7 +2045,7 @@ if test x$mode_config = x1; then
       echo "" > $config_file 2>/dev/null
       if test $? != 0; then
         echo "$script_name: error: could not modify config file $config_file" >&2
-        exit 1
+        clean_exit 1
       fi
     else
       (touch $config_file >/dev/null) 2>/dev/null
@@ -2058,7 +2053,7 @@ if test x$mode_config = x1; then
         :
       else
         echo "$script_name: error: could not create config file $config_file" >&2
-        exit 1
+        clean_exit 1
       fi
     fi
 
@@ -2087,7 +2082,7 @@ if test x$mode_config = x1; then
     (rm -f $config_file >/dev/null) 2>/dev/null
   fi
 
-  exit 0
+  clean_exit 0
 fi
 
 if test -f $config_file; then
@@ -2180,7 +2175,7 @@ if test x$mode_probe = x1; then
         ;;
       *)
         printf "%s\n" "$script_name: invalid parameter $1" >&2
-        exit 1
+        clean_exit 1
         ;;
     esac
     shift
@@ -2250,13 +2245,12 @@ EOF
     fi
   fi
 
-  exit 0
+  clean_exit 0
 fi
 
 if test x$mode_test = x1; then
-  tmp_buf="/tmp/cstem_$$_buf.txt"
+  tmp_buf="$test_dir/cstem_buf.txt"
   rm -f $tmp_buf
-  cstem_log=/tmp/cstem$$.log
 
   current_opt=
   def_num=0
@@ -3501,7 +3495,7 @@ if test x$mode_def = x1; then
   done
 
   if test -z "$op_def"; then
-    exit 0
+    clean_exit 0
   fi
 ########## CC_BLOCK_START
   CFLAGS="$op_with_flags $CFLAGS $CFLAGS_ADD"
@@ -3610,7 +3604,7 @@ fi
 
 
 
-exit 0
+clean_exit 0
 
 
 cat <<EOF
