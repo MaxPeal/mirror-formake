@@ -85,5 +85,6 @@ Formake v0.13
   * cstem: improved data model detection for cross-compilers
   * cstem: added detection of POSIX and SUS versions. Other improvements. Removed obsolete blocks
   * cstem: minor fixes and improvements
-  * cstem: general revision: removed non-product level compiler ACK
+  * cstem: general revision: removed outdated/experimental/non-production level compiler ACK
+  * cstem: general revision: removed outdated/experimental/non-production level compiler LCC
 
