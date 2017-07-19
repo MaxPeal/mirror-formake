@@ -394,7 +394,6 @@ c51               Keil C51
 compcert          CompCert C
 hpansic           HP ANSI C
 imagecraft        ImageCraft C
-pelles            Pelles C
 sdcc              SDCC (Small Device C Compiler)
 tinyc             Tiny C Compiler (TCC, TinyCC)
 vbcc              VBCC
@@ -1161,17 +1160,6 @@ read_cc_props() {
       fi
     fi
   fi
-
-########## CC_BLOCK_START
-  if test -n "$DSET__POCC__"; then
-    prop_id=pelles
-
-    if test -n "$DVAL__POCC__"; then
-      prop_vmajor=`expr "0$DVAL__POCC__" / 100`
-      prop_vminor=`expr "0$DVAL__POCC__" % 100`
-    fi
-  fi
-########## BLOCK_END
 
   if test -n "$DSET__PGI"; then
     prop_id=pgi
@@ -3956,11 +3944,6 @@ DVAL__SUNPRO_C=__SUNPRO_C
 #ifdef __SUNPRO_CC
 DSET__SUNPRO_CC=1
 DVAL__SUNPRO_CC=__SUNPRO_CC
-#endif
-
-#ifdef __POCC__
-DSET__POCC__=1
-DVAL__POCC__=__POCC__
 #endif
 
 #ifdef __PGI

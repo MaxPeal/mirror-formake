@@ -878,7 +878,6 @@ read_cc_props() {
     fi
   fi
 
-
   if test -n "$DSET__PGI"; then
     prop_id=pgi
 
@@ -3467,11 +3466,6 @@ DVAL__SUNPRO_C=__SUNPRO_C
 #ifdef __SUNPRO_CC
 DSET__SUNPRO_CC=1
 DVAL__SUNPRO_CC=__SUNPRO_CC
-#endif
-
-#ifdef __POCC__
-DSET__POCC__=1
-DVAL__POCC__=__POCC__
 #endif
 
 #ifdef __PGI
