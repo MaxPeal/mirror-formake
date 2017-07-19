@@ -254,26 +254,18 @@ vosc              Stratus VOS C
 armc              ARM Compiler (by ARM)
 clang             Clang
 codewrr           CodeWarrior
-decc              Compaq C/C++
 diabc             Wind River Diab Compiler
 dignus            Dignus Systems/C and Systems/C++
-dmc               Digital Mars C/C++
-edg               Edison Design Group
-ekopath           PathScale EKOPath
 gcc               GCC
 ghs               Green Hill C/C++
 iar               IAR C/C++
 intel             Intel C/C++
-metaware          MetaWare C/C++
 mipspro           SGI MIPSPro
-mri               Microtec C/C++
 msc               Microsoft Visual C/C++
-open64            Open64
 pgi               Portland Group C/C++
 renesas           Renesas C/C++
 snc               SN C/C++ Compiler (ProDG)
 sunpro            Solaris Studio (Sun Studio, SunPro)
-tendra            TenDRA C/C++
 ticc              Texas Instruments C/C++ Compiler
 watcom            Watcom C/C++ (Open Watcom C/C++)
 xlc               IBM XL C/C++
@@ -624,15 +616,6 @@ read_cc_props() {
 ################################################################################
 # DETECT COMPILER AND VERSION
 
-  if test -n "$DSET__EDG__"; then
-    prop_id=edg
-
-    if test -n "$DVAL__EDG_VERSION__"; then
-      prop_vmajor=`expr "0$DVAL__EDG_VERSION__" / 100`
-      prop_vminor=`expr "0$DVAL__EDG_VERSION__" % 100`
-    fi
-  fi
-
   if test -n "$DSET__CMB__"; then
     prop_id=altium_cmb
 
@@ -691,30 +674,6 @@ read_cc_props() {
     fi
   fi
 
-  if test -n "$DSET__DECC"; then
-    prop_id=decc
-
-    if test -n "$DVAL__DECC_VER"; then
-      prop_vmajor=`expr "0$DVAL__DECC_VER" / 10000000`
-      tbuf=`expr "0$DVAL__DECC_VER" % 10000000`
-      prop_vminor=`expr "0$tbuf" / 100000`
-    fi
-  fi
-
-
-  if test -n "$DSET__DMC__"; then
-    prop_id=dmc
-
-    if test -n "$DVAL__DMC__"; then
-      tbuf=`echo "$DVAL__DMC__" | sed 's/0[xX]\(.\).*/\1/g'`
-      prop_vmajor=`printf "%d" "0x$tbuf"`
-      tbuf=`echo "$DVAL__DMC__" | sed 's/0[xX].\(.\).*/\1/g'`
-      prop_vminor=`printf "%d" "0x$tbuf"`
-      tbuf=`echo "$DVAL__DMC__" | sed 's/0[xX]..\(.\).*/\1/g'`
-      prop_vrevision=`printf "%d" "0x$tbuf"`
-    fi
-  fi
-
   if test -n "$DSET__SYSC__"; then
     prop_id=dignus
 
@@ -724,14 +683,6 @@ read_cc_props() {
       prop_vminor=`expr "0$buf" / 100`
       prop_vrevision=`expr "0$DVAL__SYSC_VER__" % 100`
     fi
-  fi
-
-  if test -n "$DSET__PATHCC__"; then
-    prop_id=ekopath
-
-    prop_vmajor=$DVAL__PATHCC__
-    prop_vminor=$DVAL__PATHCC_MINOR__
-    prop_vrevision=$DVAL__PATHCC_PATCHLEVEL__
   fi
 
   if test -n "$DSET__ghs__"; then
@@ -829,10 +780,6 @@ read_cc_props() {
     fi
   fi
 
-  if test -n "$DSET__HIGHC__"; then
-    prop_id=metaware
-  fi
-
   if test -n "$DSET__MWERKS__" || test -n "$DSET__CWCC__"; then
     prop_id=codewarrior
 
@@ -868,27 +815,12 @@ read_cc_props() {
     fi
   fi
 
-  if test -n "$DSET_MRI"; then
-    prop_id=mri
-  fi
-
   if test -n "$DSET__MINGW32__"; then
     prop_bitness=32
   fi
 
   if test -n "$DSET__MINGW64__"; then
     prop_bitness=64
-  fi
-
-  if test -n "$DSET__OPEN64__" || test -n "$DSET__OPENCC__"; then
-    prop_id=open64
-
-    prop_vmajor=`expr "0$DVAL__OPENCC__" + 0`
-    prop_vminor=`expr "0$DVAL__OPENCC_MINOR__" + 0`
-    if test -n "$DVAL__OPENCC_PATCHLEVEL__"; then
-      tbuf=`echo "${DVAL__OPENCC_PATCHLEVEL__}." | sed 's/^\([^.]*\)\..*/\1/g'`
-      prop_vrevision=`expr "0$tbuf" + 0`
-    fi
   fi
 
   if test -n "$DSET__SUNPRO_C" || test -n "$DSET__SUNPRO_CC"; then
@@ -954,10 +886,6 @@ read_cc_props() {
 
   if test -n "$DSET__VOSC__"; then
     prop_id=vosc
-  fi
-
-  if test -n "$DSET__TenDRA__"; then
-    prop_id=tendra
   fi
 
   if test -n "$DSET__TI_COMPILER_VERSION__"; then
@@ -3245,32 +3173,9 @@ DSET__COMPCERT__=1
 DSET__DCC__=1
 #endif
 
-#ifdef __DECC
-DSET__DECC=1
-#endif
-
-#ifdef __DECCXX
-DSET__DECCXX=1
-#endif
-
-#ifdef __DECC_VER
-DSET__DECC_VER=1
-DVAL__DECC_VER=__DECC_VER
-#endif
-
-#ifdef __DECCXX_VER
-DSET__DECCXX_VER=1
-DVAL__DECCXX_VER=__DECCXX_VER
-#endif
-
 #ifdef __VERSION_NUMBER__
 DSET__VERSION_NUMBER__=1
 DVAL__VERSION_NUMBER__=__VERSION_NUMBER__
-#endif
-
-#ifdef __DMC__
-DSET__DMC__=1
-DVAL__DMC__=__DMC__
 #endif
 
 #ifdef __SYSC__
@@ -3280,30 +3185,6 @@ DSET__SYSC__=1
 #ifdef __SYSC_VER__
 DSET__SYSC_VER__=1
 DVAL__SYSC_VER__=__SYSC_VER__
-#endif
-
-#ifdef __EDG__
-DSET__EDG__=1
-#endif
-
-#ifdef __EDG_VERSION__
-DSET__EDG_VERSION__=1
-DVAL__EDG_VERSION__=__EDG_VERSION__
-#endif
-
-#ifdef __PATHCC__
-DSET__PATHCC__=1
-DVAL__PATHCC__=__PATHCC__
-#endif
-
-#ifdef __PATHCC_MINOR__
-DSET__PATHCC_MINOR__=1
-DVAL__PATHCC_MINOR__=__PATHCC_MINOR__
-#endif
-
-#ifdef __PATHCC_PATCHLEVEL__
-DSET__PATHCC_PATCHLEVEL__=1
-DVAL__PATHCC_PATCHLEVEL__=__PATHCC_PATCHLEVEL__
 #endif
 
 #ifdef __GNUC__
@@ -3419,10 +3300,6 @@ DSET__CX51__=1
 DVAL__CX51__=__CX51__
 #endif
 
-#ifdef __HIGHC__
-DSET__HIGHC__=1
-#endif
-
 #ifdef __MWERKS__
 DSET__MWERKS__=1
 DVAL__MWERKS__=__MWERKS__
@@ -3441,10 +3318,6 @@ DVAL_MSC_VER=_MSC_VER
 #ifdef _MSC_FULL_VER
 DSET_MSC_FULL_VER=1
 DVAL_MSC_FULL_VER=_MSC_FULL_VER
-#endif
-
-#ifdef _MRI
-DSET_MRI=1
 #endif
 
 #ifdef __MINGW32__
@@ -3471,25 +3344,6 @@ DVAL_COMPILER_VERSION=_COMPILER_VERSION
 #ifdef _SGI_COMPILER_VERSION
 DSET_SGI_COMPILER_VERSION=1
 DVAL_SGI_COMPILER_VERSION=_SGI_COMPILER_VERSION
-#endif
-
-#ifdef __OPEN64__
-DSET__OPEN64__=1
-#endif
-
-#ifdef __OPENCC__
-DSET__OPENCC__=1
-DVAL__OPENCC__=__OPENCC__
-#endif
-
-#ifdef __OPENCC_MINOR__
-DSET__OPENCC_MINOR__=1
-DVAL__OPENCC_MINOR__=__OPENCC_MINOR__
-#endif
-
-#ifdef __OPENCC_PATCHLEVEL__
-DSET__OPENCC_PATCHLEVEL__=1
-DVAL__OPENCC_PATCHLEVEL__=__OPENCC_PATCHLEVEL__
 #endif
 
 #ifdef __SUNPRO_C
@@ -3550,10 +3404,6 @@ DSET__SNC__=1
 
 #ifdef __VOSC__
 DSET__VOSC__=1
-#endif
-
-#ifdef __TenDRA__
-DSET__TenDRA__=1
 #endif
 
 #ifdef __TI_COMPILER_VERSION__
