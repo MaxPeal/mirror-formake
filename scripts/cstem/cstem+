@@ -244,7 +244,6 @@ hpacc             HP aC++
 armc              ARM Compiler (by ARM)
 clang             Clang
 codewrr           CodeWarrior
-comeau            Comeau C/C++
 decc              Compaq C/C++
 diabc             Wind River Diab Compiler
 dignus            Dignus Systems/C and Systems/C++
@@ -649,15 +648,6 @@ read_cc_props() {
     prop_vmajor=$DVAL__clang_major__
     prop_vminor=$DVAL__clang_minor__
     prop_vrevision=$DVAL__clang_patchlevel__
-  fi
-
-  if test -n "$DSET__COMO__"; then
-    prop_id=comeau
-
-    if test -n "$DVAL__COMO_VERSION__"; then
-      prop_vmajor=`expr "0$DVAL__COMO_VERSION__" / 100`
-      prop_vminor=`expr "0$DVAL__COMO_VERSION__" % 100`
-    fi
   fi
 
 
@@ -3183,15 +3173,6 @@ DVAL__clang_minor__=__clang_minor__
 #ifdef __clang_patchlevel__
 DSET__clang_patchlevel__=1
 DVAL__clang_patchlevel__=__clang_patchlevel__
-#endif
-
-#ifdef __COMO__
-DSET__COMO__=1
-#endif
-
-#ifdef __COMO_VERSION__
-DSET__COMO_VERSION__=1
-DVAL__COMO_VERSION__=__COMO_VERSION__
 #endif
 
 #ifdef __COMPCERT__
