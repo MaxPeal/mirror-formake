@@ -538,14 +538,18 @@ int main(int argc, char** argv)
 }
 EOF
 
+  cc_is_cross=1
   if ($cc_cmd $check_cflags -c $test_src >/dev/null) 2>/dev/null; then
     rm -f testapp
     ($cc_cmd $check_cflags -o testapp $test_src >/dev/null) 2>/dev/null
-    if test -f testapp; then
+    ecode=$?
+    if test -f testapp || test x$ecode = x0; then
       cc_is_ok=1
-      (./testapp >/dev/null) 2>/dev/null
-      if test $? -ne 0; then
-        cc_is_cross=1
+      if test -x ./testapp; then
+        (./testapp >/dev/null) 2>/dev/null
+        if test $? -ne 0; then
+          cc_is_cross=0
+        fi
       fi
     fi
   fi
