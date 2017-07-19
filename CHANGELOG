@@ -87,4 +87,5 @@ Formake v0.13
   * cstem: minor fixes and improvements
   * cstem: general revision: removed outdated/experimental/non-production level compiler ACK
   * cstem: general revision: removed outdated/experimental/non-production level compiler LCC
+  * cstem: general revision: removed outdated/experimental/non-production level compiler Pelles C
 
