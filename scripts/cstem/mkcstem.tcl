@@ -481,6 +481,7 @@ epiphany          Epiphany
 hppa              PA-RISC
 ia64              IA-64
 mips              MIPS
+msp430            TI MSP430
 powerpc           PowerPC
 sparc             SPARC
 superh            SuperH
@@ -490,6 +491,7 @@ zarch             IBM z/Architecture
 
 TARGET BITNESS
 --------------------------------------------------------------------------------
+16                16-bit CPU
 32                32-bit CPU
 64                64-bit CPU
 
@@ -647,6 +649,7 @@ probe_os() {
 
 check_cc() {
   cc_is_ok=
+  cc_is_ti=
 
   ($cc_cmd >/dev/null) 2>/dev/null
   if test $? -ge 126; then
@@ -659,25 +662,57 @@ check_cc() {
       CPP_FLAG=-E
       ;;
     *)
-      CPP_FLAG=-E
+      ($cc_cmd -h | grep -i texas >/dev/null) 2>/dev/null
+      if test $? -eq 0; then
+        cc_is_ti=1
+        CPP_FLAG=-ppl
+      else
+        CPP_FLAG=-E
+      fi
       ;;
   esac
 
   rm -f $test_dir/*
   cd $test_dir
 
-  test_c="cc_test.c"
+  test_c="cc_test.$ext"
+  test_pp="cc_test.pp"
   cat >$test_c <<EOF
 #define MY_DEFINE 1
 #ifdef MY_DEFINE
-  #define CPP_OK
+  #define CPP_OK 1234
 #endif
+
+int cpp_result = CPP_OK;
+
 EOF
-  ($cc_cmd $check_cflags $CPP_FLAG $test_c >/dev/null) 2>/dev/null
-  ret_code=$?
-  if test $ret_code -ne 0; then
-    cd $orig_dir
-    return
+  rm -f $test_pp
+  if test x$cc_is_ti = x1; then
+    ($cc_cmd $check_cflags $CPP_FLAG $test_c >/dev/null) 2>/dev/null
+    ret_code=$?
+    if test $ret_code -ne 0; then
+      cd $orig_dir
+      return
+    fi
+    if test -f $test_pp && cat $test_pp | grep cpp_result | grep 1234 >/dev/null; then
+      :
+    else
+      cd $orig_dir
+      return
+    fi
+  else
+    ($cc_cmd $check_cflags $CPP_FLAG $test_c >cc_test_out) 2>/dev/null
+    ret_code=$?
+    if test $ret_code -ne 0; then
+      cd $orig_dir
+      return
+    fi
+    if cat cc_test_out | grep cpp_result | grep 1234 >/dev/null; then
+      :
+    else
+      cd $orig_dir
+      return
+    fi
   fi
 
 ########## CC_BLOCK_START
@@ -707,16 +742,13 @@ EOF
 
   cc_is_cross=1
   if ($cc_cmd $check_cflags -c $test_src >/dev/null) 2>/dev/null; then
+    cc_is_ok=1
     rm -f testapp
     ($cc_cmd $check_cflags -o testapp $test_src >/dev/null) 2>/dev/null
-    ecode=$?
-    if test -f testapp || test x$ecode = x0; then
-      cc_is_ok=1
-      if test -x ./testapp; then
-        (./testapp >/dev/null) 2>/dev/null
-        if test $? -eq 0; then
-          cc_is_cross=0
-        fi
+    if test -x testapp; then
+      (./testapp >/dev/null) 2>/dev/null
+      if test $? -eq 0; then
+        cc_is_cross=0
       fi
     fi
   fi
@@ -759,17 +791,27 @@ read_cc_props() {
   prop_sus=
 
   probe_h="$test_dir/cstem_$$.$ext"
+  probe_pp="$test_dir/cstem_$$.pp"
   rm -f $probe_h
   if test -f $headers; then
     cat $headers >$probe_h
   fi
   cat $script_abs | sed -n -e '/\* COMPILER DEFINES \*/,$p' | grep -v "^EOF" >> $probe_h
   probe_h_out="$test_dir/cstem_$$_out"
+  if test x$cc_is_ti = x1; then
 ########## CC_BLOCK_START
-  $cc_cmd $CFLAGS $CPP_FLAG $probe_h 2>/dev/null > $probe_h_out
+    $cc_cmd $CFLAGS $CPP_FLAG $probe_h 2>/dev/null
 ########## CX_BLOCK_START
-  $cc_cmd $CXXFLAGS $CPP_FLAG $probe_h 2>/dev/null > $probe_h_out
+    $cc_cmd $CXXFLAGS $CPP_FLAG $probe_h 2>/dev/null
 ########## BLOCK_END
+    cat $probe_pp > $probe_h_out
+  else
+########## CC_BLOCK_START
+    $cc_cmd $CFLAGS $CPP_FLAG $probe_h 2>/dev/null > $probe_h_out
+########## CX_BLOCK_START
+    $cc_cmd $CXXFLAGS $CPP_FLAG $probe_h 2>/dev/null > $probe_h_out
+########## BLOCK_END
+  fi
   probe_sh="$test_dir/cstem_$$.sh"
   cat $probe_h_out | grep "^D[SV][EA][TL]" | sed 's/= */=/' | sed 's/ *$//' | sed 's/=\(.*\)$/="\1"/' | sed 's/""*/"/g' | sed 's/ *= */=/' | sed 's/="*$/=/' > $probe_sh
   . $probe_sh
@@ -1378,7 +1420,7 @@ read_cc_props() {
     prop_bitness=64
   fi
 
-  if test -n "$DSET__arm__" || test -n "$DSET__thumb__" || test -n "$DSET__TARGET_ARCH_ARM" || test -n "$DSET__TARGET_ARCH_THUMB" || test -n "$DSET_ARM" || test -n "$DSET_M_ARM" || test -n "$DSET_M_ARMT" || test -n "$DSET__arm"; then
+  if test -n "$DSET__arm__" || test -n "$DSET__thumb__" || test -n "$DSET__TARGET_ARCH_ARM" || test -n "$DSET__TARGET_ARCH_THUMB" || test -n "$DSET_ARM" || test -n "$DSET_M_ARM" || test -n "$DSET_M_ARMT" || test -n "$DSET__arm" || test -n "$DSET__TI_ARM__"; then
     prop_arch=arm
   fi
 
@@ -1433,6 +1475,10 @@ read_cc_props() {
 
   if test -n "$DSET__mips__" || test -n "$DSETmips" || test -n "$DSET__MIPS__" || test -n "$DSET__mips"; then
     prop_arch=mips
+  fi
+
+  if test -n "$DSET__MSP430XGENERIC__" || test -n "$DSET__MSP430__" || test -n "$DSET__MSP430X__"; then
+    prop_arch=msp430
   fi
 
   if test -n "$DSET__powerpc" || test -n "$DSET__powerpc__" || test -n "$DSET__powerpc64__" || test -n "$DSET__POWERPC__" || test -n "$DSET__ppc__" || test -n "$DSET__ppc64__" || test -n "$DSET__PPC__" || test -n "$DSET__PPC64__" || test -n "$DSET_ARCH_PPC" || test -n "$DSET_ARCH_PPC64" || test -n "$DSET_M_PPC" || test -n "$DSET__PPCGECKO__" || test -n "$DSET__PPCBROADWAY__" || test -n "$DSET_XENON" || test -n "$DSET__ppc" || test -n "$DSET__PowerPC__" || test -n "$DSET__PPC" || test -n "$DSET__ppc64"; then
@@ -1534,6 +1580,21 @@ EOF
       ptr_sz=$DVAL__SIZEOF_POINTER__
     elif test -n "$DVALUINTPTR_MAX"; then
       case "$DVALUINTPTR_MAX" in
+        0xffffU)
+          ptr_sz=2
+          ;;
+        429496*)
+          ptr_sz=4
+          ;;
+        184467*)
+          ptr_sz=8
+          ;;
+      esac
+    elif test -n "$DVAL__UINTPTR_MAX__"; then
+      case "$DVAL__UINTPTR_MAX__" in
+        0xffffU)
+          ptr_sz=2
+          ;;
         429496*)
           ptr_sz=4
           ;;
@@ -1570,6 +1631,18 @@ EOF
         prop_bitness=32
         ;;
       ilp64 | llp64 | lp64)
+        prop_bitness=64
+        ;;
+    esac
+  elif test -z "$prop_bitness" && test -n "$ptr_sz"; then
+    case $ptr_sz in
+      2)
+        prop_bitness=16
+        ;;
+      4)
+        prop_bitness=32
+        ;;
+      8)
         prop_bitness=64
         ;;
     esac
@@ -4227,6 +4300,10 @@ DSET_M_ARM=1
 DSET_M_ARMT=1
 #endif
 
+#ifdef __TI_ARM__
+DSET__TI_ARM__=1
+#endif
+
 #ifdef __arm
 DSET__arm=1
 #endif
@@ -4357,6 +4434,18 @@ DSET__mips=1
 
 #ifdef __MIPS__
 DSET__MIPS__=1
+#endif
+
+#ifdef __MSP430XGENERIC__
+DSET__MSP430XGENERIC__=1
+#endif
+
+#ifdef __MSP430__
+DSET__MSP430__=1
+#endif
+
+#ifdef __MSP430X__
+DSET__MSP430X__=1
 #endif
 
 #ifdef __powerpc
@@ -4569,6 +4658,11 @@ DVALULONG_MAX=ULONG_MAX
 #ifdef UINTPTR_MAX
 DSETUINTPTR_MAX=1
 DVALUINTPTR_MAX=UINTPTR_MAX
+#endif
+
+#ifdef __UINTPTR_MAX__
+DSET__UINTPTR_MAX__=1
+DVAL__UINTPTR_MAX__=__UINTPTR_MAX__
 #endif
 
 #ifdef __SIZEOF_INT__
