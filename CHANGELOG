@@ -93,4 +93,5 @@ Formake v0.13
   * cstem: general revision: removed outdated/experimental/non-production level compiler Comeau C/C++
   * cstem: general revision: removed outdated/experimental/non-production level compiler: Compaq C/C++, Digital Mars C/C++, EDG, PathScale EKOPath,
     MetaWare C/C++, Microtec C/C++, Open64, TenDRA C/C++
+  * cstem: general revision: removed outdated/experimental/non-production level operating systems: Syllable, Tru64
 
