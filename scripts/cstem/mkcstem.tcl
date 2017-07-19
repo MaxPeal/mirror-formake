@@ -404,7 +404,6 @@ COMPILERS
 hpacc             HP aC++
 ########## BLOCK_END
 armc              ARM Compiler (by ARM)
-borlandc          Borland C++ (by Borland, CodeGear, Embarcadero)
 clang             Clang
 codewrr           CodeWarrior
 comeau            Comeau C/C++
@@ -875,10 +874,6 @@ read_cc_props() {
       tbuf=`expr "0$DVAL__ARMCC_VERSION" % 10000`
       prop_vrevision=`expr "0$tbuf" / 1000`
     fi
-  fi
-
-  if test -n "$DSET__BORLANDC__" || test -n "$DSET__CODEGEARC__"; then
-    prop_id=borlandc
   fi
 
   if test -n "$DSET__clang__"; then
@@ -3647,16 +3642,6 @@ DSET__CC_ARM=1
 #ifdef __ARMCC_VERSION
 DSET__ARMCC_VERSION=1
 DVAL__ARMCC_VERSION=__ARMCC_VERSION
-#endif
-
-#ifdef __BORLANDC__
-DSET__BORLANDC__=1
-DVAL__BORLANDC__=__BORLANDC__
-#endif
-
-#ifdef __CODEGEARC__
-DSET__CODEGEARC__=1
-DVAL__CODEGEARC__=__CODEGEARC__
 #endif
 
 #ifdef __clang__
