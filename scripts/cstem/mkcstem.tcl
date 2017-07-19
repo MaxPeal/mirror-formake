@@ -724,7 +724,9 @@ EOF
 ########## BLOCK_END
 
   if ($cc_cmd $check_cflags -c $test_src >/dev/null) 2>/dev/null; then
-    if ($cc_cmd $check_cflags -o testapp $test_src >/dev/null) 2>/dev/null; then
+    rm -f testapp
+    ($cc_cmd $check_cflags -o testapp $test_src >/dev/null) 2>/dev/null
+    if test -f testapp; then
       cc_is_ok=1
       (./testapp >/dev/null) 2>/dev/null
       if test $? -ne 0; then
