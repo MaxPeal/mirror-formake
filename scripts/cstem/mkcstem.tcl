@@ -394,7 +394,6 @@ c51               Keil C51
 compcert          CompCert C
 hpansic           HP ANSI C
 imagecraft        ImageCraft C
-lcc               LCC (A Retargetable Compiler for ANSI C)
 pelles            Pelles C
 sdcc              SDCC (Small Device C Compiler)
 tinyc             Tiny C Compiler (TCC, TinyCC)
@@ -1078,10 +1077,6 @@ read_cc_props() {
       prop_vmajor=`expr "0$DVAL__CX51__" / 100`
       prop_vminor=`expr "0$DVAL__CX51__" % 100`
     fi
-  fi
-
-  if test -n "$DSET__LCC__"; then
-    prop_id=lcc
   fi
 ########## BLOCK_END
 
@@ -3878,10 +3873,6 @@ DVAL__C51__=__C51__
 #ifdef __CX51__
 DSET__CX51__=1
 DVAL__CX51__=__CX51__
-#endif
-
-#ifdef __LCC__
-DSET__LCC__=1
 #endif
 
 #ifdef __HIGHC__

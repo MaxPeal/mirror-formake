@@ -3386,10 +3386,6 @@ DSET__CX51__=1
 DVAL__CX51__=__CX51__
 #endif
 
-#ifdef __LCC__
-DSET__LCC__=1
-#endif
-
 #ifdef __HIGHC__
 DSET__HIGHC__=1
 #endif
