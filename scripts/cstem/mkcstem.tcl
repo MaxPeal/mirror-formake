@@ -684,14 +684,14 @@ check_cc() {
   rm -f $test_dir/*
   cd $test_dir
 
-  test_h="cc_test.h"
-  cat >$test_h <<EOF
+  test_c="cc_test.c"
+  cat >$test_c <<EOF
 #define MY_DEFINE 1
 #ifdef MY_DEFINE
   #define CPP_OK
 #endif
 EOF
-  ($cc_cmd $check_cflags $CPP_FLAG $test_h >/dev/null) 2>/dev/null
+  ($cc_cmd $check_cflags $CPP_FLAG $test_c >/dev/null) 2>/dev/null
   ret_code=$?
   if test $ret_code -ne 0; then
     cd $orig_dir
