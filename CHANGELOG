@@ -89,4 +89,5 @@ Formake v0.13
   * cstem: general revision: removed outdated/experimental/non-production level compiler LCC
   * cstem: general revision: removed outdated/experimental/non-production level compiler Pelles C
   * cstem: fixed compiler test procedure
+  * cstem: general revision: removed outdated/experimental/non-production level compiler Borland C/C++
 
