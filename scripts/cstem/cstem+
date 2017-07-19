@@ -547,7 +547,7 @@ EOF
       cc_is_ok=1
       if test -x ./testapp; then
         (./testapp >/dev/null) 2>/dev/null
-        if test $? -ne 0; then
+        if test $? -eq 0; then
           cc_is_cross=0
         fi
       fi
