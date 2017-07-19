@@ -466,8 +466,6 @@ os9               Microware OS-9
 qnx               QNX
 sco               SCO UNIX
 solaris           Solaris
-syllable          Syllable Desktop
-tru64             Tru64 UNIX
 vos               Stratus VOS (Virtual Operating System)
 vxworks           VxWorks
 windows           Windows
@@ -583,12 +581,6 @@ probe_os() {
       ;;
     hp-ux)
       config_os=hpux
-      ;;
-    osf1)
-      sizer >/dev/null 2>&1
-      if sizer -v | grep Tru64 > /dev/null; then
-        config_os=tru64
-      fi
       ;;
     freebsd)
       config_os=freebsd
@@ -1354,10 +1346,6 @@ read_cc_props() {
     prop_os=vos
   fi
 
-  if test -n "$DSET__SYLLABLE__"; then
-    prop_os=syllable
-  fi
-
   if test -n "$DSET__VXWORKS__" || test -n "$DSET__vxworks" || test -n "$DSET_WRS_KERNEL"; then
     prop_os=vxworks
     if test -n "$DVAL_WRS_VXWORKS_MAJOR"; then
@@ -1374,10 +1362,6 @@ read_cc_props() {
 
   if test -n "$DSET__MVS__" || test -n "$DSET__HOS_MVS__" || test -n "$DSET__TOS_MVS__"; then
     prop_os=zos
-  fi
-
-  if (test -n "$DSET__alpha__" || test -n "$DSET_M_ALPHA" || test -n "$DSET__alpha" || test -n "$DSET__ALPHA") && (test -n "$DSET__osf__" || test -n "$DSET__digital__") ; then
-    prop_os=tru64
   fi
 
   prop_os_version=$prop_os_vmajor
@@ -4082,10 +4066,6 @@ DSET__SunOS_5_11=1
 DSET__VOS__=1
 #endif
 
-#ifdef __SYLLABLE__
-DSET__SYLLABLE__=1
-#endif
-
 #ifdef __VXWORKS__
 DSET__VXWORKS__=1
 #endif
@@ -4170,14 +4150,6 @@ DSET__HOS_MVS__=1
 
 #ifdef __TOS_MVS__
 DSET__TOS_MVS__=1
-#endif
-
-#ifdef __osf__
-DSET__osf__=1
-#endif
-
-#ifdef __digital__
-DSET__digital__=1
 #endif
 
 
