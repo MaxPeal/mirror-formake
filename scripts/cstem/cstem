@@ -482,26 +482,30 @@ probe_os() {
 }
 
 check_cc() {
-  cc_is_ok=
-  cc_is_ti=
+  check_cc_ok=
+  cc_type=
+  cc_is_cross=1
 
-  ($cc_cmd >/dev/null) 2>/dev/null
+  ($prop_cmd >/dev/null) 2>/dev/null
   if test $? -ge 126; then
     return
   fi
 
-  cc_cmd_base=`basename "$cc_cmd"`
+  cc_cmd_base=`basename "$prop_cmd"`
   case $cc_cmd_base in
-    gcc*|g++*)
+    gcc*|g++*|clang*)
       CPP_FLAG=-E
+      cc_type=gcc
       ;;
     *)
-      ($cc_cmd -h | grep -i texas >/dev/null) 2>/dev/null
+      cc_cmd0=`echo "$prop_cmd" | sed 's# [^/]*$##'`
+      ($cc_cmd0 -h | grep -i texas >/dev/null) 2>/dev/null
       if test $? -eq 0; then
-        cc_is_ti=1
         CPP_FLAG=-ppl
+        cc_type=ti
       else
         CPP_FLAG=-E
+        cc_type=gcc
       fi
       ;;
   esac
@@ -520,22 +524,22 @@ check_cc() {
 int cpp_result = CPP_OK;
 
 EOF
-  rm -f $test_pp
-  if test x$cc_is_ti = x1; then
-    ($cc_cmd $check_cflags $CPP_FLAG $test_c >/dev/null) 2>/dev/null
+  if test $cc_type = ti; then
+    rm -f $test_pp
+    ($prop_cmd $prop_cflags $CPP_FLAG $test_c >/dev/null) 2>/dev/null
     ret_code=$?
-    if test $ret_code -ne 0; then
+    if test ! -f $test_pp; then
       cd $orig_dir
       return
     fi
-    if test -f $test_pp && cat $test_pp | grep cpp_result | grep 1234 >/dev/null; then
+    if cat $test_pp | grep cpp_result | grep 1234 >/dev/null; then
       :
     else
       cd $orig_dir
       return
     fi
   else
-    ($cc_cmd $check_cflags $CPP_FLAG $test_c >cc_test_out) 2>/dev/null
+    ($prop_cmd $prop_cflags $CPP_FLAG $test_c >cc_test_out) 2>/dev/null
     ret_code=$?
     if test $ret_code -ne 0; then
       cd $orig_dir
@@ -549,7 +553,7 @@ EOF
     fi
   fi
 
-  test_src="test.c"
+  test_src="test.$ext"
   cat > $test_src <<EOF
 int main(int argc, char** argv)
 {
@@ -557,11 +561,10 @@ int main(int argc, char** argv)
 }
 EOF
 
-  cc_is_cross=1
-  if ($cc_cmd $check_cflags -c $test_src >/dev/null) 2>/dev/null; then
-    cc_is_ok=1
+  if ($prop_cmd $prop_cflags -c $test_src >/dev/null) 2>/dev/null; then
+    check_cc_ok=1
     rm -f testapp
-    ($cc_cmd $check_cflags -o testapp $test_src >/dev/null) 2>/dev/null
+    ($prop_cmd $prop_cflags -o testapp $test_src >/dev/null) 2>/dev/null
     if test -x testapp; then
       (./testapp >/dev/null) 2>/dev/null
       if test $? -eq 0; then
@@ -586,7 +589,7 @@ int main(int argc, char** argv)
   return 0;
 }
 EOF
-    if ($cc_cmd $check_cflags -c $test_src >/dev/null) 2>/dev/null; then
+    if ($prop_cmd $prop_cflags -c $test_src >/dev/null) 2>/dev/null; then
       echo "#include $hdr" >>$headers
     fi
   done
@@ -615,11 +618,11 @@ read_cc_props() {
   fi
   cat $script_abs | sed -n -e '/\* COMPILER DEFINES \*/,$p' | grep -v "^EOF" >> $probe_h
   probe_h_out="$test_dir/cstem_$$_out"
-  if test x$cc_is_ti = x1; then
-    $cc_cmd $CFLAGS $CPP_FLAG $probe_h 2>/dev/null
+  if test $cc_type = ti; then
+    $prop_cmd $CFLAGS $CPP_FLAG $probe_h 2>/dev/null
     cat $probe_pp > $probe_h_out
   else
-    $cc_cmd $CFLAGS $CPP_FLAG $probe_h 2>/dev/null > $probe_h_out
+    $prop_cmd $CFLAGS $CPP_FLAG $probe_h 2>/dev/null > $probe_h_out
   fi
   probe_sh="$test_dir/cstem_$$.sh"
   cat $probe_h_out | grep "^D[SV][EA][TL]" | sed 's/= */=/' | sed 's/ *$//' | sed 's/=\(.*\)$/="\1"/' | sed 's/""*/"/g' | sed 's/ *= */=/' | sed 's/="*$/=/' > $probe_sh
@@ -1298,7 +1301,7 @@ int main(int argc, char *argv[])
 }
 
 EOF
-    $cc_cmd $CFLAGS -o $dm_exe $dm_src 2>/dev/null
+    $prop_cmd $CFLAGS -o $dm_exe $dm_src 2>/dev/null
     prop_data_model=`$dm_exe`
     rm -f $dm_src $dm_exe
   fi
@@ -1439,7 +1442,7 @@ int main(int argc, char *argv[])
 }
 
 EOF
-    $cc_cmd $CFLAGS -o $border_exe $border_src 2>/dev/null
+    $prop_cmd $CFLAGS -o $border_exe $border_src 2>/dev/null
     prop_endianness=`$border_exe`
     rm -f $border_src $border_exe
   fi
@@ -1498,75 +1501,86 @@ EOF
   fi
 }
 
-get_cc() {
+get_cc_list() {
   probe_os
 
   case "x$config_os" in
-    xdarwin)
-      cc_list="clang cc c99 gcc"
+    xmacos)
+      cc_list="clang gcc c99 cc c89"
       ;;
     xaix)
-      cc_list="cc xlc gcc c99 clang"
-      ;;
-    xsolaris)
-      cc_list="cc gcc c99 clang"
-      ;;
-    xirix)
-      cc_list="cc c99 gcc c89 clang"
-      ;;
-    xgnulinux)
-      cc_list="gcc cc c99 clang"
+      cc_list="xlc gcc clang c99 cc c89"
       ;;
     *)
-      cc_list="cc c99 c89 gcc clang"
+      cc_list="gcc clang c99 cc c89"
       ;;
   esac
 }
 
-perform_probe() {
-  cc_is_ok=
-  check_cflags=
+probe_base() {
+  probe_base_ok=
+  prop_cmd=
+  prop_cflags=
+  probe_cc_ok=
+  probe_cflags_ok=
   if test -z "$CC"; then
-    get_cc
+    get_cc_list
 
-    for cc_cmd in $cc_list; do
+    for prop_cmd in $cc_list; do
       check_cc
-      if test x$cc_is_ok = x1; then
+      if test x$check_cc_ok = x1; then
         break
       fi
     done
+    if test x$check_cc_ok != x1; then
+      prop_cmd=
+    fi
   else
-    cc_cmd=$CC
+    prop_cmd=$CC
     check_cc
   fi
 
-  if test x$cc_is_ok != x1; then
-    printf "%s\n" "${script_name}: C compiler not found" >&2
-    clean_exit 1
+  if test x$check_cc_ok != x1; then
+    return
   fi
+  probe_cc_ok=1
 
   if test -n "$CFLAGS"; then
-    check_cflags=$CFLAGS
     prop_cflags=$CFLAGS
     check_cc
-    if test x$cc_is_ok != x1; then
-      printf "%s\n" "${script_name}: invalid C flags: $CFLAGS" >&2
-      clean_exit 1
+    if test x$check_cc_ok != x1; then
+      return
     fi
   fi
+  probe_cflags_ok=1
   if test -n "$LDFLAGS"; then
     prop_ldflags=$LDFLAGS
+  fi
+  probe_base_ok=1
+}
+
+probe_ext() {
+  probe_ext_ok=
+  probe_base
+
+  if test x$probe_base_ok != x1; then
+    if test x$probe_cc_ok != x1; then
+      printf "%s\n" "${script_name}: C compiler not found" >&2
+    elif test x$probe_cflags_ok != x1; then
+      printf "%s\n" "${script_name}: invalid C flags: $CFLAGS" >&2
+    fi
+    return
   fi
 
   get_hdr_defs
   
   read_cc_props
-  prop_cmd=$cc_cmd
   if test $cc_is_cross = 1; then
     prop_flag_cross="true"
   else
     prop_flag_cross="false"
   fi
+  probe_ext_ok=1
 }
 
 echo_status() {
@@ -1822,7 +1836,10 @@ if test x$mode_probe = x1; then
   CFLAGS=`echo "$CFLAGS $CFLAGS_ADD" | sed 's/^ *//' | sed 's/ *$//'`
   LDFLAGS=`echo "$LDFLAGS $LDFLAGS_ADD" | sed 's/^ *//' | sed 's/ *$//'`
 
-  perform_probe
+  probe_ext
+  if test x$probe_ext_ok != x1; then
+    clean_exit 1
+  fi
 
   if test -z "$print_string" && test -z "$out_format"; then
     cat <<EOF
@@ -2122,22 +2139,6 @@ if test x$mode_test = x1; then
 
 
 ################################################################################
-# SET UP COMPILER AND LINKER
-  CPP_FLAG=-E
-
-  CC_CMD=$CC
-  if test -z "$CC_CMD"; then
-    perform_probe
-    CC_CMD=$prop_cmd
-  fi
-
-  if test -n "$LD"; then
-    LD_CMD=$LD
-  else
-    LD_CMD=$CC_CMD
-  fi
-  
-################################################################################
 # SET UP TEST DIR
   setup_test_dir
   test_src=test_src.$ext
@@ -2145,26 +2146,21 @@ if test x$mode_test = x1; then
 ################################################################################
 # TEST COMPILER
   log_title "TEST COMPILER"
+
   if test x$op_test_cc = x1; then
     echo_status -l "%s" "checking compiler $CC_CMD ... "
   fi
 
-  cat <<EOF >test.$ext
-int main(int argc, char *argv[]) {
-  return 0;
-}
-EOF
-  log_src test.$ext
-  echo "$CC_CMD -c -o test.o test.$ext" >> $cstem_log
-  $CC_CMD -c -o test.o test.$ext>> $cstem_log 2>&1
-  ret=$?
-  if test $ret -ne 0; then
+  probe_base
+  CC_CMD=$prop_cmd
+
+  if test x$probe_cc_ok != x1; then
     if test x$op_test_cc = x1; then
       echo_status "%s\n" "Failed"
     else
       echo_status "%s\n" "checking compiler $CC_CMD ... Failed"
     fi
-    clean_exit $ret
+    clean_exit 1
   else
     if test x$op_test_cc = x1; then
       echo_status "%s\n" "OK"
@@ -2172,6 +2168,14 @@ EOF
   fi
   rm -f test.$ext
   rm -f test.o
+  
+################################################################################
+# SET UP LINKER
+  if test -n "$LD"; then
+    LD_CMD=$LD
+  else
+    LD_CMD=$CC_CMD
+  fi
   
 ################################################################################
 # TEST op_with_flags
@@ -3048,34 +3052,24 @@ if test x$mode_def = x1; then
   op_with_inc=`echo "$op_with_inc" | sed 's/^ *//' | sed 's/ *$//'`
 
 ################################################################################
-# SET UP COMPILER
-  CPP_FLAG=-E
-  CC_CMD=$CC
-  if test -z "$CC_CMD"; then
-    perform_probe
-    CC_CMD=$prop_cmd
+# TEST COMPILER
+  probe_base
+  CC_CMD=$prop_cmd
+
+  if test x$probe_base_ok != x1; then
+    if test x$probe_cc_ok != x1; then
+      printf "%s\n" "${script_name}: C compiler not found" >&2
+    elif test x$probe_cflags_ok != x1; then
+      printf "%s\n" "${script_name}: invalid C flags: $CFLAGS" >&2
+    fi
+    clean_exit 1
   fi
 
 ################################################################################
 # SET UP TEST DIR
   setup_test_dir
   test_src=test_src.$ext
-
-################################################################################
-# TEST COMPILER
-  cat <<EOF >test.$ext
-int main(int argc, char *argv[]) {
-  return 0;
-}
-EOF
-  $CC_CMD -c -o test.o test.$ext 2>&1
-  ret=$?
-  if test $ret -ne 0; then
-    echo "%s" "checking compiler $CC_CMD ... Failed" >&2
-    clean_exit $ret
-  fi
-  rm -f test.$ext
-  rm -f test.o
+  test_pp=test_src.pp
 
 ################################################################################
 # TEST op_with_flags
@@ -3121,7 +3115,14 @@ EOF
 CSTEM_DEFVAL=$def
 #endif
 EOF
-    $CC_CMD $op_with_flags $CPP_FLAG $test_src 2>/dev/null > test_c.out
+    if test $cc_type = ti; then
+      $CC_CMD $op_with_flags $CPP_FLAG $test_src 2>/dev/null
+      cat $test_pp > test_c.out
+      rm -f $test_pp
+    else
+      $CC_CMD $op_with_flags $CPP_FLAG $test_src 2>/dev/null > test_c.out
+    fi
+
     defval=`cat test_c.out | grep "^ *CSTEM_DEFVAL" | sed 's/^ *CSTEM_DEFVAL=//' | sed 's/ *$//' | sed 's/"$//' |  sed 's/^"//' | tr -d '\n'`
     if test -n "$defval"; then
       if test -n "$defvals"; then
