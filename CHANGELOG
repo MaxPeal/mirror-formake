@@ -96,4 +96,5 @@ Formake v0.13
   * cstem: general revision: removed outdated/experimental/non-production level operating systems: Syllable, Tru64
   * cstem: added detection of TI msp430. Added detection of 16-bit arch. Added support of TI compilers. Other improvements
   * cstem: refactored compiler probing
+  * cstem: minor interface changes
 
