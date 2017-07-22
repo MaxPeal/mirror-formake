@@ -148,11 +148,11 @@ $script_name config OPTIONS
 
 $script_name -h|-help|--help
 $script_name -help-props
-$script_name -v
+$script_name -v|-version
 
  -h|-help|--help       print this help
  -help-props           print a detailed list of compiler properties
- -v                    print version
+ -v|-version           print version
 
  c++                   enable C++ mode
 
@@ -1791,7 +1791,7 @@ case x"$1" in
     mode_probe=1
     shift
     ;;
-  x-v)
+  x-v|x-version)
     print_version
     clean_exit 0
     ;;
