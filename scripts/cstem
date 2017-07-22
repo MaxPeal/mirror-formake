@@ -2367,28 +2367,18 @@ if test x$mode_test = x1; then
 # TEST COMPILER
   log_title "TEST COMPILER"
 
-  if test x$op_test_cc = x1; then
-    if test -z "$CC"; then
-      echo_status -l "%s" "checking compiler ... "
-    else
-      echo_status -l "%s" "checking compiler $CC ... "
-    fi
-  fi
-
   probe_base
   cd $test_dir
 
   if test x$probe_cc_ok != x1; then
-    if test x$op_test_cc = x1; then
-      echo_status "%s\n" "Failed"
+    if test -z "$CC"; then
+      echo_status -l "%s\n" "compiler not found"
     else
-      echo_status "%s\n" "checking compiler $prop_cmd ... Failed"
+      echo_status -l "%s\n" "checking compiler $CC ... Failed"
     fi
     clean_exit 1
-  else
-    if test x$op_test_cc = x1; then
-      echo_status "%s\n" "OK"
-    fi
+  elif test x$op_test_cc = x1; then
+    echo_status -l "%s\n" "checking compiler $CC ... OK"
   fi
   rm -f test.$ext
   rm -f test.o
@@ -3332,9 +3322,13 @@ if test x$mode_def = x1; then
 
   if test x$probe_base_ok != x1; then
     if test x$probe_cc_ok != x1; then
-      printf "%s\n" "${script_name}: C/C++ compiler not found" >&2
+      if test -z "$CC"; then
+        printf "%s\n" "compiler not found" >&2
+      else
+        printf "%s\n" "checking compiler $CC ... Failed" >&2
+      fi
     elif test x$probe_cflags_ok != x1; then
-      printf "%s\n" "${script_name}: invalid C/C++ flags: $CFLAGS" >&2
+      printf "%s\n" "invalid compiler flags: $CFLAGS" >&2
     fi
     clean_exit 1
   fi
