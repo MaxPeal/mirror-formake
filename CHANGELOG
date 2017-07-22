@@ -100,3 +100,5 @@ Formake v0.13
   * cstem: merged cstem and cstem+
   * removed cfront
 
+Formake v0.14
+  * cstem: added parameter '-version'
