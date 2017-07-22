@@ -2668,7 +2668,7 @@ EOF
           clean_exit 1
           ;;
       esac
-      rpart=`echo "$def_string" | sed 's/[a-zA-Z0-9_]*//'`
+      rpart=`echo "$def_string" | sed 's/[a-zA-Z0-9_]*//' | sed 's/^ *//'`
       if test "x$rpart" = x; then
         cat >>$test_src <<EOF
 #ifndef $def_name
