@@ -39,7 +39,7 @@ export FORMAKE_BASH_REDIRECTED
 ################################################################################
 # BASE CONFIGURATION
 PACKAGE_NAME="formake"
-PACKAGE_VERSION="0.12"
+PACKAGE_VERSION="0.13"
 CONF="build.conf"
 MK_CONF="mk.conf"
 DISTCLEAN_FILES="$CONF $MK_CONF configure.log"

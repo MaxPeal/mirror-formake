@@ -121,7 +121,7 @@ if test ! -d $test_dir; then
   echo "$script_name: error: could not create temporary directory $test_dir" >&2
   exit 1
 fi
-version_string="0.5"
+version_string="0.6"
 cc_is_cross=0
 headers=$test_dir/cstem_inc_headers
 cstem_log=$test_dir/cstem.log
