@@ -98,4 +98,5 @@ Formake v0.13
   * cstem: refactored compiler probing
   * cstem: minor interface changes
   * cstem: merged cstem and cstem+
+  * removed cfront
 
