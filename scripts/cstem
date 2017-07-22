@@ -1758,10 +1758,12 @@ setup_test_dir() {
 case x"$1" in
   xc++)
     cstem_mode=c++
+    op_param_mode=c++
     shift
     ;;
   xcc)
     cstem_mode=cc
+    op_param_mode=cc
     shift
     ;;
 esac
@@ -1906,7 +1908,7 @@ if test x$mode_probe = x1; then
         cstem_mode=c++
         ;;
       -cxxflags)
-        print_string="$print_string cflags"
+        print_string="$print_string cxxflags"
         cstem_mode=c++
         ;;
       LD=*)
@@ -1971,11 +1973,23 @@ if test x$mode_probe = x1; then
     shift
   done
 
+  case x$op_param_mode in
+    xc++)
+      cstem_mode=c++
+      ;;
+    xcc)
+      cstem_mode=cc
+      ;;
+  esac
+
   if test $cstem_mode = "c++"; then
-    CC=$CXX
-    CFLAGS=$CXXFLAGS
-    CFLAGS_ADD=$CXXFLAGS_ADD
+    test -n "$CXX" && CC=$CXX
+    test -n "$CXXFLAGS" && CFLAGS=$CXXFLAGS
+    test -n "$CXXFLAGS_ADD" && CFLAGS_ADD=$CXXFLAGS_ADD
     ext="C"
+    if test -n "$print_string"; then
+      print_string=`echo "$print_string" | sed 's/cxxflags/cflags/g'`
+    fi
   else
     ext="c"
   fi
@@ -2046,7 +2060,7 @@ if test x$mode_test = x1; then
   def_num=0
   type_num=0
   while test $# -gt 0; do
-    param=`echo "$1" | sed 's/^ *//' | sed 's/^# */#/'`
+    param=`printf "%s" "$1" | sed 's/^ *//' | sed 's/^# */#/'`
     case "$param" in
       CC=*)
         CC=`echo "$param" | sed 's/^[^=]*=//'`
@@ -2089,18 +2103,18 @@ if test x$mode_test = x1; then
         current_opt=
         ;;
       -cxx)
-        op_test_cc=1
+        op_test_cxx=1
         cstem_mode=c++
         current_opt=
         ;;
       -cxx=*)
-        op_test_cc=1
+        op_test_cxx=1
         CXX=`echo "$param" | sed 's/^[^=]*=//'`
         cstem_mode=c++
         current_opt=
         ;;
       -cxxflags=*)
-        op_test_flags=`echo "$param" | sed 's/^[^=]*=//'`
+        op_test_cxxflags=`echo "$param" | sed 's/^[^=]*=//'`
         cstem_mode=c++
         current_opt=
         ;;
@@ -2301,10 +2315,21 @@ if test x$mode_test = x1; then
     shift
   done
 
+  case x$op_param_mode in
+    xc++)
+      cstem_mode=c++
+      ;;
+    xcc)
+      cstem_mode=cc
+      ;;
+  esac
+
   if test $cstem_mode = "c++"; then
-    CC=$CXX
-    CFLAGS=$CXXFLAGS
-    CFLAGS_ADD=$CXXFLAGS_ADD
+    test -n "$CXX" && CC=$CXX
+    test -n "$CXXFLAGS" && CFLAGS=$CXXFLAGS
+    test -n "$CXXFLAGS_ADD" && CFLAGS_ADD=$CXXFLAGS_ADD
+    test -n "$op_test_cxx" && op_test_cc=$op_test_cxx
+    test -n "$op_test_cxxflags" && op_test_flags=$op_test_cxxflags
     ext="C"
   else
     ext="c"
@@ -3273,10 +3298,19 @@ if test x$mode_def = x1; then
     shift
   done
 
+  case x$op_param_mode in
+    xc++)
+      cstem_mode=c++
+      ;;
+    xcc)
+      cstem_mode=cc
+      ;;
+  esac
+
   if test $cstem_mode = "c++"; then
-    CC=$CXX
-    CFLAGS=$CXXFLAGS
-    CFLAGS_ADD=$CXXFLAGS_ADD
+    test -n "$CXX" && CC=$CXX
+    test -n "$CXXFLAGS" && CFLAGS=$CXXFLAGS
+    test -n "$CXXFLAGS_ADD" && CFLAGS_ADD=$CXXFLAGS_ADD
     ext="C"
   else
     ext="c"
