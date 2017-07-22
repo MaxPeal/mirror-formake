@@ -2363,12 +2363,6 @@ if test x$mode_test = x1; then
     fi
   fi
 
-
-################################################################################
-# SET UP TEST DIR
-  setup_test_dir
-  test_src=test_src.$ext
-  
 ################################################################################
 # TEST COMPILER
   log_title "TEST COMPILER"
@@ -2398,6 +2392,11 @@ if test x$mode_test = x1; then
   fi
   rm -f test.$ext
   rm -f test.o
+  
+################################################################################
+# SET UP TEST DIR
+  setup_test_dir
+  test_src=test_src.$ext
   
 ################################################################################
 # SET UP LINKER
