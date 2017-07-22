@@ -223,6 +223,7 @@ version_string="0.5"
 cc_is_cross=0
 headers=$test_dir/cstem_inc_headers
 cstem_log=$test_dir/cstem.log
+cc_macros_loaded=
 
 ################################################################################
 # LOAD CONFIG
@@ -324,13 +325,13 @@ TEST MODE. TEST SYSTEM CAPABILITIES
  LDFLAGS_ADD=<FLAGS>   specify additional linker flags
  INC=<FILES>           include header files
 ########## CC_BLOCK_START
- -cc [CMD]             test C compiler
+ -cc[=CMD]             test C compiler
  -cflags=FLAGS         test C compiler flags
- -ld [CMD]             test C linker
+ -ld[=CMD]             test C linker
 ########## CX_BLOCK_START
- -cxx [CMD]            test C++ compiler
+ -cxx[=CMD]            test C++ compiler
  -cxxflags=FLAGS       test C++ compiler flags
- -ld [CMD]             test C++ linker
+ -ld[=CMD]             test C++ linker
 ########## BLOCK_END
  -ldflags=FLAGS        test linker flags
  -lib ..               test system libraries
@@ -368,11 +369,11 @@ DEF MODE. READ PREPROCESSOR DEFINES
 ########## BLOCK_END
  INC=<FILES>           include header files
 ########## CC_BLOCK_START
- -cc CMD               specify compiler command
+ -cc=CMD               specify compiler command
  -cflags=FLAGS         specify compiler flags
  *.h|*.H               include headers
 ########## CX_BLOCK_START
- -cxx [CMD]            specify compiler command
+ -cxx=CMD              specify compiler command
  -cxxflags=FLAGS       specify compiler flags
  *.h|*.H|*.hpp         include header files. Other file extensions are recognized
 ########## BLOCK_END
@@ -649,7 +650,7 @@ probe_os() {
 
 check_cc() {
   check_cc_ok=
-  cc_type=
+  cmd_id=
   cc_is_cross=1
 
   ($prop_cmd >/dev/null) 2>/dev/null
@@ -661,17 +662,17 @@ check_cc() {
   case $cc_cmd_base in
     gcc*|g++*|clang*)
       CPP_FLAG=-E
-      cc_type=gcc
+      cmd_id=gcc
       ;;
     *)
       cc_cmd0=`echo "$prop_cmd" | sed 's# [^/]*$##'`
       ($cc_cmd0 -h | grep -i texas >/dev/null) 2>/dev/null
       if test $? -eq 0; then
         CPP_FLAG=-ppl
-        cc_type=ti
+        cmd_id=ticc
       else
         CPP_FLAG=-E
-        cc_type=gcc
+        cmd_id=gcc
       fi
       ;;
   esac
@@ -690,7 +691,7 @@ check_cc() {
 int cpp_result = CPP_OK;
 
 EOF
-  if test $cc_type = ti; then
+  if test $cmd_id = ticc; then
     rm -f $test_pp
     ($prop_cmd $prop_cflags $CPP_FLAG $test_c >/dev/null) 2>/dev/null
     ret_code=$?
@@ -759,10 +760,10 @@ EOF
   cd $orig_dir
 }
 
-get_hdr_defs() {
+inc_headers() {
   test_src="test.$ext"
-  rm -f $test_dir/*
   cd $test_dir
+  rm -f $headers
 
   for hdr in "<android/api-level.h>" "<sys/neutrino.h>" "<version.h>" "<limits.h>" "<stdint.h>" "<sys/types.h>" "<sys/cdefs.h>" "<features.h>" "<limits.h>" "<unistd.h>"; do
     cat > $test_src <<EOF
@@ -780,28 +781,22 @@ EOF
   cd $orig_dir
 }
 
-read_cc_props() {
-  prop_id=
-  prop_version=
-  prop_std=
-  prop_os=
-  prop_os_version=
-  prop_arch=
-  prop_bitness=
-  prop_endianness=
-  prop_data_model=
-  prop_posix=
-  prop_sus=
+load_cc_macros() {
+  if test x$cc_macros_loaded = x1; then
+    return
+  fi
 
+  inc_headers
+  
   probe_h="$test_dir/cstem_$$.$ext"
   probe_pp="$test_dir/cstem_$$.pp"
-  rm -f $probe_h
+  rm -f $probe_h $probe_pp
   if test -f $headers; then
     cat $headers >$probe_h
   fi
   cat $script_abs | sed -n -e '/\* COMPILER DEFINES \*/,$p' | grep -v "^EOF" >> $probe_h
   probe_h_out="$test_dir/cstem_$$_out"
-  if test $cc_type = ti; then
+  if test $cmd_id = ticc; then
 ########## CC_BLOCK_START
     $prop_cmd $CFLAGS $CPP_FLAG $probe_h 2>/dev/null
 ########## CX_BLOCK_START
@@ -819,40 +814,14 @@ read_cc_props() {
   cat $probe_h_out | grep "^D[SV][EA][TL]" | sed 's/= */=/' | sed 's/ *$//' | sed 's/=\(.*\)$/="\1"/' | sed 's/""*/"/g' | sed 's/ *= */=/' | sed 's/="*$/=/' > $probe_sh
   . $probe_sh
 
-########## CC_BLOCK_START
-  if test -n "$DSET__STDC__"; then
-    prop_std=c89
-  fi
+  cc_macros_loaded=1
+}
 
-  if test -n "$DSET__STDC_VERSION__"; then
-    std_version=`echo "$DVAL__STDC_VERSION__" | sed 's/[a-zA-Z_]//g'`
-    if test "$std_version" -ge 201112; then
-      prop_std=c11
-    elif test "$std_version" -ge 199901; then
-      prop_std=c99
-    elif test "$std_version" -ge 199409; then
-      prop_std=c95
-    else
-      prop_std=c89
-    fi
-  fi
-########## CX_BLOCK_START
-  if test -n "$DSET__cplusplus_cli"; then
-    prop_std=cxx_cli
-  elif test -n "$DSET__embedded_cplusplus"; then
-    prop_std=embedded_cxx
-  elif test -n "$DSET__cplusplus"; then
-    std_version=`echo "$DVAL__cplusplus" | sed 's/[a-zA-Z_]//g'`
-    if test "$std_version" -ge 201402; then
-      prop_std=cxx14
-    elif test "$std_version" -ge 201103; then
-      prop_std=cxx11
-    elif test "$std_version" -ge 199711; then
-      prop_std=cxx98
-    fi
-  fi
-########## BLOCK_END
+read_cc_props_base() {
+  prop_id=
+  prop_version=
 
+  load_cc_macros
 
 ################################################################################
 # DETECT COMPILER AND VERSION
@@ -1081,14 +1050,6 @@ read_cc_props() {
     fi
   fi
 
-  if test -n "$DSET__MINGW32__"; then
-    prop_bitness=32
-  fi
-
-  if test -n "$DSET__MINGW64__"; then
-    prop_bitness=64
-  fi
-
   if test -n "$DSET__SUNPRO_C" || test -n "$DSET__SUNPRO_CC"; then
     prop_id=sunpro
 
@@ -1219,6 +1180,55 @@ read_cc_props() {
       prop_version="${prop_version}.${prop_vrevision}"
     fi
   fi
+}
+
+read_cc_props_ext() {
+  prop_std=
+  prop_os=
+  prop_os_version=
+  prop_arch=
+  prop_bitness=
+  prop_endianness=
+  prop_data_model=
+  prop_posix=
+  prop_sus=
+
+  load_cc_macros
+
+########## CC_BLOCK_START
+  if test -n "$DSET__STDC__"; then
+    prop_std=c89
+  fi
+
+  if test -n "$DSET__STDC_VERSION__"; then
+    std_version=`echo "$DVAL__STDC_VERSION__" | sed 's/[a-zA-Z_]//g'`
+    if test "$std_version" -ge 201112; then
+      prop_std=c11
+    elif test "$std_version" -ge 199901; then
+      prop_std=c99
+    elif test "$std_version" -ge 199409; then
+      prop_std=c95
+    else
+      prop_std=c89
+    fi
+  fi
+########## CX_BLOCK_START
+  if test -n "$DSET__cplusplus_cli"; then
+    prop_std=cxx_cli
+  elif test -n "$DSET__embedded_cplusplus"; then
+    prop_std=embedded_cxx
+  elif test -n "$DSET__cplusplus"; then
+    std_version=`echo "$DVAL__cplusplus" | sed 's/[a-zA-Z_]//g'`
+    if test "$std_version" -ge 201402; then
+      prop_std=cxx14
+    elif test "$std_version" -ge 201103; then
+      prop_std=cxx11
+    elif test "$std_version" -ge 199711; then
+      prop_std=cxx98
+    fi
+  fi
+########## BLOCK_END
+
 
 ################################################################################
 # DETECT OS AND VERSION
@@ -1414,6 +1424,14 @@ read_cc_props() {
 
 ################################################################################
 # DETECT ARCH & BITNESS
+  if test -n "$DSET__MINGW32__"; then
+    prop_bitness=32
+  fi
+
+  if test -n "$DSET__MINGW64__"; then
+    prop_bitness=64
+  fi
+
   if test -n "$DSET__arch64__"; then
     prop_bitness=64
   fi
@@ -1819,6 +1837,14 @@ probe_base() {
   if test -n "$LDFLAGS"; then
     prop_ldflags=$LDFLAGS
   fi
+
+  if test $cc_is_cross = 1; then
+    prop_flag_cross="true"
+  else
+    prop_flag_cross="false"
+  fi
+
+  read_cc_props_base
   probe_base_ok=1
 }
 
@@ -1839,14 +1865,7 @@ probe_ext() {
     return
   fi
 
-  get_hdr_defs
-  
-  read_cc_props
-  if test $cc_is_cross = 1; then
-    prop_flag_cross="true"
-  else
-    prop_flag_cross="false"
-  fi
+  read_cc_props_ext
   probe_ext_ok=1
 }
 
@@ -2228,7 +2247,12 @@ if test x$mode_test = x1; then
         ;;
       -cc)
         op_test_cc=1
-        current_opt=cc
+        current_opt=
+        ;;
+      -cc=*)
+        op_test_cc=1
+        CC=`echo "$param" | sed 's/^[^=]*=//'`
+        current_opt=
         ;;
       -cflags=*)
         op_test_flags=`echo "$param" | sed 's/^[^=]*=//'`
@@ -2249,7 +2273,12 @@ if test x$mode_test = x1; then
         ;;
       -cxx)
         op_test_cc=1
-        current_opt=cxx
+        current_opt=
+        ;;
+      -cxx=*)
+        op_test_cc=1
+        CXX=`echo "$param" | sed 's/^[^=]*=//'`
+        current_opt=
         ;;
       -cxxflags=*)
         op_test_flags=`echo "$param" | sed 's/^[^=]*=//'`
@@ -2306,7 +2335,13 @@ if test x$mode_test = x1; then
       -ld)
         op_test_ld=1
         op_disable_ld=
-        current_opt=ld
+        current_opt=
+        ;;
+      -ld=*)
+        op_test_ld=1
+        LD=`echo "$param" | sed 's/^[^=]*=//'`
+        op_disable_ld=
+        current_opt=
         ;;
       -ldflags=*)
         op_test_ldflags=`echo "$param" | sed 's/^[^=]*=//'`
@@ -2406,21 +2441,6 @@ if test x$mode_test = x1; then
           clean_exit 1
         fi
         case "$current_opt" in
-########## CC_BLOCK_START
-          cc)
-            CC=$param
-            current_opt=
-            ;;
-########## CX_BLOCK_START
-          cxx)
-            CXX=$param
-            current_opt=
-            ;;
-########## BLOCK_END
-          ld)
-            LD=$param
-            current_opt=
-            ;;
           lib)
             param=`echo "$param" | sed 's/^lib//'`
             if test -n "$param"; then
@@ -2506,17 +2526,28 @@ if test x$mode_test = x1; then
   log_title "TEST COMPILER"
 
   if test x$op_test_cc = x1; then
-    echo_status -l "%s" "checking compiler $CC_CMD ... "
+########## CC_BLOCK_START
+    if test -z "$CC"; then
+########## CX_BLOCK_START
+    if test -z "$CXX"; then
+########## BLOCK_END
+      echo_status -l "%s" "checking compiler ... "
+    else
+########## CC_BLOCK_START
+      echo_status -l "%s" "checking compiler $CC ... "
+########## CX_BLOCK_START
+      echo_status -l "%s" "checking compiler $CXX ... "
+########## BLOCK_END
+    fi
   fi
 
   probe_base
-  CC_CMD=$prop_cmd
 
   if test x$probe_cc_ok != x1; then
     if test x$op_test_cc = x1; then
       echo_status "%s\n" "Failed"
     else
-      echo_status "%s\n" "checking compiler $CC_CMD ... Failed"
+      echo_status "%s\n" "checking compiler $prop_cmd ... Failed"
     fi
     clean_exit 1
   else
@@ -2532,7 +2563,7 @@ if test x$mode_test = x1; then
   if test -n "$LD"; then
     LD_CMD=$LD
   else
-    LD_CMD=$CC_CMD
+    LD_CMD=$prop_cmd
   fi
   
 ################################################################################
@@ -2546,8 +2577,8 @@ int main(int argc, char *argv[]) {
 }
 EOF
     log_src test.$ext
-    echo "$CC_CMD $op_with_flags -c -o test.o test.$ext" >> $cstem_log
-    $CC_CMD $op_with_flags -c -o test.o test.$ext>> $cstem_log 2>&1
+    echo "$prop_cmd $op_with_flags -c -o test.o test.$ext" >> $cstem_log
+    $prop_cmd $op_with_flags -c -o test.o test.$ext>> $cstem_log 2>&1
     ret=$?
     if test $ret -ne 0; then
       echo_status "%s\n" "checking compiler flags '$op_with_flags'... Failed"
@@ -2569,8 +2600,8 @@ int main(int argc, char *argv[]) {
 }
 EOF
     log_src test.$ext
-    echo "$CC_CMD $op_with_flags $op_test_flags -c -o test.o test.$ext" >> $cstem_log
-    $CC_CMD $op_with_flags $op_test_flags -c -o test.o test.$ext>> $cstem_log 2>&1
+    echo "$prop_cmd $op_with_flags $op_test_flags -c -o test.o test.$ext" >> $cstem_log
+    $prop_cmd $op_with_flags $op_test_flags -c -o test.o test.$ext>> $cstem_log 2>&1
     ret=$?
     if test $ret -ne 0; then
       echo_status "%s\n" "Failed"
@@ -2578,8 +2609,8 @@ EOF
       for flag in $op_test_flags; do
        echo_status "%s" "  $flag ... "
        flags="$flags $flag"
-       echo "$CC_CMD $op_with_flags $flags -c -o test.o test.$ext" >> $cstem_log
-       $CC_CMD $op_with_flags $flags -c -o test.o test.$ext>> $cstem_log 2>&1
+       echo "$prop_cmd $op_with_flags $flags -c -o test.o test.$ext" >> $cstem_log
+       $prop_cmd $op_with_flags $flags -c -o test.o test.$ext>> $cstem_log 2>&1
        _ret=$?
        if test $_ret -ne 0; then
          echo_status "%s\n" "Failed"
@@ -2610,8 +2641,8 @@ int main(int argc, char *argv[]) {
 }
 EOF
     log_src test.$ext
-    echo "$CC_CMD $op_with_flags $op_test_flags -c -o test.o test.$ext" >> $cstem_log
-    $CC_CMD $op_with_flags $op_test_flags -c -o test.o test.$ext>> $cstem_log 2>&1
+    echo "$prop_cmd $op_with_flags $op_test_flags -c -o test.o test.$ext" >> $cstem_log
+    $prop_cmd $op_with_flags $op_test_flags -c -o test.o test.$ext>> $cstem_log 2>&1
     
     echo "$LD_CMD -o app test.o" >> $cstem_log
     $LD_CMD -o app test.o>> $cstem_log 2>&1
@@ -2647,8 +2678,8 @@ int main(int argc, char *argv[]) {
 }
 EOF
     log_src test.$ext
-    echo "$CC_CMD $op_with_flags $op_test_flags -c -o test.o test.$ext" >> $cstem_log
-    $CC_CMD $op_with_flags $op_test_flags -c -o test.o test.$ext>> $cstem_log 2>&1
+    echo "$prop_cmd $op_with_flags $op_test_flags -c -o test.o test.$ext" >> $cstem_log
+    $prop_cmd $op_with_flags $op_test_flags -c -o test.o test.$ext>> $cstem_log 2>&1
     
     echo "$LD_CMD -o app test.o $op_with_ldflags" >> $cstem_log
     $LD_CMD -o app test.o $op_with_ldflags >> $cstem_log 2>&1
@@ -2677,8 +2708,8 @@ int main(int argc, char *argv[]) {
 }
 EOF
     log_src test.$ext
-    echo "$CC_CMD $op_with_flags $op_test_flags -c -o test.o test.$ext" >> $cstem_log
-    $CC_CMD $op_with_flags $op_test_flags -c -o test.o test.$ext>> $cstem_log 2>&1
+    echo "$prop_cmd $op_with_flags $op_test_flags -c -o test.o test.$ext" >> $cstem_log
+    $prop_cmd $op_with_flags $op_test_flags -c -o test.o test.$ext>> $cstem_log 2>&1
 
     echo "$LD_CMD -o app test.o $op_with_ldflags $op_test_ldflags" >> $cstem_log
     $LD_CMD -o app test.o $op_with_ldflags $op_test_ldflags >> $cstem_log 2>&1
@@ -2723,8 +2754,8 @@ EOF
     echo "int cstem_test = 1;" >> $test_src
 
     log_src $test_src
-    echo "$CC_CMD $op_with_flags $op_test_flags -c -o test.o $test_src" >> $cstem_log
-    $CC_CMD $op_with_flags $op_test_flags -c -o test.o $test_src >> $cstem_log 2>&1
+    echo "$prop_cmd $op_with_flags $op_test_flags -c -o test.o $test_src" >> $cstem_log
+    $prop_cmd $op_with_flags $op_test_flags -c -o test.o $test_src >> $cstem_log 2>&1
     ret=$?
     if test $ret -ne 0; then
       echo_status "%s\n" "checking headers '$op_with_inc'... Failed"
@@ -2746,8 +2777,8 @@ EOF
       echo "#include <$inc>" >> $test_src
       echo_status -l "%s" "checking header $inc ... "
       log_src $test_src
-      echo "$CC_CMD $op_with_flags $op_test_flags -c -o test.o $test_src" >> $cstem_log
-      $CC_CMD $op_with_flags $op_test_flags -c -o test.o $test_src >> $cstem_log 2>&1
+      echo "$prop_cmd $op_with_flags $op_test_flags -c -o test.o $test_src" >> $cstem_log
+      $prop_cmd $op_with_flags $op_test_flags -c -o test.o $test_src >> $cstem_log 2>&1
       ret=$?
       if test $ret -ne 0; then
         echo_status "%s\n" "Failed"
@@ -2840,8 +2871,8 @@ EOF
       fi
     fi
     log_src $test_src
-    echo "$CC_CMD $op_with_flags $op_test_flags -c -o test.o $test_src" >> $cstem_log
-    $CC_CMD $op_with_flags $op_test_flags -c -o test.o $test_src >> $cstem_log 2>&1
+    echo "$prop_cmd $op_with_flags $op_test_flags -c -o test.o $test_src" >> $cstem_log
+    $prop_cmd $op_with_flags $op_test_flags -c -o test.o $test_src >> $cstem_log 2>&1
     ret=$?
     if test $ret -ne 0; then
       echo_status "%s\n" "Failed"
@@ -2873,8 +2904,8 @@ EOF
     
       echo_status -l "%s" "checking type $type_string ... "
       log_src $test_src
-      echo "$CC_CMD $op_with_flags $op_test_flags -c -o test.o $test_src" >> $cstem_log
-      $CC_CMD $op_with_flags $op_test_flags -c -o test.o $test_src >> $cstem_log 2>&1
+      echo "$prop_cmd $op_with_flags $op_test_flags -c -o test.o $test_src" >> $cstem_log
+      $prop_cmd $op_with_flags $op_test_flags -c -o test.o $test_src >> $cstem_log 2>&1
       ret=$?
       if test $ret -ne 0; then
         echo_status "%s\n" "Failed"
@@ -2910,8 +2941,8 @@ EOF
     
       echo_status -l "%s" "checking enum $enum ... "
       log_src $test_src
-      echo "$CC_CMD $op_with_flags $op_test_flags -c -o test.o $test_src" >> $cstem_log
-      $CC_CMD $op_with_flags $op_test_flags -c -o test.o $test_src >> $cstem_log 2>&1
+      echo "$prop_cmd $op_with_flags $op_test_flags -c -o test.o $test_src" >> $cstem_log
+      $prop_cmd $op_with_flags $op_test_flags -c -o test.o $test_src >> $cstem_log 2>&1
       ret=$?
       if test $ret -ne 0; then
         echo_status "%s\n" "Failed"
@@ -2947,8 +2978,8 @@ int main(int argc, char *argv[]) {
 }
 EOF
     log_src test.$ext
-    echo "$CC_CMD $op_with_flags $op_test_flags -c -o test.o test.$ext" >> $cstem_log
-    $CC_CMD $op_with_flags $op_test_flags -c -o test.o test.$ext>> $cstem_log 2>&1
+    echo "$prop_cmd $op_with_flags $op_test_flags -c -o test.o test.$ext" >> $cstem_log
+    $prop_cmd $op_with_flags $op_test_flags -c -o test.o test.$ext>> $cstem_log 2>&1
 
     echo "$LD_CMD -o app test.o $op_with_ldflags $op_test_ldflags $op_libs" >> $cstem_log
     $LD_CMD -o app test.o $op_with_ldflags $op_test_ldflags $op_libs >> $cstem_log 2>&1
@@ -2995,8 +3026,8 @@ EOF
   
     echo_status -l "%s" "checking source string $op_cstr ... "
     log_src $test_src
-    echo "$CC_CMD $op_with_flags $op_test_flags -c -o test.o $test_src" >> $cstem_log
-    $CC_CMD $op_with_flags $op_test_flags -c -o test.o $test_src >> $cstem_log 2>&1
+    echo "$prop_cmd $op_with_flags $op_test_flags -c -o test.o $test_src" >> $cstem_log
+    $prop_cmd $op_with_flags $op_test_flags -c -o test.o $test_src >> $cstem_log 2>&1
     ret=$?
     if test $ret -ne 0; then
       echo_status "%s\n" "Failed"
@@ -3014,8 +3045,8 @@ EOF
           echo "test again ..." >> $cstem_log
           echo "int main(int argc, char *argv[]) { return 0;}" >>$test_src
           log_src $test_src
-          echo "$CC_CMD $op_with_flags $op_test_flags -c -o test.o $test_src" >> $cstem_log
-          $CC_CMD $op_with_flags $op_test_flags -c -o test.o $test_src >> $cstem_log 2>&1
+          echo "$prop_cmd $op_with_flags $op_test_flags -c -o test.o $test_src" >> $cstem_log
+          $prop_cmd $op_with_flags $op_test_flags -c -o test.o $test_src >> $cstem_log 2>&1
           ret=$?
           if test $ret -ne 0; then
             echo_status "%s\n" "Failed"
@@ -3059,8 +3090,8 @@ EOF
       echo "int main(int argc, char *argv[]) {int cstem_$var = (int) $var; return 0;}" >> $test_src
     
       log_src $test_src
-      echo "$CC_CMD $op_with_flags $op_test_flags -c -o test.o $test_src" >> $cstem_log
-      $CC_CMD $op_with_flags $op_test_flags -c -o test.o $test_src >> $cstem_log 2>&1
+      echo "$prop_cmd $op_with_flags $op_test_flags -c -o test.o $test_src" >> $cstem_log
+      $prop_cmd $op_with_flags $op_test_flags -c -o test.o $test_src >> $cstem_log 2>&1
       ret=$?
       if test $ret -ne 0; then
         echo_status "%s\n" "Failed"
@@ -3114,8 +3145,8 @@ EOF
       echo "int main(int argc, char *argv[]) {void *cstem_$sym = $sym; return 0;}" >> $test_src
     
       log_src $test_src
-      echo "$CC_CMD $op_with_flags $op_test_flags -c -o test.o $test_src" >> $cstem_log
-      $CC_CMD $op_with_flags $op_test_flags -c -o test.o $test_src >> $cstem_log 2>&1
+      echo "$prop_cmd $op_with_flags $op_test_flags -c -o test.o $test_src" >> $cstem_log
+      $prop_cmd $op_with_flags $op_test_flags -c -o test.o $test_src >> $cstem_log 2>&1
       ret=$?
       if test $ret -ne 0; then
         echo_status "%s\n" "Failed"
@@ -3169,8 +3200,8 @@ EOF
       echo "int main(int argc, char *argv[]) {int cstem_$var = (int) $var; return 0;}" >> $test_src
     
       log_src $test_src
-      echo "$CC_CMD $op_with_flags $op_test_flags -c -o test.o $test_src" >> $cstem_log
-      $CC_CMD $op_with_flags $op_test_flags -c -o test.o $test_src >> $cstem_log 2>&1
+      echo "$prop_cmd $op_with_flags $op_test_flags -c -o test.o $test_src" >> $cstem_log
+      $prop_cmd $op_with_flags $op_test_flags -c -o test.o $test_src >> $cstem_log 2>&1
       ret=$?
       if test $ret -ne 0; then
         echo_status "%s\n" "Failed"
@@ -3225,8 +3256,8 @@ EOF
       echo "int main(int argc, char *argv[]) { int cstem_$func = $func(1); return cstem_$func; }" >> $test_src
     
       log_src $test_src
-      echo "$CC_CMD $op_with_flags $op_test_flags -c -o test.o $test_src" >> $cstem_log
-      $CC_CMD $op_with_flags $op_test_flags -c -o test.o $test_src >> $cstem_log 2>&1
+      echo "$prop_cmd $op_with_flags $op_test_flags -c -o test.o $test_src" >> $cstem_log
+      $prop_cmd $op_with_flags $op_test_flags -c -o test.o $test_src >> $cstem_log 2>&1
       ret=$?
       if test $ret -ne 0; then
         echo_status "%s\n" "Failed"
@@ -3290,8 +3321,8 @@ EOF
       src_base=`basename "$src_full"`
     
       log_src $src_base
-      echo "$CC_CMD $op_with_flags $op_test_flags -c -o test.o $src_base" >> $cstem_log
-      $CC_CMD $op_with_flags $op_test_flags -c -o test.o $src_base >> $cstem_log 2>&1
+      echo "$prop_cmd $op_with_flags $op_test_flags -c -o test.o $src_base" >> $cstem_log
+      $prop_cmd $op_with_flags $op_test_flags -c -o test.o $src_base >> $cstem_log 2>&1
       ret=$?
       if test $ret -ne 0; then
         echo_status "%s\n" "Failed"
@@ -3360,8 +3391,9 @@ if test x$mode_def = x1; then
         CFLAGS_ADD=`echo "$1" | sed 's/^[^=]*=//'`
         current_opt=
         ;;
-      -cc)
-        current_opt=cc
+      -cc=*)
+        CC=`echo "$param" | sed 's/^[^=]*=//'`
+        current_opt=
         ;;
       -cflags=*)
         CFLAGS=`echo "$1" | sed 's/^[^=]*=//'`
@@ -3384,8 +3416,9 @@ if test x$mode_def = x1; then
         CXXFLAGS_ADD=`echo "$1" | sed 's/^[^=]*=//'`
         current_opt=
         ;;
-      -cxx)
-        current_opt=cxx
+      -cxx=*)
+        CXX=`echo "$param" | sed 's/^[^=]*=//'`
+        current_opt=
         ;;
       -cxxflags=*)
         CXXFLAGS=`echo "$1" | sed 's/^[^=]*=//'`
@@ -3409,17 +3442,6 @@ if test x$mode_def = x1; then
         ;;
       *)
         case "$current_opt" in
-########## CC_BLOCK_START
-          cc)
-            CC=$1
-            current_opt=
-            ;;
-########## CX_BLOCK_START
-          cxx)
-            CXX=$1
-            current_opt=
-            ;;
-########## BLOCK_END
           inc)
             op_with_inc="$op_with_inc $1"
             ;;
@@ -3450,7 +3472,6 @@ if test x$mode_def = x1; then
 ################################################################################
 # TEST COMPILER
   probe_base
-  CC_CMD=$prop_cmd
 
   if test x$probe_base_ok != x1; then
     if test x$probe_cc_ok != x1; then
@@ -3479,7 +3500,7 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 EOF
-    $CC_CMD $op_with_flags -c -o test.o test.$ext 2>&1
+    $prop_cmd $op_with_flags -c -o test.o test.$ext 2>&1
     ret=$?
     if test $ret -ne 0; then
       echo "%s" "checking compiler flags '$op_with_flags'... Failed" >&2
@@ -3495,7 +3516,7 @@ EOF
     cat $test_src_base > $test_src
     echo "int cstem_test = 1;" >> $test_src
 
-    $CC_CMD $op_with_flags -c -o test.o $test_src 2>&1
+    $prop_cmd $op_with_flags -c -o test.o $test_src 2>&1
     ret=$?
     if test $ret -ne 0; then
       echo "%s" "checking headers '$op_with_inc'... Failed" >&2
@@ -3515,12 +3536,12 @@ EOF
 CSTEM_DEFVAL=$def
 #endif
 EOF
-    if test $cc_type = ti; then
-      $CC_CMD $op_with_flags $CPP_FLAG $test_src 2>/dev/null
+    if test "$prop_id" = ticc; then
+      $prop_cmd $op_with_flags $CPP_FLAG $test_src 2>/dev/null
       cat $test_pp > test_c.out
       rm -f $test_pp
     else
-      $CC_CMD $op_with_flags $CPP_FLAG $test_src 2>/dev/null > test_c.out
+      $prop_cmd $op_with_flags $CPP_FLAG $test_src 2>/dev/null > test_c.out
     fi
 
     defval=`cat test_c.out | grep "^ *CSTEM_DEFVAL" | sed 's/^ *CSTEM_DEFVAL=//' | sed 's/ *$//' | sed 's/"$//' |  sed 's/^"//' | tr -d '\n'`
