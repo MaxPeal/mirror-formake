@@ -1298,7 +1298,7 @@ dist_files="$dist_files $src_dist_files"
 
 if test "$op_srcroot" = "."; then
   if test -d mk; then
-    opt_fscripts="abspath cfront cstem cstem+ excom ldlshell ldlwrap libro mkdep optool pofig src2obj"
+    opt_fscripts="abspath cstem excom ldlshell ldlwrap libro mkdep optool pofig src2obj"
     formake_dist=
     for script in $opt_fscripts; do
       if test -f mk/$script; then

@@ -358,7 +358,7 @@ get_cstem() {
   if test x$cxx_mode = x; then
     xstem=cstem
   else
-    xstem=cstem+
+    xstem="cstem c++"
   fi
   
   ($xstem -h >/dev/null) 2>/dev/null

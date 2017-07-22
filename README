@@ -4,10 +4,7 @@ Universal and portable scripts can be used in build automation, software configu
 
 Formake provides the following scripts:
   abspath       Calculate absolute path
-  cfront        C compiler frontend based on cstem
-  cfront+       C++ compiler frontend based on cstem+
-  cstem         C system query and test tool
-  cstem+        C++ system query and test tool
+  cstem         C/C++ system query and test tool
   excom         Command test tool
   ldlshell      Load interactive shell with predefined LD library path environment
   ldlwrap       Create program wrapper script with predefined LD library path environment
@@ -52,30 +49,10 @@ Examples:
 
 ================
 
-cfront/cfront+
+cstem
 
-cfront/cfront+ are simple wrappers for selected C/C++ compiler. cfront depends on cstem to find out C compiler command and flags.
-cfront+ depends on cstem+.
-
-Run 'cfront -help' to get help.
-Run 'cfront+ -help' to get help.
-
-Examples for cfront:
-  
-  Compile a source files:
-  $ cfront -c file.c file2.c file3.c
-
-  Link objects:
-  $ cfront ld -o program file.o file2.o file3.o
-
-
-
-================
-
-cstem/cstem+
-
-cstem is a script for probing C compiler parameters and testing C system properties. It can be configured for using specified compiler
-command, linker command, compiler and linker flags. cstem+ is very similar script but for C++ compiler. cstem and cstem+ have same semantics of parameters with minor differencies of several parameter names.
+cstem is a script for probing C/C++ compiler parameters and testing C/C++ system properties. It can be configured for using specified compiler
+command, linker command, compiler and linker flags.
 
 cstem has 4 modes:
   - config mode, for configuring compiler and linker
@@ -83,7 +60,7 @@ cstem has 4 modes:
   - test mode, for testing different C system facilities
   - def mode, for getting CPP macro values
 
-To get help run 'cstem -help' or 'cstem+ -help'.
+To get help run 'cstem -help'.
 
 Example. Configure cstem:
   $ cstem config CC=gcc CFLAGS="-O3 -g0 -I. -DRELEASE" LDFLAGS="-L."
@@ -345,7 +322,7 @@ Example. Generate C source compilation rules:
 
 
 
-mkrule depends on the following scripts: pofig, cstem, cstem+, mkdep, ldlwrap, libro
+mkrule depends on the following scripts: pofig, cstem, mkdep, ldlwrap, libro
 
 
 ================

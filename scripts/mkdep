@@ -176,7 +176,7 @@ if test $source_num -gt 1 && test -n "$op_object"; then
 fi
 
 if test -n "$have_cxx$op_cxx"; then
-  cstem_cmd="cstem+"
+  cstem_cmd="cstem c++"
 else
   cstem_cmd="cstem"
 fi

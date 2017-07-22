@@ -123,7 +123,7 @@ while test $# -gt 0; do
       ;;
     -c++)
       op_cxx=1
-      mk_scripts="$mk_scripts cstem+"
+      mk_scripts="$mk_scripts cstem"
       current_opt=
       ;;
     -f)
@@ -507,31 +507,31 @@ if test x$op_cxx = x1; then
 ################################################################################
 ## PROBE AND CONFIGURE C++ ENVIRONMENT
 ##
-## See cstem+ manual or run 'cstem+ -help' to get a full list of options
+## See cstem manual or run 'cstem -help' to get a full list of options
 
 ## Check C++ compiler, flags , linker, linker flags
-cstem+ test -cxx $CXX -cxxflags="$CXXFLAGS" -ld $CXX -ldflags="$LDFLAGS" || exit 1
+cstem c++ test -cxx $CXX -cxxflags="$CXXFLAGS" -ld $CXX -ldflags="$LDFLAGS" || exit 1
 
-## Configure cstem+ for the following tests
-cstem+ config CXX=$CXX CXXFLAGS=$CXXFLAGS LDFLAGS=$LDFLAGS
+## Configure cstem for the following tests
+cstem c++ config CXX=$CXX CXXFLAGS=$CXXFLAGS LDFLAGS=$LDFLAGS
 
 ## Probe compiler properties: compiler id, version, command, language standard,
 ## target OS, target OS version, target kernel, target architecture,
 ## target bitness, target endianess, target data model:
-cxx_id=`cstem+ probe -id`
-cxx_version=`cstem+ probe -ver`
-cxx_cmd=`cstem+ probe -cmd`
-cxx_standard=`cstem+ probe -std`
-cxx_os=`cstem+ probe -os`
-cxx_os_version=`cstem+ probe -osver`
-cxx_kernel=`cstem+ probe -kernel`
-cxx_arch=`cstem+ probe -arch`
-cxx_bitness=`cstem+ probe -bits`
-cxx_endianess=`cstem+ probe -endian`
-cxx_data_model=`cstem+ probe -dm`
+cxx_id=`cstem c++ probe -id`
+cxx_version=`cstem c++ probe -ver`
+cxx_cmd=`cstem c++ probe -cmd`
+cxx_standard=`cstem c++ probe -std`
+cxx_os=`cstem c++ probe -os`
+cxx_os_version=`cstem c++ probe -osver`
+cxx_kernel=`cstem c++ probe -kernel`
+cxx_arch=`cstem c++ probe -arch`
+cxx_bitness=`cstem c++ probe -bits`
+cxx_endianess=`cstem c++ probe -endian`
+cxx_data_model=`cstem c++ probe -dm`
 
 ## Test C++ environment
-# cstem+ test -lib ... -inc ... -def ... -type ... -enum ... -var ... -func ... -sym ... -rsym ...
+# cstem c++ test -lib ... -inc ... -def ... -type ... -enum ... -var ... -func ... -sym ... -rsym ...
 
 TOP_EOF
 fi
