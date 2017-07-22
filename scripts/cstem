@@ -3253,15 +3253,6 @@ if test x$mode_def = x1; then
         cstem_mode=c++
         current_opt=
         ;;
-      *.h)
-        op_with_inc="$op_with_inc $1"
-        current_opt=
-        ;;
-      *.H|*.[Hh]++|*.[Hh][Hh]|*.[Hh][Xx][Xx]|*.[Hh][Pp][Pp])
-        op_with_inc="$op_with_inc $1"
-        cstem_mode=c++
-        current_opt=
-        ;;
       INC=*)
         op_with_inc=`echo "$1" | sed 's/^[^=]*=//'`
         current_opt=
@@ -3271,6 +3262,15 @@ if test x$mode_def = x1; then
         ;;
       -[ID]*)
         op_with_flags="$op_with_flags $1"
+        current_opt=
+        ;;
+      *.h)
+        op_with_inc="$op_with_inc $1"
+        current_opt=
+        ;;
+      *.H|*.[Hh]++|*.[Hh][Hh]|*.[Hh][Xx][Xx]|*.[Hh][Pp][Pp])
+        op_with_inc="$op_with_inc $1"
+        cstem_mode=c++
         current_opt=
         ;;
       *)
