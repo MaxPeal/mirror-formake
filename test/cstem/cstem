@@ -2033,6 +2033,7 @@ if test x$mode_test = x1; then
   tmp_buf="$test_dir/cstem_buf.txt"
   rm -f $tmp_buf
 
+  op_disable_ld=1
   current_opt=
   def_num=0
   type_num=0
@@ -2143,6 +2144,7 @@ if test x$mode_test = x1; then
         ;;
       -ldflags=*)
         op_test_ldflags=`echo "$param" | sed 's/^[^=]*=//'`
+        op_disable_ld=
         current_opt=
         ;;
       -lib)
@@ -2185,6 +2187,7 @@ if test x$mode_test = x1; then
         ;;
       -l*)
         op_libs="$op_libs $param"
+        op_disable_ld=
         current_opt=
         ;;
       -[ID]*)
@@ -2222,12 +2225,14 @@ if test x$mode_test = x1; then
         ;;
       *.so|*.so.*)
         op_libs="$op_libs $param"
+        op_disable_ld=
         if test x$current_opt != xlib; then
           current_opt=
         fi
         ;;
       *.a)
         op_libs="$op_libs $param"
+        op_disable_ld=
         if test x$current_opt != xlib; then
           current_opt=
         fi
@@ -2243,6 +2248,7 @@ if test x$mode_test = x1; then
             param=`echo "$param" | sed 's/^lib//'`
             if test -n "$param"; then
               op_libs="$op_libs -l$param"
+              op_disable_ld=
             fi
             ;;
           inc)
@@ -2261,18 +2267,23 @@ if test x$mode_test = x1; then
             ;;
           var)
             op_var="$op_var $param"
+            op_disable_ld=
             ;;
           func)
             op_func="$op_func $param"
+            op_disable_ld=
             ;;
           sym)
             op_sym="$op_sym $param"
+            op_disable_ld=
             ;;
           rval)
             op_rval="$op_rval $param"
+            op_disable_ld=
             ;;
           cstr)
             op_cstr=$1
+            op_disable_ld=
             current_opt=
             ;;
         esac
