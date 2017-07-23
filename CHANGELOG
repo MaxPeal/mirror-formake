@@ -111,4 +111,5 @@ Formake v0.14
   * cstem: minor fixes
   * cstem: fixed test mode. Failed for C++ when tested with namespace prefix
   * cstem: changed testing order: moved all compile-only tests before initial LD tests
+  * cstem: fixed for Solaris shell
 
