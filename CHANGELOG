@@ -113,4 +113,5 @@ Formake v0.14
   * cstem: changed testing order: moved all compile-only tests before initial LD tests
   * cstem: fixed for Solaris shell
   * cstem: disabled LD testing when we check only compile time properties
+  * cstem: added a base support of MSVC compiler
 
