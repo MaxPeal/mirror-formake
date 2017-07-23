@@ -1,6 +1,7 @@
 #!/bin/sh
 
-cstem="./cstem c++ test"
+cstem="./cstem c++ test CC=g++"
+#cstem="./cstem c++ test CC=clang++"
 
 $cstem -cc
 $cstem -cflags="-I. -I/usr/local/include"
