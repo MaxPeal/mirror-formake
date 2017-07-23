@@ -2384,7 +2384,7 @@ if test x$mode_test = x1; then
   fi
   rm -f test.$c_ext
   rm -f test.o*
-  
+
 ################################################################################
 # SET UP TEST DIR
   setup_test_dir
@@ -2392,6 +2392,10 @@ if test x$mode_test = x1; then
   
 ################################################################################
 # SET UP LINKER
+  if test "$prop_id" = msc; then
+    op_disable_ld=1
+  fi
+  
   if test -n "$LD"; then
     LD_CMD=$LD
   else
