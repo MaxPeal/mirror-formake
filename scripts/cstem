@@ -2689,8 +2689,7 @@ EOF
       type_string=`echo "$type_string" | sed 's/^ *//'`
 
       type_base=`echo "$type_string" | sed 's/\**$//'`
-      var_name=`echo "cstem_$type_base" | sed 's/[^a-zA-Z0-9_]/_/g'`
-      echo "$type_base *$var_name;" >> $test_src
+      echo "$type_base *cstem_var;" >> $test_src
     
       echo_status -l "%s" "checking type $type_string ... "
       log_src $test_src
@@ -2727,7 +2726,7 @@ EOF
     for enum in $op_enum; do
       cat $test_src_base > $test_src
 
-      echo "int cstem_$enum = $enum;" >> $test_src
+      echo "int cstem_enum = $enum;" >> $test_src
     
       echo_status -l "%s" "checking enum $enum ... "
       log_src $test_src
@@ -2877,7 +2876,7 @@ EOF
 
       echo_status -l "%s" "checking variable $var ... "
     
-      echo "int main(int argc, char *argv[]) {int cstem_$var = (int) $var; return 0;}" >> $test_src
+      echo "int main(int argc, char *argv[]) {int cstem_var = (int) $var; return 0;}" >> $test_src
     
       log_src $test_src
       echo "$prop_cmd $CFLAGS $op_test_flags -c -o test.o $test_src" >> $cstem_log
@@ -2933,7 +2932,7 @@ EOF
       echo_status -l "%s" "checking symbol $sym ... "
     
       echo "extern void *$sym;" > $test_src
-      echo "int main(int argc, char *argv[]) {void *cstem_$sym = $sym; return 0;}" >> $test_src
+      echo "int main(int argc, char *argv[]) {void *cstem_sym = $sym; return 0;}" >> $test_src
     
       log_src $test_src
       echo "$prop_cmd $CFLAGS $op_test_flags -c -o test.o $test_src" >> $cstem_log
@@ -2988,7 +2987,7 @@ EOF
 
       echo_status -l "%s" "checking rval $var ... "
     
-      echo "int main(int argc, char *argv[]) {int cstem_$var = (int) $var; return 0;}" >> $test_src
+      echo "int main(int argc, char *argv[]) {int cstem_var = (int) $var; return 0;}" >> $test_src
     
       log_src $test_src
       echo "$prop_cmd $CFLAGS $op_test_flags -c -o test.o $test_src" >> $cstem_log
@@ -3044,7 +3043,7 @@ EOF
       echo_status -l "%s" "checking function $func ... "
     
       echo "int $func(int);" > $test_src
-      echo "int main(int argc, char *argv[]) { int cstem_$func = $func(1); return cstem_$func; }" >> $test_src
+      echo "int main(int argc, char *argv[]) { int cstem_var = $func(1); return cstem_var; }" >> $test_src
     
       log_src $test_src
       echo "$prop_cmd $CFLAGS $op_test_flags -c -o test.o $test_src" >> $cstem_log
