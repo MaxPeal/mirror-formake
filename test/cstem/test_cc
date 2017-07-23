@@ -1,0 +1,41 @@
+#!/bin/sh
+
+cstem="./cstem test"
+
+$cstem -cc
+$cstem -cflags="-I. -I/usr/local/include"
+$cstem -ld
+$cstem -lib xml2
+$cstem -lib X11
+$cstem -lib jpeg
+$cstem -lib c
+$cstem -lib m
+$cstem -lib xml2 X11 jpeg c m
+$cstem -lxml2 -lX11 -ljpeg -lc -lm
+$cstem -inc stdio.h stdlib.h
+$cstem -inc libxml/xmlwriter.h -I/usr/include/libxml2
+$cstem -inc X11/X.h X11/Xlib.h
+$cstem -inc stdio.h stdlib.h libxml/xmlwriter.h X11/X.h X11/Xlib.h -I/usr/include/libxml2
+$cstem -def "__unix__"
+$cstem -def LONG_MAX INT_MAX limits.h
+$cstem -def "#ifdef __unix__"
+$cstem -def "#if __unix__ == 1"
+$cstem -def "#ifdef _BSD_SOURCE" INC="stdio.h"
+$cstem -def "#if _BSD_SOURCE >= 0" INC="stdio.h"
+$cstem -def "#ifdef X_PROTOCOL" INC="X11/X.h"
+$cstem -def "#if X_PROTOCOL > 8" INC="X11/X.h"
+$cstem -def _BSD_SOURCE __STDC__ __unix__ __GNUC__ X_PROTOCOL KeyPressMask LONG_MAX INT_MAX UCHAR_MAX CHAR_BIT INC="X11/X.h stdio.h" limits.h
+$cstem -def "#if X_PROTOCOL > 8" -def "#ifdef __unix__" "#ifdef _BSD_SOURCE" -def "#if __unix__ == 1" "CHAR_BIT == 8" INC="X11/X.h stdio.h" limits.h
+$cstem -def "X_PROTOCOL > 8" -def "__unix__" "_BSD_SOURCE" -def "__unix__ == 1" INC="X11/X.h stdio.h"
+$cstem -type uint16_t stdlib.h stdint.h
+$cstem -type uint32_t stdlib.h stdint.h
+$cstem -type XID INC="X11/X.h"
+$cstem -type String Widget INC="X11/Intrinsic.h"
+$cstem -type uint32_t uint16_t XID Atom KeyCode String Widget Pixel Boolean XtPointer XEvent KeySym Cardinal Display INC="X11/Intrinsic.h" stdlib.h stdint.h
+$cstem -enum XtAddress XtListHead X11/Intrinsic.h
+$cstem -var topLevelShellWidgetClass vendorShellWidgetClass applicationShellWidgetClass -lX11 -lXt INC="X11/Shell.h X11/Intrinsic.h X11/Vendor.h"
+$cstem -sym topLevelShellWidgetClass vendorShellWidgetClass applicationShellWidgetClass LDFLAGS="-lX11 -lXt"
+$cstem -func close fprintf exit atexit atoi XOpenDisplay XCloseDisplay XtCreateWidget LDFLAGS="-lX11 -lXt" INC="stdio.h unistd.h stdlib.h X11/Intrinsic.h"
+$cstem -rval __unix__ X_PROTOCOL XtAddress XtListHead topLevelShellWidgetClass vendorShellWidgetClass INC="X11/X.h X11/Shell.h X11/Intrinsic.h X11/Vendor.h" LDFLAGS="-lX11 -lXt"
+$cstem -cstr "Widget w = NULL;" INC="X11/Intrinsic.h" LDFLAGS="-lX11 -lXt"
+
