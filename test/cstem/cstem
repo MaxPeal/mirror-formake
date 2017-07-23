@@ -121,7 +121,7 @@ if test ! -d $test_dir; then
   echo "$script_name: error: could not create temporary directory $test_dir" >&2
   exit 1
 fi
-version_string="0.6"
+version_string="0.7"
 cc_is_cross=0
 headers=$test_dir/cstem_inc_headers
 cstem_log=$test_dir/cstem.log
@@ -2384,7 +2384,7 @@ if test x$mode_test = x1; then
   fi
   rm -f test.$c_ext
   rm -f test.o*
-  
+
 ################################################################################
 # SET UP TEST DIR
   setup_test_dir
@@ -2392,6 +2392,10 @@ if test x$mode_test = x1; then
   
 ################################################################################
 # SET UP LINKER
+  if test "$prop_id" = msc; then
+    op_disable_ld=1
+  fi
+  
   if test -n "$LD"; then
     LD_CMD=$LD
   else
