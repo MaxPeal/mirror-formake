@@ -3,6 +3,7 @@
 cstem="./cstem test CC=gcc"
 #cstem="./cstem test CC=clang"
 #cstem="./cstem test CC=tcc"
+#cstem="./cstem test CC=sdcc -disable-ld"
 
 $cstem -cc
 $cstem -cflags="-I. -I/usr/local/include"
