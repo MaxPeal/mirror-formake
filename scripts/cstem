@@ -2416,125 +2416,7 @@ EOF
     rm -f test.$ext
     rm -f test.o
   fi
-  
-################################################################################
-# TEST LD
-  if test x$op_disable_ld = x; then
-    log_title "TEST LD"
-    if test x$op_test_ld = x1; then
-      echo_status -l "%s" "checking linker $LD_CMD ... "
-    fi
-
-    cat <<EOF >test.$ext
-int main(int argc, char *argv[]) {
-  return 0;
-}
-EOF
-    log_src test.$ext
-    echo "$prop_cmd $CFLAGS $op_test_flags -c -o test.o test.$ext" >> $cstem_log
-    $prop_cmd $CFLAGS $op_test_flags -c -o test.o test.$ext>> $cstem_log 2>&1
-    
-    echo "$LD_CMD -o app test.o" >> $cstem_log
-    $LD_CMD -o app test.o>> $cstem_log 2>&1
-    ret=$?
-    if test $ret -ne 0; then
-      if test x$op_test_ld = x1; then
-        echo_status "%s\n" "Failed"
-      else
-        echo_status "%s\n" "checking linker $LD_CMD ... Failed"
-      fi
-      if test x$op_no_break = x; then
-        clean_exit $ret
-      fi
-      exit_status=1
-    else
-      if test x$op_test_ld = x1; then
-        echo_status "%s\n" "OK"
-      fi
-    fi
-    rm -f app
-    rm -f test.o
-    rm -f test.$ext
-  fi
-
-################################################################################
-# TEST LDFLAGS
-  if test x$op_disable_ld = x && test -n "$LDFLAGS"; then
-    log_title "TEST ADDITIONAL LILNKER FLAGS (LDFLAGS)"
-
-    cat <<EOF >test.$ext
-int main(int argc, char *argv[]) {
-  return 0;
-}
-EOF
-    log_src test.$ext
-    echo "$prop_cmd $CFLAGS $op_test_flags -c -o test.o test.$ext" >> $cstem_log
-    $prop_cmd $CFLAGS $op_test_flags -c -o test.o test.$ext>> $cstem_log 2>&1
-    
-    echo "$LD_CMD -o app test.o $LDFLAGS" >> $cstem_log
-    $LD_CMD -o app test.o $LDFLAGS >> $cstem_log 2>&1
-    ret=$?
-    if test $ret -ne 0; then
-      echo_status "%s\n" "checking linker flags '$LDFLAGS'... Failed"
-      if test x$op_no_break = x; then
-        clean_exit $ret
-      fi
-      exit_status=1
-    fi
-    rm -f app
-    rm -f test.o
-    rm -f test.$ext
-  fi
-
-################################################################################
-# TEST LD FLAGS
-  if test x$op_disable_ld = x && test -n "$op_test_ldflags"; then
-    log_title "TEST LD FLAGS"
-    echo_status -l "%s" "checking linker flags $op_test_ldflags ... "
-
-    cat <<EOF >test.$ext
-int main(int argc, char *argv[]) {
-  return 0;
-}
-EOF
-    log_src test.$ext
-    echo "$prop_cmd $CFLAGS $op_test_flags -c -o test.o test.$ext" >> $cstem_log
-    $prop_cmd $CFLAGS $op_test_flags -c -o test.o test.$ext>> $cstem_log 2>&1
-
-    echo "$LD_CMD -o app test.o $LDFLAGS $op_test_ldflags" >> $cstem_log
-    $LD_CMD -o app test.o $LDFLAGS $op_test_ldflags >> $cstem_log 2>&1
-    ret=$?
-    if test $ret -ne 0; then
-      echo_status "%s\n" "Failed"
-      flags=
-      for flag in $op_test_ldflags; do
-        echo_status "%s" "  $flag ... "
-        flags="$flags $flag"
-        echo "$LD_CMD -o app test.o $LDFLAGS $flags" >> $cstem_log
-        $LD_CMD -o app test.o $LDFLAGS $flags >> $cstem_log 2>&1
-        _ret=$?
-        if test $_ret -ne 0; then
-          echo_status "%s\n" "Failed"
-          if test x$op_no_break = x; then
-            clean_exit $_ret
-          else
-            break
-          fi
-        else
-          echo_status "%s\n" "OK"
-        fi
-      done
-      if test x$op_no_break = x; then
-        clean_exit $ret
-      fi
-      exit_status=1
-    else
-      echo_status "%s\n" "OK"
-    fi
-    rm -f app
-    rm -f test.o
-  fi
-
+ 
 ################################################################################
 # TEST op_with_inc
   if test -n "$op_with_inc"; then
@@ -2755,6 +2637,124 @@ EOF
     done
   fi
   
+################################################################################
+# TEST LD
+  if test x$op_disable_ld = x; then
+    log_title "TEST LD"
+    if test x$op_test_ld = x1; then
+      echo_status -l "%s" "checking linker $LD_CMD ... "
+    fi
+
+    cat <<EOF >test.$ext
+int main(int argc, char *argv[]) {
+  return 0;
+}
+EOF
+    log_src test.$ext
+    echo "$prop_cmd $CFLAGS $op_test_flags -c -o test.o test.$ext" >> $cstem_log
+    $prop_cmd $CFLAGS $op_test_flags -c -o test.o test.$ext>> $cstem_log 2>&1
+    
+    echo "$LD_CMD -o app test.o" >> $cstem_log
+    $LD_CMD -o app test.o>> $cstem_log 2>&1
+    ret=$?
+    if test $ret -ne 0; then
+      if test x$op_test_ld = x1; then
+        echo_status "%s\n" "Failed"
+      else
+        echo_status "%s\n" "checking linker $LD_CMD ... Failed"
+      fi
+      if test x$op_no_break = x; then
+        clean_exit $ret
+      fi
+      exit_status=1
+    else
+      if test x$op_test_ld = x1; then
+        echo_status "%s\n" "OK"
+      fi
+    fi
+    rm -f app
+    rm -f test.o
+    rm -f test.$ext
+  fi
+
+################################################################################
+# TEST LD FLAGS FROM LDFLAGS VARIABLE
+  if test x$op_disable_ld = x && test -n "$LDFLAGS"; then
+    log_title "TEST ADDITIONAL LINKER FLAGS (LDFLAGS)"
+
+    cat <<EOF >test.$ext
+int main(int argc, char *argv[]) {
+  return 0;
+}
+EOF
+    log_src test.$ext
+    echo "$prop_cmd $CFLAGS $op_test_flags -c -o test.o test.$ext" >> $cstem_log
+    $prop_cmd $CFLAGS $op_test_flags -c -o test.o test.$ext>> $cstem_log 2>&1
+    
+    echo "$LD_CMD -o app test.o $LDFLAGS" >> $cstem_log
+    $LD_CMD -o app test.o $LDFLAGS >> $cstem_log 2>&1
+    ret=$?
+    if test $ret -ne 0; then
+      echo_status "%s\n" "checking linker flags '$LDFLAGS'... Failed"
+      if test x$op_no_break = x; then
+        clean_exit $ret
+      fi
+      exit_status=1
+    fi
+    rm -f app
+    rm -f test.o
+    rm -f test.$ext
+  fi
+
+################################################################################
+# TEST LD FLAGS
+  if test x$op_disable_ld = x && test -n "$op_test_ldflags"; then
+    log_title "TEST LD FLAGS"
+    echo_status -l "%s" "checking linker flags $op_test_ldflags ... "
+
+    cat <<EOF >test.$ext
+int main(int argc, char *argv[]) {
+  return 0;
+}
+EOF
+    log_src test.$ext
+    echo "$prop_cmd $CFLAGS $op_test_flags -c -o test.o test.$ext" >> $cstem_log
+    $prop_cmd $CFLAGS $op_test_flags -c -o test.o test.$ext>> $cstem_log 2>&1
+
+    echo "$LD_CMD -o app test.o $LDFLAGS $op_test_ldflags" >> $cstem_log
+    $LD_CMD -o app test.o $LDFLAGS $op_test_ldflags >> $cstem_log 2>&1
+    ret=$?
+    if test $ret -ne 0; then
+      echo_status "%s\n" "Failed"
+      flags=
+      for flag in $op_test_ldflags; do
+        echo_status "%s" "  $flag ... "
+        flags="$flags $flag"
+        echo "$LD_CMD -o app test.o $LDFLAGS $flags" >> $cstem_log
+        $LD_CMD -o app test.o $LDFLAGS $flags >> $cstem_log 2>&1
+        _ret=$?
+        if test $_ret -ne 0; then
+          echo_status "%s\n" "Failed"
+          if test x$op_no_break = x; then
+            clean_exit $_ret
+          else
+            break
+          fi
+        else
+          echo_status "%s\n" "OK"
+        fi
+      done
+      if test x$op_no_break = x; then
+        clean_exit $ret
+      fi
+      exit_status=1
+    else
+      echo_status "%s\n" "OK"
+    fi
+    rm -f app
+    rm -f test.o
+  fi
+
 ################################################################################
 # TEST LIBRARIES
   if test x$op_disable_ld = x && test -n "$op_libs"; then
