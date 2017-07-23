@@ -2037,7 +2037,7 @@ if test x$mode_test = x1; then
   def_num=0
   type_num=0
   while test $# -gt 0; do
-    param=`printf "%s" "$1" | sed 's/^ *//' | sed 's/^# */#/'`
+    param=$1
     case "$param" in
       CC=*)
         CC=`echo "$param" | sed 's/^[^=]*=//'`
@@ -2237,6 +2237,7 @@ if test x$mode_test = x1; then
           printf "%s\n" "$script_name: invalid parameter $param" >&2
           clean_exit 1
         fi
+        param=`echo "$1" | sed 's/^ *//' | sed 's/^# */#/'`
         case "$current_opt" in
           lib)
             param=`echo "$param" | sed 's/^lib//'`
