@@ -2884,9 +2884,9 @@ EOF
       $prop_cmd $CFLAGS $op_test_flags -c -o test.o $test_src >> $cstem_log 2>&1
       ret=$?
       if test $ret -ne 0; then
-        echo_status "%s\n" "Failed"
         test_failed=1
         if test x$op_no_break = x; then
+          echo_status "%s\n" "Failed"
           clean_exit $ret
         fi
       fi
@@ -2896,9 +2896,9 @@ EOF
         $LD_CMD -o app test.o $LDFLAGS $op_test_ldflags $op_libs >> $cstem_log 2>&1
         ret=$?
         if test $ret -ne 0; then
-          echo_status "%s\n" "Failed"
           test_failed=1
           if test x$op_no_break = x; then
+            echo_status "%s\n" "Failed"
             clean_exit $ret
           fi
         fi
@@ -2916,6 +2916,7 @@ EOF
           fi
         fi
       else
+        echo_status "%s\n" "Failed"
         exit_status=1
       fi
       rm -f test.o
