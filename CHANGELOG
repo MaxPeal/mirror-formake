@@ -102,3 +102,11 @@ Formake v0.13
 
 Formake v0.14
   * cstem: added parameter '-version'
+  * cstem: fixed params parsing in test mode
+  * cstem: fixed test mode: printed error about missing file
+  * cstem: minor optimizations and fixes
+  * cstem: fixed def mode
+  * cstem: fixed 'test -def' for complex expressions
+  * cstem: removed duplicating parameters. Other minor optimizations
+  * cstem: minor fixes
+
