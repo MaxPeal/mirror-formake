@@ -115,3 +115,6 @@ Formake v0.14
   * cstem: disabled LD testing when we check only compile time properties
   * cstem: added a base support of MSVC compiler
 
+Formake v0.15
+  * cstem: disabled any linking tests for MSVC
+
