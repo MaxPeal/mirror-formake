@@ -109,4 +109,5 @@ Formake v0.14
   * cstem: fixed 'test -def' for complex expressions
   * cstem: removed duplicating parameters. Other minor optimizations
   * cstem: minor fixes
+  * cstem: fixed test mode. Failed for C++ when tested with namespace prefix
 
