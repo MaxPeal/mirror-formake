@@ -249,7 +249,6 @@ armc              ARM Compiler (by ARM)
 c166              Keil C166
 c51               Keil C51
 clang             Clang
-codewrr           CodeWarrior
 compcert          CompCert C
 diabc             Wind River Diab Compiler
 dignus            Dignus Systems/C and Systems/C++
@@ -832,28 +831,6 @@ read_cc_props_base() {
     elif test -n "$DVAL__CX51__"; then
       prop_vmajor=`expr "0$DVAL__CX51__" / 100`
       prop_vminor=`expr "0$DVAL__CX51__" % 100`
-    fi
-  fi
-
-  if test -n "$DSET__MWERKS__" || test -n "$DSET__CWCC__"; then
-    prop_id=codewarrior
-
-    if test -n "$DVAL__CWCC__"; then
-      tbuf=`echo "$DVAL__CWCC__" | sed 's/0[xX]\(.\).*/\1/g'`
-      prop_vmajor=`printf "%d" "0x$tbuf"`
-      tbuf=`echo "$DVAL__CWCC__" | sed 's/0[xX].\(.\).*/\1/g'`
-      prop_vminor=`printf "%d" "0x$tbuf"`
-      tbuf=`echo "$DVAL__CWCC__" | sed 's/0[xX]..\(..\).*/\1/g'`
-      prop_vrevision=`printf "%d" "0x$tbuf"`
-    elif test -n "$DVAL__MWERKS__"; then
-      if test "x$DVAL__MWERKS__" != "x1"; then
-        tbuf=`echo "$DVAL__MWERKS__" | sed 's/0[xX]\(.\).*/\1/g'`
-        prop_vmajor=`printf "%d" "0x$tbuf"`
-        tbuf=`echo "$DVAL__MWERKS__" | sed 's/0[xX].\(.\).*/\1/g'`
-        prop_vminor=`printf "%d" "0x$tbuf"`
-        tbuf=`echo "$DVAL__MWERKS__" | sed 's/0[xX]..\(..\).*/\1/g'`
-        prop_vrevision=`printf "%d" "0x$tbuf"`
-      fi
     fi
   fi
 
@@ -3543,16 +3520,6 @@ DVAL__C51__=__C51__
 #ifdef __CX51__
 DSET__CX51__=1
 DVAL__CX51__=__CX51__
-#endif
-
-#ifdef __MWERKS__
-DSET__MWERKS__=1
-DVAL__MWERKS__=__MWERKS__
-#endif
-
-#ifdef __CWCC__
-DSET__CWCC__=1
-DVAL__CWCC__=__CWCC__
 #endif
 
 #ifdef _MSC_VER
