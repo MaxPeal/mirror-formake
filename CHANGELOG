@@ -116,4 +116,5 @@ Formake v0.14
   * cstem: added a base support of MSVC compiler
 
 Formake v0.15
+  * cstem: removed support of Altium CHC and Altium MicroBlaze compilers
 
