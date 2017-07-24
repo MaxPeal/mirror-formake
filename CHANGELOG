@@ -116,5 +116,4 @@ Formake v0.14
   * cstem: added a base support of MSVC compiler
 
 Formake v0.15
-  * cstem: disabled any linking tests for MSVC
 
