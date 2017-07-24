@@ -119,4 +119,5 @@ Formake v0.15
   * cstem: removed support of Altium CHC and Altium MicroBlaze compilers
   * cstem: removed CodeWarrior compiler support
   * cstem: removed support of compilers DiabC, Dignus C/C++, GreenHill C/C++, IAR C/C++, ImageCraft C, Renesas C/C++, SN C/C++ (ProDG), VBCC, Stratus VOS C
+  * cstem: removed support of compilers Keil C166, Keil C51
 
