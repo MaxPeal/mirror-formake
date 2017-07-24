@@ -1,6 +1,9 @@
 #!/bin/sh
 
-cstem="./cstem c++ test CC=g++"
+export LM_LICENSE_FILE=/home/alex/heap/projects/formake/compilers/pgi/license.dat
+
+cstem="./cstem c++ test CC=/home/alex/heap/projects/formake/compilers/pgi/linux86-64/2017/bin/pgc++"
+#cstem="./cstem c++ test CC=g++"
 #cstem="./cstem c++ test CC=clang++"
 
 $cstem -cc

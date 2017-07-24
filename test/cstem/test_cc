@@ -1,6 +1,9 @@
 #!/bin/sh
 
-cstem="./cstem test CC=gcc"
+export LM_LICENSE_FILE=/home/alex/heap/projects/formake/compilers/pgi/license.dat
+
+cstem="./cstem test CC=/home/alex/heap/projects/formake/compilers/pgi/linux86-64/2017/bin/pgcc"
+#cstem="./cstem test CC=gcc"
 #cstem="./cstem test CC=clang"
 #cstem="./cstem test CC=tcc"
 #cstem="./cstem test CC=sdcc -disable-ld"
