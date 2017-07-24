@@ -120,4 +120,6 @@ Formake v0.15
   * cstem: removed CodeWarrior compiler support
   * cstem: removed support of compilers DiabC, Dignus C/C++, GreenHill C/C++, IAR C/C++, ImageCraft C, Renesas C/C++, SN C/C++ (ProDG), VBCC, Stratus VOS C
   * cstem: removed support of compilers Keil C166, Keil C51
+  * cstem: removed support for OS: AmigaOS, eCos, Integrity, Interix, LynxOS, MorphOS, NonStop, Nucleus RTOS, Microware OS-9, Stratus VOS, VxWorks, IBM z/OS
+  * cstem: removed support of arch: Blackfin, Epiphany, TI MSP430, SuperH, IBM z/Architecture
 
