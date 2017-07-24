@@ -277,52 +277,35 @@ embedded_cxx      Embedded C++ (EC++)
 TARGET OPERATING SYSTEMS
 --------------------------------------------------------------------------------
 aix               AIX (Advanced Interactive eXecutive)
-amigaos           AmigaOS
 android           Android
 cygwin            Cygwin
 dragonfly         DragonFly BSD
-ecos              eCos (Embedded Configurable Operating System)
 freebsd           FreeBSD
 gnuhurd           GNU/Hurd
 gnulinux          GNU/Linux
 hpux              HP-UX (Hewlett-Packard UniX)
-integrity         Integrity
-interix           Interix (POSIX-conformant Unix subsystem for Windows)
 irix              IRIX
-lynxos            LynxOS RTOS
 macos             Apple macOS
 minix             MINIX
-morphos           MorphOS
 netbsd            NetBSD
-nonstop           NonStop
-nucleus           Nucleus RTOS
 openbsd           OpenBSD
-os9               Microware OS-9
 qnx               QNX
 sco               SCO UNIX
 solaris           Solaris
-vos               Stratus VOS (Virtual Operating System)
-vxworks           VxWorks
 windows           Windows
-zos               IBM z/OS
 
 TARGET ARCHITECTURES
 --------------------------------------------------------------------------------
 alpha             Alpha
 arm               ARM (Advanced RISC Machine)
 arm64             ARM 64-bit (ARMv8, AArch64 or ARM64)
-blackfin          Blackfin
-epiphany          Epiphany
 hppa              PA-RISC
 ia64              IA-64
 mips              MIPS
-msp430            TI MSP430
 powerpc           PowerPC
 sparc             SPARC
-superh            SuperH
 x86               x86
 x86_64            x86-64 (AMD64)
-zarch             IBM z/Architecture
 
 TARGET BITNESS
 --------------------------------------------------------------------------------
@@ -391,9 +374,6 @@ probe_os() {
     mirbsd)
       config_os=miros
       ;;
-    morphos)
-      config_os=morphos
-      ;;
     z/vm)
       config_os=zvm
       ;;
@@ -447,9 +427,6 @@ probe_os() {
       ;;
     linux)
       config_os=gnulinux
-      ;;
-    lynxos)
-      config_os=lynxos
       ;;
     haiku)
       config_os=haiku
@@ -968,10 +945,6 @@ read_cc_props_ext() {
     prop_os_vmajor=$DVAL__ANDROID_API__
   fi
 
-  if test -n "$DSETAMIGA" || test -n "$DSET__amigaos__"; then
-    prop_os=amigaos
-  fi
-
   if test -n "$DSET__FreeBSD__"; then
     prop_os=freebsd
     prop_os_vmajor=$DVAL__FreeBSD__
@@ -993,10 +966,6 @@ read_cc_props_ext() {
     prop_os=cygwin
   fi
 
-  if test -n "$DSET__ECOS"; then
-    prop_os=ecos
-  fi
-
   if test -n "$DSET__gnu_hurd__"; then
     prop_os=gnuhurd
   fi
@@ -1013,24 +982,8 @@ read_cc_props_ext() {
     prop_os=hpux
   fi
 
-  if test -n "$DSET__INTEGRITY"; then
-    prop_os=integrity
-  fi
-
-  if test -n "$DSET__INTERIX"; then
-    prop_os=interix
-  fi
-
   if test -n "$DSETsgi" || test -n "$DSET__sgi"; then
     prop_os=irix
-  fi
-
-  if test -n "$DSET__Lynx__"; then
-    prop_os=lynxos
-  fi
-
-  if test -n "$DSET__OS9000" || test -n "$DSET_OSK"; then
-    prop_os=os9
   fi
 
   if test -n "$DSET__APPLE__" && test -n "$DSET__MACH__"; then
@@ -1039,18 +992,6 @@ read_cc_props_ext() {
 
   if test -n "$DSET__minix"; then
     prop_os=minix
-  fi
-
-  if test -n "$DSET__MORPHOS__"; then
-    prop_os=morphos
-  fi
-
-  if test -n "$DSET__TANDEM"; then
-    prop_os=nonstop
-  fi
-
-  if test -n "$DSET__nucleus__"; then
-    prop_os=nucleus
   fi
 
   if test -n "$DSET__QNX__" || test -n "$DSET__QNXNTO__"; then
@@ -1080,26 +1021,8 @@ read_cc_props_ext() {
     fi
   fi
 
-  if test -n "$DSET__VOS__"; then
-    prop_os=vos
-  fi
-
-  if test -n "$DSET__VXWORKS__" || test -n "$DSET__vxworks" || test -n "$DSET_WRS_KERNEL"; then
-    prop_os=vxworks
-    if test -n "$DVAL_WRS_VXWORKS_MAJOR"; then
-      prop_os_vmajor=$DVAL_WRS_VXWORKS_MAJOR
-    fi
-    if test -n "$DVAL_WRS_VXWORKS_MINOR"; then
-      prop_os_vmajor=$DVAL_WRS_VXWORKS_MINOR
-    fi
-  fi
-
   if test -n "$DSET_WIN32$DSETWIN32$DSET__WIN32__$__WIN32" || test -n "$DSET_WIN64$DSETWIN64$DSET__WIN64$DSET__WIN64__" || test -n "$DSET__TOS_WIN__" || test -n "$DSET__WINDOWS__" || test -n "$DSETWINNT$DSET__WINNT$DSET__WINNT__"; then
     prop_os=windows
-  fi
-
-  if test -n "$DSET__MVS__" || test -n "$DSET__HOS_MVS__" || test -n "$DSET__TOS_MVS__"; then
-    prop_os=zos
   fi
 
   prop_os_version=$prop_os_vmajor
@@ -1131,14 +1054,6 @@ read_cc_props_ext() {
   if test -n "$DSET__aarch64__"; then
     prop_arch=arm64
     prop_bitness=64
-  fi
-
-  if test -n "$DSET__bfin" || test -n "$DSET__BFIN__"; then
-    prop_arch=blackfin
-  fi
-
-  if test -n "$DSET__epiphany__"; then
-    prop_arch=epiphany
   fi
 
   if test -n "$DSET__hppa__" || test -n "$DSET__HPPA__" || test -n "$DSET__hppa"; then
@@ -1181,25 +1096,12 @@ read_cc_props_ext() {
     prop_arch=mips
   fi
 
-  if test -n "$DSET__MSP430XGENERIC__" || test -n "$DSET__MSP430__" || test -n "$DSET__MSP430X__"; then
-    prop_arch=msp430
-  fi
-
   if test -n "$DSET__powerpc" || test -n "$DSET__powerpc__" || test -n "$DSET__powerpc64__" || test -n "$DSET__POWERPC__" || test -n "$DSET__ppc__" || test -n "$DSET__ppc64__" || test -n "$DSET__PPC__" || test -n "$DSET__PPC64__" || test -n "$DSET_ARCH_PPC" || test -n "$DSET_ARCH_PPC64" || test -n "$DSET_M_PPC" || test -n "$DSET__PPCGECKO__" || test -n "$DSET__PPCBROADWAY__" || test -n "$DSET_XENON" || test -n "$DSET__ppc" || test -n "$DSET__PowerPC__" || test -n "$DSET__PPC" || test -n "$DSET__ppc64"; then
     prop_arch=powerpc
   fi
 
   if test -n "$DSET__sparc__" || test -n "$DSET__sparc" || test -n "$DSET__sparc64__"; then
     prop_arch=sparc
-  fi
-
-  if test -n "$DSET__sh__"; then
-    prop_arch=superh
-  fi
-
-  if test -n "$DSET__s390x__" || test -n "$DSET__zarch__" || test -n "$DSET__SYSC_ZARCH__"; then
-    prop_arch=zarch
-    prop_bitness=64
   fi
 
 
@@ -3520,14 +3422,6 @@ DSET__ANDROID_API__=1
 DVAL__ANDROID_API__=__ANDROID_API__
 #endif
 
-#ifdef AMIGA
-DSETAMIGA=1
-#endif
-
-#ifdef __amigaos__
-DSET__amigaos__=1
-#endif
-
 #ifdef __FreeBSD__
 DSET__FreeBSD__=1
 DVAL__FreeBSD__=__FreeBSD__
@@ -3547,10 +3441,6 @@ DSET__DragonFly__=1
 
 #ifdef __CYGWIN__
 DSET__CYGWIN__=1
-#endif
-
-#ifdef __ECOS
-DSET__ECOS=1
 #endif
 
 #ifdef __gnu_hurd__
@@ -3589,18 +3479,6 @@ DSEThpux=1
 DSET__hpux=1
 #endif
 
-#ifdef __INTEGRITY
-DSET__INTEGRITY=1
-#endif
-
-#ifdef __INTERIX
-DSET__INTERIX=1
-#endif
-
-#ifdef __Lynx__
-DSET__Lynx__=1
-#endif
-
 #ifdef __APPLE__
 DSET__APPLE__=1
 #endif
@@ -3609,28 +3487,8 @@ DSET__APPLE__=1
 DSET__MACH__=1
 #endif
 
-#ifdef __OS9000
-DSET__OS9000=1
-#endif
-
-#ifdef _OSK
-DSET_OSK=1
-#endif
-
 #ifdef __minix
 DSET__minix=1
-#endif
-
-#ifdef __MORPHOS__
-DSET__MORPHOS__=1
-#endif
-
-#ifdef __TANDEM
-DSET__TANDEM=1
-#endif
-
-#ifdef __nucleus__
-DSET__nucleus__=1
 #endif
 
 #ifdef __QNX__
@@ -3694,32 +3552,6 @@ DSET__SunOS_5_10=1
 DSET__SunOS_5_11=1
 #endif
 
-#ifdef __VOS__
-DSET__VOS__=1
-#endif
-
-#ifdef __VXWORKS__
-DSET__VXWORKS__=1
-#endif
-
-#ifdef __vxworks
-DSET__vxworks=1
-#endif
-
-#ifdef _WRS_VXWORKS_MAJOR
-DSET_WRS_VXWORKS_MAJOR=1
-DVAL_WRS_VXWORKS_MAJOR=_WRS_VXWORKS_MAJOR
-#endif
-
-#ifdef _WRS_VXWORKS_MINOR
-DSET_WRS_VXWORKS_MINOR=1
-DVAL_WRS_VXWORKS_MINOR=_WRS_VXWORKS_MINOR
-#endif
-
-#ifdef _WRS_KERNEL
-DSET_WRS_KERNEL=1
-#endif
-
 #ifdef _WIN32
 DSET_WIN32=1
 #endif
@@ -3770,18 +3602,6 @@ DSET__WINNT=1
 
 #ifdef __WINNT__
 DSET__WINNT__=1
-#endif
-
-#ifdef __MVS__
-DSET__MVS__=1
-#endif
-
-#ifdef __HOS_MVS__
-DSET__HOS_MVS__=1
-#endif
-
-#ifdef __TOS_MVS__
-DSET__TOS_MVS__=1
 #endif
 
 
@@ -3869,18 +3689,6 @@ DSET__arm=1
 
 #ifdef __aarch64__
 DSET__aarch64__=1
-#endif
-
-#ifdef __bfin
-DSET__bfin=1
-#endif
-
-#ifdef __BFIN__
-DSET__BFIN__=1
-#endif
-
-#ifdef __epiphany__
-DSET__epiphany__=1
 #endif
 
 #ifdef __hppa__
@@ -3995,18 +3803,6 @@ DSET__mips=1
 DSET__MIPS__=1
 #endif
 
-#ifdef __MSP430XGENERIC__
-DSET__MSP430XGENERIC__=1
-#endif
-
-#ifdef __MSP430__
-DSET__MSP430__=1
-#endif
-
-#ifdef __MSP430X__
-DSET__MSP430X__=1
-#endif
-
 #ifdef __powerpc
 DSET__powerpc=1
 #endif
@@ -4089,22 +3885,6 @@ DSET__sparc=1
 
 #ifdef __sparc64__
 DSET__sparc64__=1
-#endif
-
-#ifdef __sh__
-DSET__sh__=1
-#endif
-
-#ifdef __s390x__
-DSET__s390x__=1
-#endif
-
-#ifdef __zarch__
-DSET__zarch__=1
-#endif
-
-#ifdef __SYSC_ZARCH__
-DSET__SYSC_ZARCH__=1
 #endif
 
 /* ENDIANNESS */
