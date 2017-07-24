@@ -157,29 +157,22 @@ OPERATING SYSTEMS
 aix               IBM AIX
 cygwin            Cygwin
 dragonfly         DragonFly BSD
-esx               VMware ESXi
 freebsd           FreeBSD
 gnuhurd           GNU/Hurd
 gnulinux          GNU/Linux
-haiku             Haiku
 hpux              HP-UX
 irix              IRIX
-lynxos            LynxOS RTOS
 macos             Apple macOS
 msys              Msys
 minix             MINIX
 miros             MirOS
-mks               MKS Toolkit
-morphos           MorphOS
 netbsd            NetBSD
 openbsd           OpenBSD
 qnx               QNX
 riscos            RISC OS
 sco               SCO UNIX
 solaris           Solaris
-tru64             Tru64 UNIX
 unixware          UnixWare
-zvm               IBM z/VM
 
 DISTRIBUTIONS
 --------------------------------------------------------------------------------
@@ -198,29 +191,18 @@ ubuntu            Ubuntu
 ARCHITECTURES
 --------------------------------------------------------------------------------
 alpha             Alpha
-arc               ARC (Argonaut RISC Core)
 arm               ARM (Advanced RISC Machine)
 arm64             ARM 64-bit (ARMv8, AArch64 or ARM64)
-avr32             Atmel AVR
-cris              ETRAX CRIS
-frv               Fujitsu FR-V
-hexagon           Qualcomm Hexagon
 hppa              PA-RISC
 hppa64            PA-RISC 64-bit
 ia64              IA-64
-m32r              M32R
 mips              MIPS
 mips64            MIPS64
-or1k              32-bit OpenRISC 1000 family
 powerpc           PowerPC
 sparc             SPARC
 sparc64           SPARC64
-superh            SuperH
-tile              Tilera Tile processor
 x86               x86
 x86_64            x86-64 (AMD64)
-xtensa            Tensilica Xtensa processor
-zarch             IBM z/Architecture
 EOF
 }
 
@@ -297,13 +279,6 @@ perform_probe() {
       config_os_vmajor=`echo "$uname_r" | sed 's/\..*//'`
       config_os_vminor=`echo "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
-    morphos)
-      config_os=morphos
-      ;;
-    z/vm)
-      config_os=zvm
-      config_arch=zarch
-      ;;
     riscos)
       config_os=riscos
       ;;
@@ -368,14 +343,6 @@ perform_probe() {
 	  ;;
       esac
       ;;
-    osf1)
-      sizer >/dev/null 2>&1
-      if sizer -v | grep Tru64 > /dev/null; then
-        config_os=tru64
-        config_os_vmajor=`echo "$uname_r" | sed 's/^[^0-9]*//' | sed 's/\..*//'`
-        config_os_vminor=`echo "$uname_r" | sed 's/^[^0-9]*//' | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
-      fi
-      ;;
     freebsd)
       config_os=freebsd
       config_os_vmajor=`echo "$uname_r" | sed 's/\..*//'`
@@ -402,13 +369,6 @@ perform_probe() {
       config_os_vmajor=`echo "$uname_r" | sed 's/\..*//'`
       config_os_vminor=`echo "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
       ;;
-    windows_95 | windows_98 | windows_nt)
-      case "$uname_m" in
-        8664)
-          config_os=mks
-          ;;
-      esac
-      ;;
     minix)
       config_os=minix
       config_os_vmajor=`echo "$uname_r" | sed 's/\..*//'`
@@ -431,12 +391,6 @@ perform_probe() {
       config_kernel_vminor=`echo $kernel_version | sed 's/^.*\.\([0-9]*\)\.[0-9]*.*/\1/'`
       config_kernel_vrevision=`echo $kernel_version | sed 's/^.*\.[0-9]*\.\([0-9]*\).*/\1/'`
       ;;
-    lynxos)
-      config_os=lynxos
-      ;;
-    haiku)
-      config_os=haiku
-      ;;
     procnto* | qnx)
       config_os=qnx
       config_os_vmajor=`echo "$uname_r" | sed 's/\..*//'`
@@ -446,9 +400,6 @@ perform_probe() {
       config_os=dragonfly
       config_os_vmajor=`echo "$uname_r" | sed 's/\..*//'`
       config_os_vminor=`echo "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
-      ;;
-    vmkernel)
-      config_os=esx
       ;;
     unixware)
       config_os=unixware
@@ -498,26 +449,11 @@ perform_probe() {
       amd64)
         config_arch=x86_64
         ;;
-      arc | arceb)
-        config_arch=arc
-        ;;
       arm*)
         config_arch=arm
         ;;
-      avr32*)
-        config_arch=avr32
-        ;;
       authenticamd | genuineintel | EM64T)
         config_arch=x86_64
-        ;;
-      cris | crisv32)
-        config_arch=cris
-        ;;
-      frv)
-        config_arch=frv
-        ;;
-      hexagon)
-        config_arch=hexagon
         ;;
       i?86*)
         config_arch=x86
@@ -528,9 +464,6 @@ perform_probe() {
       ia64 | IA64)
         config_arch=ia64
         ;;
-      m32r*)
-        config_arch=m32r
-        ;;
       macppc)
         config_arch=powerpc
         ;;
@@ -539,9 +472,6 @@ perform_probe() {
         ;;
       mips64)
         config_arch=mips64
-        ;;
-      or1k|or32)
-        config_arch=or1k
         ;;
       padre)
         config_arch=sparc
@@ -558,29 +488,17 @@ perform_probe() {
       ppc | ppcle)
         config_arch=powerpc
         ;;
-      sh64*)
-        config_arch=superh
-        ;;
-      sh*)
-        config_arch=superh
-        ;;
       sparc)
         config_arch=sparc
         ;;
       sparc64)
         config_arch=sparc64
         ;;
-      tile*)
-        config_arch=tile
-        ;;
       x86 | x86pc)
         config_arch=x86
         ;;
       x86_64)
         config_arch=x86_64
-        ;;
-      xtensa*)
-        config_arch=xtensa
         ;;
       i*)
         case "$config_os" in
@@ -619,12 +537,6 @@ perform_probe() {
         ;;
       powerpc)
         config_arch=powerpc
-        ;;
-      sh5*)
-        config_arch=superh
-        ;;
-      sh3eb | sh3el)
-        config_arch=superh
         ;;
       sparc)
         config_arch=sparc
