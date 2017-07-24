@@ -1,0 +1,67 @@
+#!/bin/sh
+
+export LM_LICENSE_FILE=/mnt/hd2/alex/DS-5/license.dat
+
+cstem="./cstem test CC=/mnt/hd2/alex/DS-5/sw/ARMCompiler5.05u1/bin/armcc"
+
+$cstem -cc
+$cstem -cflags="-I. -I/usr/local/include"
+$cstem -ld
+$cstem -lib xml2
+$cstem -lib X11
+$cstem -lib jpeg
+$cstem -lib c
+$cstem -lib m
+$cstem -lib xml2 X11 jpeg c m
+$cstem -lxml2 -lX11 -ljpeg -lc -lm
+$cstem -inc stdio.h
+$cstem -inc stdio.h
+$cstem -inc unistd.h
+$cstem -inc libxml/xmlwriter.h -I/usr/include/libxml2
+$cstem -inc X11/X.h X11/Xlib.h
+$cstem -def "__unix__"
+$cstem -def LONG_MAX INT_MAX limits.h
+$cstem -def "#ifdef __unix__"
+$cstem -def "#if __unix__ == 1"
+$cstem -def "#ifdef _BSD_SOURCE" INC="stdio.h"
+$cstem -def "#if _BSD_SOURCE >= 0" INC="stdio.h"
+$cstem -def "#ifdef X_PROTOCOL" INC="X11/X.h"
+$cstem -def "#if X_PROTOCOL > 8" INC="X11/X.h"
+$cstem -def _BSD_SOURCE __STDC__ __unix__ __GNUC__ X_PROTOCOL KeyPressMask LONG_MAX INT_MAX UCHAR_MAX CHAR_BIT INC="stdio.h" limits.h
+$cstem -def "#if X_PROTOCOL > 8" -def "#ifdef __unix__" "#ifdef _BSD_SOURCE" -def "#if __unix__ == 1" "CHAR_BIT == 8" INC="stdio.h" limits.h
+$cstem -def "X_PROTOCOL > 8" -def "__unix__" "_BSD_SOURCE" -def "__unix__ == 1" INC="stdio.h"
+$cstem -type uint16_t stdlib.h stdint.h
+$cstem -type uint32_t stdlib.h stdint.h
+$cstem -type uint32_t uint16_t stdlib.h stdint.h
+$cstem -func close INC="stdio.h stdlib.h"
+$cstem -func fprintf INC="stdio.h stdlib.h"
+$cstem -func exit INC="stdio.h stdlib.h"
+$cstem -func atexit INC="stdio.h stdlib.h"
+$cstem -func atoi INC="stdio.h stdlib.h"
+$cstem -func close fprintf exit atexit atoi INC="stdio.h stdlib.h"
+$cstem -rval __unix__
+
+cstem="./cstem c++ test CC=/mnt/hd2/alex/DS-5/sw/ARMCompiler5.05u1/bin/armcc"
+
+$cstem -cc
+$cstem -cflags="-I. -I/usr/local/include"
+$cstem -ld
+$cstem -lib -lstdc++
+$cstem -inc vector list set map queue
+$cstem -inc cctype cstring cwchar
+$cstem -inc iterator
+$cstem -inc iostream cstdio
+$cstem -inc vector list set map queue cctype cstring cwchar iterator iostream cstdio
+$cstem -def __unix__
+$cstem -def LONG_MAX INT_MAX limits.h INC="climits limits"
+$cstem -def Q_BYTE_ORDER QT_VERSION Q_DECL_EXPORT QT_VERSION_STR INC="QtCore/QtGlobal" -I/usr/include/qt4
+$cstem -def "#if __unix__ == 1"
+$cstem -def "#ifdef _BSD_SOURCE" INC="stdio.h"
+$cstem -def "#if _BSD_SOURCE >= 0" INC="stdio.h"
+$cstem -def "#ifdef X_PROTOCOL" INC="X11/X.h"
+$cstem -def "#if X_PROTOCOL > 8" INC="X11/X.h"
+$cstem -def _BSD_SOURCE __STDC__ __unix__ __GNUC__ X_PROTOCOL KeyPressMask LONG_MAX INT_MAX UCHAR_MAX CHAR_BIT INC="X11/X.h stdio.h" limits.h
+$cstem -def "#if X_PROTOCOL > 8" -def "#ifdef __unix__" "#ifdef _BSD_SOURCE" -def "#if __unix__ == 1" "CHAR_BIT == 8" INC="X11/X.h stdio.h" limits.h
+$cstem -def "X_PROTOCOL > 8" -def "__unix__" "_BSD_SOURCE" -def "__unix__ == 1" INC="X11/X.h stdio.h"
+$cstem -type bool
+

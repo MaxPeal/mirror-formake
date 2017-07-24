@@ -38,7 +38,14 @@ $cstem -type uint32_t uint16_t XID Atom KeyCode String Widget Pixel Boolean XtPo
 $cstem -enum XtAddress XtListHead X11/Intrinsic.h
 $cstem -var topLevelShellWidgetClass vendorShellWidgetClass applicationShellWidgetClass -lX11 -lXt INC="X11/Shell.h X11/Intrinsic.h X11/Vendor.h"
 $cstem -sym topLevelShellWidgetClass vendorShellWidgetClass applicationShellWidgetClass LDFLAGS="-lX11 -lXt"
-$cstem -func close fprintf exit atexit atoi XOpenDisplay XCloseDisplay XtCreateWidget LDFLAGS="-lX11 -lXt" INC="stdio.h unistd.h stdlib.h X11/Intrinsic.h"
+$cstem -func close INC="stdio.h unistd.h stdlib.h"
+$cstem -func fprintf INC="stdio.h unistd.h stdlib.h"
+$cstem -func exit INC="stdio.h unistd.h stdlib.h"
+$cstem -func atexit INC="stdio.h unistd.h stdlib.h"
+$cstem -func atoi INC="stdio.h unistd.h stdlib.h"
+$cstem -func XOpenDisplay LDFLAGS="-lX11 -lXt" INC="stdio.h unistd.h stdlib.h X11/Intrinsic.h"
+$cstem -func XCloseDisplay LDFLAGS="-lX11 -lXt" INC="stdio.h unistd.h stdlib.h X11/Intrinsic.h"
+$cstem -func XtCreateWidget LDFLAGS="-lX11 -lXt" INC="stdio.h unistd.h stdlib.h X11/Intrinsic.h"
 $cstem -rval __unix__ X_PROTOCOL XtAddress XtListHead topLevelShellWidgetClass vendorShellWidgetClass INC="X11/X.h X11/Shell.h X11/Intrinsic.h X11/Vendor.h" LDFLAGS="-lX11 -lXt"
 $cstem -cstr "Widget w = NULL;" INC="X11/Intrinsic.h" LDFLAGS="-lX11 -lXt"
 
