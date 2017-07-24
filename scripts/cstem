@@ -250,26 +250,17 @@ c166              Keil C166
 c51               Keil C51
 clang             Clang
 compcert          CompCert C
-diabc             Wind River Diab Compiler
-dignus            Dignus Systems/C and Systems/C++
 gcc               GCC
-ghs               Green Hill C/C++
 hpacc             HP aC++
 hpansic           HP ANSI C
-iar               IAR C/C++
-imagecraft        ImageCraft C
 intel             Intel C/C++
 mipspro           SGI MIPSPro
 msc               Microsoft Visual C/C++
 pgi               Portland Group C/C++
-renesas           Renesas C/C++
 sdcc              SDCC (Small Device C Compiler)
-snc               SN C/C++ Compiler (ProDG)
 sunpro            Solaris Studio (Sun Studio, SunPro)
 ticc              Texas Instruments C/C++ Compiler
 tinyc             Tiny C Compiler (TCC, TinyCC)
-vbcc              VBCC
-vosc              Stratus VOS C
 watcom            Watcom C/C++ (Open Watcom C/C++)
 xlc               IBM XL C/C++
 
@@ -701,38 +692,6 @@ read_cc_props_base() {
     prop_id=compcert
   fi
 
-  if test -n "$DSET__DCC__"; then
-    prop_id=diabc
-
-    if test -n "$DVAL__VERSION_NUMBER__"; then
-      prop_vmajor=`echo "$DVAL__VERSION_NUMBER__" | sed 's/^\(.\).*/\1/g'`
-      prop_vminor=`echo "$DVAL__VERSION_NUMBER__" | sed 's/^.\(.\).*/\1/g'`
-      prop_vrevision=`echo "$DVAL__VERSION_NUMBER__" | sed 's/^..\(..\).*/\1/g'`
-    fi
-  fi
-
-  if test -n "$DSET__SYSC__"; then
-    prop_id=dignus
-
-    if test -n "$DVAL__SYSC_VER__"; then
-      prop_vmajor=`expr "0$DVAL__SYSC_VER__" / 10000`
-      buf=`expr "0$DVAL__SYSC_VER__" % 10000`
-      prop_vminor=`expr "0$buf" / 100`
-      prop_vrevision=`expr "0$DVAL__SYSC_VER__" % 100`
-    fi
-  fi
-
-  if test -n "$DSET__ghs__"; then
-    prop_id=ghs
-
-    if test -n "$DVAL__GHS_VERSION_NUMBER__"; then
-      prop_vmajor=`expr "0$DVAL__GHS_VERSION_NUMBER__" / 100`
-      tbuf=`expr "0$DVAL__GHS_VERSION_NUMBER__" % 100`
-      prop_vminor=`expr "0$tbuf" / 10`
-      prop_vrevision=`expr "0$DVAL__GHS_VERSION_NUMBER__" % 10`
-    fi
-  fi
-
   if test $cstem_mode = "c++"; then
     if test -n "$DSET__HP_cc"; then
       prop_id=hpansic
@@ -751,15 +710,6 @@ read_cc_props_base() {
           prop_vrevision=`expr "0$DVAL__HP_aCC" % 100`
         fi
       fi
-    fi
-  fi
-
-  if test -n "$DSET__IAR_SYSTEMS_ICC__"; then
-    prop_id=iar
-
-    if test -n "$DVAL__VER__"; then
-      prop_vmajor=`expr "0$DVAL__VER__" / 100`
-      prop_vminor=`expr "0$DVAL__VER__" % 100`
     fi
   fi
 
@@ -796,10 +746,6 @@ read_cc_props_base() {
       prop_vminor=`expr "0$tbuf" / 10`
       prop_vrevision=`expr "0$DVAL__IBMCPP__" % 10`
     fi
-  fi
-
-  if test -n "$DSET__IMAGECRAFT__"; then
-    prop_id=imagecraft
   fi
 
   if test -n "$DSET__INTEL_COMPILER" || test -n "$DSET__ICC" || test -n "$DSET__ECC" || test -n "$DSET__ICL"; then
@@ -875,24 +821,6 @@ read_cc_props_base() {
     prop_vrevision=$DVAL__PGIC_PATCHLEVEL__
   fi
 
-  if test -n "$DSET__RENESAS__" || test -n "$DSET__HITACHI__"; then
-    prop_id=renesas
-
-    version_string=${DVAL__RENESAS_VERSION__:-$DVAL__HITACHI_VERSION__}
-
-    if test -n "$version_string"; then
-      tbuf=`echo "$version_string" | sed 's/0[xX]\(..\).*/\1/g'`
-      prop_vmajor=`printf "%d" "0x$tbuf"`
-      tbuf=`echo "$version_string" | sed 's/0[xX]..\(..\).*/\1/g'`
-      prop_vminor=`printf "%d" "0x$tbuf"`
-      nchars=`echo -n "$version_string" | wc -c`
-      if test "$nchars" -gt 6; then
-        tbuf=`echo "$version_string" | sed 's/0[xX]....\(..\).*/\1/g'`
-        prop_vrevision=`printf "%d" "0x$tbuf"`
-      fi
-    fi
-  fi
-
   if test -n "$DSETSDCC"; then
     prop_id=sdcc
 
@@ -902,14 +830,6 @@ read_cc_props_base() {
       prop_vminor=`expr "0$tbuf" / 10`
       prop_vrevision=`expr "0$DVALSDCC" % 10`
     fi
-  fi
-
-  if test -n "$DSET__SNC__"; then
-    prop_id=snc
-  fi
-
-  if test -n "$DSET__VOSC__"; then
-    prop_id=vosc
   fi
 
   if test -n "$DSET__TI_COMPILER_VERSION__"; then
@@ -925,10 +845,6 @@ read_cc_props_base() {
 
   if test -n "$DSET__TINYC__"; then
     prop_id=tinyc
-  fi
-
-  if test -n "$DSET__VBCC__"; then
-    prop_id=vbcc
   fi
 
   if test -n "$DSET__WATCOMC__"; then
@@ -3391,24 +3307,6 @@ DVAL__clang_patchlevel__=__clang_patchlevel__
 DSET__COMPCERT__=1
 #endif
 
-#ifdef __DCC__
-DSET__DCC__=1
-#endif
-
-#ifdef __VERSION_NUMBER__
-DSET__VERSION_NUMBER__=1
-DVAL__VERSION_NUMBER__=__VERSION_NUMBER__
-#endif
-
-#ifdef __SYSC__
-DSET__SYSC__=1
-#endif
-
-#ifdef __SYSC_VER__
-DSET__SYSC_VER__=1
-DVAL__SYSC_VER__=__SYSC_VER__
-#endif
-
 #ifdef __GNUC__
 DSET__GNUC__=1
 DVAL__GNUC__=__GNUC__
@@ -3434,15 +3332,6 @@ DSET__GNUC_VERSION__=1
 DVAL__GNUC_VERSION__=__GNUC_VERSION__
 #endif
 
-#ifdef __ghs__
-DSET__ghs__=1
-#endif
-
-#ifdef __GHS_VERSION_NUMBER__
-DSET__GHS_VERSION_NUMBER__=1
-DVAL__GHS_VERSION_NUMBER__=__GHS_VERSION_NUMBER__
-#endif
-
 #ifdef __HP_cc
 DSET__HP_cc=1
 #endif
@@ -3450,15 +3339,6 @@ DSET__HP_cc=1
 #ifdef __HP_aCC
 DSET__HP_aCC=1
 DVAL__HP_aCC=__HP_aCC
-#endif
-
-#ifdef __IAR_SYSTEMS_ICC__
-DSET__IAR_SYSTEMS_ICC__=1
-#endif
-
-#ifdef __VER__
-DSET__VER__=1
-DVAL__VER__=__VER__
 #endif
 
 #ifdef __xlc__
@@ -3484,10 +3364,6 @@ DVAL__IBMCPP__=__IBMCPP__
 #ifdef __COMPILER_VER__
 DSET__COMPILER_VER__=1
 DVAL__COMPILER_VER__=__COMPILER_VER__
-#endif
-
-#ifdef __IMAGECRAFT__
-DSET__IMAGECRAFT__=1
 #endif
 
 #ifdef __INTEL_COMPILER
@@ -3587,35 +3463,9 @@ DSET__PGIC_PATCHLEVEL__=1
 DVAL__PGIC_PATCHLEVEL__=__PGIC_PATCHLEVEL__
 #endif
 
-#ifdef __RENESAS__
-DSET__RENESAS__=1
-#endif
-
-#ifdef __HITACHI__
-DSET__HITACHI__=1
-#endif
-
-#ifdef __RENESAS_VERSION__
-DSET__RENESAS_VERSION__=1
-DVAL__RENESAS_VERSION__=__RENESAS_VERSION__
-#endif
-
-#ifdef __HITACHI_VERSION__
-DSET__HITACHI_VERSION__=1
-DVAL__HITACHI_VERSION__=__HITACHI_VERSION__
-#endif
-
 #ifdef SDCC
 DSETSDCC=1
 DVALSDCC=SDCC
-#endif
-
-#ifdef __SNC__
-DSET__SNC__=1
-#endif
-
-#ifdef __VOSC__
-DSET__VOSC__=1
 #endif
 
 #ifdef __TI_COMPILER_VERSION__
@@ -3625,10 +3475,6 @@ DVAL__TI_COMPILER_VERSION__=__TI_COMPILER_VERSION__
 
 #ifdef __TINYC__
 DSET__TINYC__=1
-#endif
-
-#ifdef __VBCC__
-DSET__VBCC__=1
 #endif
 
 #ifdef __WATCOMC__
