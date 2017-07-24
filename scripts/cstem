@@ -246,8 +246,6 @@ cat <<EOF
 COMPILERS
 --------------------------------------------------------------------------------
 armc              ARM Compiler (by ARM)
-c166              Keil C166
-c51               Keil C51
 clang             Clang
 compcert          CompCert C
 gcc               GCC
@@ -756,27 +754,6 @@ read_cc_props_base() {
       tbuf=`expr "0$DVAL__INTEL_COMPILER" % 100`
       prop_vminor=`expr "0$tbuf" / 10`
       prop_vrevision=`expr "0$DVAL__INTEL_COMPILER" % 10`
-    fi
-  fi
-
-  if test -n "$DSET__C166__"; then
-    prop_id=c166
-
-    if test -n "$DVAL__C166__"; then
-      prop_vmajor=`expr "0$DVAL__C166__" / 100`
-      prop_vminor=`expr "0$DVAL__C166__" % 100`
-    fi
-  fi
-
-  if test -n "$DSET__C51__" || test -n "$DSET__CX51__"; then
-    prop_id=c51
-
-    if test -n "$DVAL__C51__"; then
-      prop_vmajor=`expr "0$DVAL__C51__" / 100`
-      prop_vminor=`expr "0$DVAL__C51__" % 100`
-    elif test -n "$DVAL__CX51__"; then
-      prop_vmajor=`expr "0$DVAL__CX51__" / 100`
-      prop_vminor=`expr "0$DVAL__CX51__" % 100`
     fi
   fi
 
@@ -3381,21 +3358,6 @@ DSET__ECC=1
 
 #ifdef __ICL
 DSET__ICL=1
-#endif
-
-#ifdef __C166__
-DSET__C166__=1
-DVAL__C166__=__C166__
-#endif
-
-#ifdef __C51__
-DSET__C51__=1
-DVAL__C51__=__C51__
-#endif
-
-#ifdef __CX51__
-DSET__CX51__=1
-DVAL__CX51__=__CX51__
 #endif
 
 #ifdef _MSC_VER
