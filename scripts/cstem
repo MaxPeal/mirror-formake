@@ -245,8 +245,6 @@ print_help_props() {
 cat <<EOF
 COMPILERS
 --------------------------------------------------------------------------------
-altium_chc        Altium C-to-Hardware (CHC) compiler
-altium_cmb        Altium MicroBlaze C
 armc              ARM Compiler (by ARM)
 c166              Keil C166
 c51               Keil C51
@@ -679,30 +677,6 @@ read_cc_props_base() {
 
 ################################################################################
 # DETECT COMPILER AND VERSION
-
-  if test -n "$DSET__CMB__"; then
-    prop_id=altium_cmb
-
-    if test -n "$DVAL__VERSION__"; then
-      prop_vmajor=`expr "0$DVAL__VERSION__" / 1000`
-      prop_vminor=`expr "0$DVAL__VERSION__" % 1000`
-    fi
-    if test -n "$DVAL__REVISION__"; then
-      prop_vrevision=`expr "0$DVAL__REVISION__" + 0`
-    fi
-  fi
-
-  if test -n "$DSET__CHC__"; then
-    prop_id=altium_chc
-
-    if test -n "$DVAL__VERSION__"; then
-      prop_vmajor=`expr "0$DVAL__VERSION__" / 1000`
-      prop_vminor=`expr "0$DVAL__VERSION__" % 1000`
-    fi
-    if test -n "$DVAL__REVISION__"; then
-      prop_vrevision=`expr "0$DVAL__REVISION__" + 0`
-    fi
-  fi
 
   if test -n "$DSET__CC_ARM"; then
     prop_id=armc
@@ -3407,24 +3381,6 @@ DSET__embedded_cplusplus=1
 
 
 /* COMPILERS */
-
-#ifdef __CMB__
-DSET__CMB__=1
-#endif
-
-#ifdef __VERSION__
-DSET__VERSION__=1
-DVAL__VERSION__=__VERSION__
-#endif
-
-#ifdef __REVISION__
-DSET__REVISION__=1
-DVAL__REVISION__=__REVISION__
-#endif
-
-#ifdef __CHC__
-DSET__CHC__=1
-#endif
 
 #ifdef __CC_ARM
 DSET__CC_ARM=1
