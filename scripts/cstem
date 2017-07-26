@@ -374,9 +374,6 @@ probe_os() {
     mirbsd)
       config_os=miros
       ;;
-    z/vm)
-      config_os=zvm
-      ;;
     riscos)
       config_os=riscos
       ;;
@@ -412,13 +409,6 @@ probe_os() {
     cygwin*)
       config_os=cygwin
       ;;
-    windows_95 | windows_98 | windows_nt)
-      case "$uname_m" in
-        8664)
-          config_os=mks
-          ;;
-      esac
-      ;;
     minix)
       config_os=minix
       ;;
@@ -428,17 +418,11 @@ probe_os() {
     linux)
       config_os=gnulinux
       ;;
-    haiku)
-      config_os=haiku
-      ;;
     procnto* | qnx)
       config_os=qnx
       ;;
     dragonfly)
       config_os=dragonfly
-      ;;
-    vmkernel)
-      config_os=esx
       ;;
     unixware)
       config_os=unixware
@@ -505,9 +489,9 @@ check_cc() {
   rm -f $test_dir/*
   cd $test_dir
 
-  test_c="cc_test.$c_ext"
+  test_src="test.$c_ext"
   test_pp="cc_test.pp"
-  cat >$test_c <<EOF
+  cat >$test_src <<EOF
 #define MY_DEFINE 1
 #ifdef MY_DEFINE
   #define CPP_OK 1234
@@ -518,7 +502,7 @@ int cpp_result = CPP_OK;
 EOF
   if test $cmd_id = ticc; then
     rm -f $test_pp
-    ($prop_cmd $prop_cflags $CPP_FLAG $test_c >/dev/null) 2>/dev/null
+    ($prop_cmd $prop_cflags $CPP_FLAG $test_src >/dev/null) 2>/dev/null
     ret_code=$?
     if test ! -f $test_pp; then
       cd $orig_dir
@@ -531,7 +515,7 @@ EOF
       return
     fi
   else
-    ($prop_cmd $prop_cflags $CPP_FLAG $test_c >cc_test_out) 2>/dev/null
+    ($prop_cmd $prop_cflags $CPP_FLAG $test_src >cc_test_out) 2>/dev/null
     ret_code=$?
     if test $ret_code -ne 0; then
       cd $orig_dir
@@ -545,7 +529,6 @@ EOF
     fi
   fi
 
-  test_src="test.$c_ext"
 if test $cstem_mode = "c++"; then
   cat > $test_src <<EOF
 class test_class
@@ -1511,7 +1494,6 @@ setup_test_dir() {
   
   test_src_base=test_src_base.$c_ext
   
-  rm -f $test_src_base
   echo "" >$test_src_base
   for inc in $op_with_inc; do
     inc=`echo "$inc" | sed 's/[<]//' | sed 's/[>]//'`
@@ -2116,6 +2098,9 @@ if test x$mode_test = x1; then
   log_title "TEST COMPILER"
 
   probe_base
+  cc_c="$prop_cmd $c_flag"
+  cc_cf="$cc_c $CFLAGS $op_test_flags"
+
   cd $test_dir
 
   if test x$probe_cc_ok != x1; then
@@ -2128,13 +2113,13 @@ if test x$mode_test = x1; then
   elif test x$op_test_cc = x1; then
     echo_status -l "%s\n" "checking compiler $CC ... OK"
   fi
-  rm -f test.$c_ext
-  rm -f test.o*
 
 ################################################################################
 # SET UP TEST DIR
   setup_test_dir
   test_src=test_src.$c_ext
+  test_obj=test.$obj_ext
+  test_exe=app$exe_ext
   
 ################################################################################
 # SET UP LINKER
@@ -2143,26 +2128,27 @@ if test x$mode_test = x1; then
   else
     LD_CMD=$prop_cmd
   fi
+  linker_flags="$LDFLAGS $op_test_ldflags"
   
 ################################################################################
 # TEST CFLAGS
   if test -n "$CFLAGS"; then
     log_title "TEST ADDITIONAL COMPILER FLAGS (CFLAGS)"
 
-    cat <<EOF >test.$c_ext
+    cat <<EOF >$test_src
 int main(int argc, char *argv[]) {
   return 0;
 }
 EOF
-    log_src test.$c_ext
-    echo "$prop_cmd $CFLAGS $c_flag test.$c_ext" >> $cstem_log
-    $prop_cmd $CFLAGS $c_flag test.$c_ext>> $cstem_log 2>&1
+    log_src $test_src
+    echo "$cc_c $CFLAGS $test_src" >> $cstem_log
+    $cc_c $CFLAGS $test_src>> $cstem_log 2>&1
     ret=$?
     if test $ret -ne 0; then
       echo_status "%s\n" "checking compiler flags '$CFLAGS'... Failed"
       clean_exit $ret
     fi
-    rm -f test.$c_ext
+    rm -f $test_src
     rm -f test.o*
   fi
 
@@ -2172,14 +2158,14 @@ EOF
     log_title "TEST COMPILER FLAGS"
     echo_status -l "%s" "checking compiler flags $op_test_flags ... "
 
-    cat <<EOF >test.$c_ext
+    cat <<EOF >$test_src
 int main(int argc, char *argv[]) {
   return 0;
 }
 EOF
-    log_src test.$c_ext
-    echo "$prop_cmd $CFLAGS $op_test_flags $c_flag test.$c_ext" >> $cstem_log
-    $prop_cmd $CFLAGS $op_test_flags $c_flag test.$c_ext>> $cstem_log 2>&1
+    log_src $test_src
+    echo "$cc_cf $test_src" >> $cstem_log
+    $cc_cf $test_src>> $cstem_log 2>&1
     ret=$?
     if test $ret -ne 0; then
       echo_status "%s\n" "Failed"
@@ -2187,8 +2173,8 @@ EOF
       for flag in $op_test_flags; do
        echo_status "%s" "  $flag ... "
        flags="$flags $flag"
-       echo "$prop_cmd $CFLAGS $flags $c_flag test.$c_ext" >> $cstem_log
-       $prop_cmd $CFLAGS $flags $c_flag test.$c_ext>> $cstem_log 2>&1
+       echo "$cc_c $CFLAGS $flags $test_src" >> $cstem_log
+       $cc_c $CFLAGS $flags $test_src>> $cstem_log 2>&1
        _ret=$?
        if test $_ret -ne 0; then
          echo_status "%s\n" "Failed"
@@ -2201,7 +2187,7 @@ EOF
     else
       echo_status "%s\n" "OK"
     fi
-    rm -f test.$c_ext
+    rm -f $test_src
     rm -f test.o*
   fi
  
@@ -2214,8 +2200,8 @@ EOF
     echo "int cstem_test = 1;" >> $test_src
 
     log_src $test_src
-    echo "$prop_cmd $CFLAGS $op_test_flags $c_flag $test_src" >> $cstem_log
-    $prop_cmd $CFLAGS $op_test_flags $c_flag $test_src >> $cstem_log 2>&1
+    echo "$cc_cf $test_src" >> $cstem_log
+    $cc_cf $test_src >> $cstem_log 2>&1
     ret=$?
     if test $ret -ne 0; then
       echo_status "%s\n" "checking headers '$op_with_inc'... Failed"
@@ -2237,8 +2223,8 @@ EOF
       echo "#include <$inc>" >> $test_src
       echo_status -l "%s" "checking header $inc ... "
       log_src $test_src
-      echo "$prop_cmd $CFLAGS $op_test_flags $c_flag $test_src" >> $cstem_log
-      $prop_cmd $CFLAGS $op_test_flags $c_flag $test_src >> $cstem_log 2>&1
+      echo "$cc_cf $test_src" >> $cstem_log
+      $cc_cf $test_src >> $cstem_log 2>&1
       ret=$?
       if test $ret -ne 0; then
         echo_status "%s\n" "Failed"
@@ -2331,8 +2317,8 @@ EOF
       fi
     fi
     log_src $test_src
-    echo "$prop_cmd $CFLAGS $op_test_flags $c_flag $test_src" >> $cstem_log
-    $prop_cmd $CFLAGS $op_test_flags $c_flag $test_src >> $cstem_log 2>&1
+    echo "$cc_cf $test_src" >> $cstem_log
+    $cc_cf $test_src >> $cstem_log 2>&1
     ret=$?
     if test $ret -ne 0; then
       echo_status "%s\n" "Failed"
@@ -2363,8 +2349,8 @@ EOF
     
       echo_status -l "%s" "checking type $type_string ... "
       log_src $test_src
-      echo "$prop_cmd $CFLAGS $op_test_flags $c_flag $test_src" >> $cstem_log
-      $prop_cmd $CFLAGS $op_test_flags $c_flag $test_src >> $cstem_log 2>&1
+      echo "$cc_cf $test_src" >> $cstem_log
+      $cc_cf $test_src >> $cstem_log 2>&1
       ret=$?
       if test $ret -ne 0; then
         echo_status "%s\n" "Failed"
@@ -2400,8 +2386,8 @@ EOF
     
       echo_status -l "%s" "checking enum $enum ... "
       log_src $test_src
-      echo "$prop_cmd $CFLAGS $op_test_flags $c_flag $test_src" >> $cstem_log
-      $prop_cmd $CFLAGS $op_test_flags $c_flag $test_src >> $cstem_log 2>&1
+      echo "$cc_cf $test_src" >> $cstem_log
+      $cc_cf $test_src >> $cstem_log 2>&1
       ret=$?
       if test $ret -ne 0; then
         echo_status "%s\n" "Failed"
@@ -2433,17 +2419,17 @@ EOF
       echo_status -l "%s" "checking linker $LD_CMD ... "
     fi
 
-    cat <<EOF >test.$c_ext
+    cat <<EOF >$test_src
 int main(int argc, char *argv[]) {
   return 0;
 }
 EOF
-    log_src test.$c_ext
-    echo "$prop_cmd $CFLAGS $op_test_flags $c_flag $o_obj_flag test.$obj_ext test.$c_ext" >> $cstem_log
-    $prop_cmd $CFLAGS $op_test_flags $c_flag $o_obj_flag test.$obj_ext test.$c_ext >> $cstem_log 2>&1
+    log_src $test_src
+    echo "$cc_cf $o_obj_flag $test_obj $test_src" >> $cstem_log
+    $cc_cf $o_obj_flag $test_obj $test_src >> $cstem_log 2>&1
     
-    echo "$LD_CMD $o_exe_flag app$exe_ext test.$obj_ext" >> $cstem_log
-    $LD_CMD $o_exe_flag app$exe_ext test.$obj_ext>> $cstem_log 2>&1
+    echo "$LD_CMD $o_exe_flag $test_exe $test_obj" >> $cstem_log
+    $LD_CMD $o_exe_flag $test_exe $test_obj>> $cstem_log 2>&1
     ret=$?
     if test $ret -ne 0; then
       if test x$op_test_ld = x1; then
@@ -2462,7 +2448,7 @@ EOF
     fi
     rm -f app*
     rm -f test.o*
-    rm -f test.$c_ext
+    rm -f $test_src
   fi
 
 ################################################################################
@@ -2470,17 +2456,17 @@ EOF
   if test x$op_disable_ld = x && test -n "$LDFLAGS"; then
     log_title "TEST ADDITIONAL LINKER FLAGS (LDFLAGS)"
 
-    cat <<EOF >test.$c_ext
+    cat <<EOF >$test_src
 int main(int argc, char *argv[]) {
   return 0;
 }
 EOF
-    log_src test.$c_ext
-    echo "$prop_cmd $CFLAGS $op_test_flags $c_flag $o_obj_flag test.$obj_ext test.$c_ext" >> $cstem_log
-    $prop_cmd $CFLAGS $op_test_flags $c_flag $o_obj_flag test.$obj_ext test.$c_ext>> $cstem_log 2>&1
+    log_src $test_src
+    echo "$cc_cf $o_obj_flag $test_obj $test_src" >> $cstem_log
+    $cc_cf $o_obj_flag $test_obj $test_src>> $cstem_log 2>&1
     
-    echo "$LD_CMD $o_exe_flag app$exe_ext test.$obj_ext $LDFLAGS" >> $cstem_log
-    $LD_CMD $o_exe_flag app$exe_ext test.$obj_ext $LDFLAGS >> $cstem_log 2>&1
+    echo "$LD_CMD $o_exe_flag $test_exe $test_obj $LDFLAGS" >> $cstem_log
+    $LD_CMD $o_exe_flag $test_exe $test_obj $LDFLAGS >> $cstem_log 2>&1
     ret=$?
     if test $ret -ne 0; then
       echo_status "%s\n" "checking linker flags '$LDFLAGS'... Failed"
@@ -2491,7 +2477,7 @@ EOF
     fi
     rm -f app*
     rm -f test.o*
-    rm -f test.$c_ext
+    rm -f $test_src
   fi
 
 ################################################################################
@@ -2500,17 +2486,17 @@ EOF
     log_title "TEST LD FLAGS"
     echo_status -l "%s" "checking linker flags $op_test_ldflags ... "
 
-    cat <<EOF >test.$c_ext
+    cat <<EOF >$test_src
 int main(int argc, char *argv[]) {
   return 0;
 }
 EOF
-    log_src test.$c_ext
-    echo "$prop_cmd $CFLAGS $op_test_flags $c_flag $o_obj_flag test.$obj_ext test.$c_ext" >> $cstem_log
-    $prop_cmd $CFLAGS $op_test_flags $c_flag $o_obj_flag test.$obj_ext test.$c_ext>> $cstem_log 2>&1
+    log_src $test_src
+    echo "$cc_cf $o_obj_flag $test_obj $test_src" >> $cstem_log
+    $cc_cf $o_obj_flag $test_obj $test_src>> $cstem_log 2>&1
 
-    echo "$LD_CMD $o_exe_flag app$exe_ext test.$obj_ext $LDFLAGS $op_test_ldflags" >> $cstem_log
-    $LD_CMD $o_exe_flag app$exe_ext test.$obj_ext $LDFLAGS $op_test_ldflags >> $cstem_log 2>&1
+    echo "$LD_CMD $o_exe_flag $test_exe $test_obj $linker_flags" >> $cstem_log
+    $LD_CMD $o_exe_flag $test_exe $test_obj $linker_flags >> $cstem_log 2>&1
     ret=$?
     if test $ret -ne 0; then
       echo_status "%s\n" "Failed"
@@ -2518,8 +2504,8 @@ EOF
       for flag in $op_test_ldflags; do
         echo_status "%s" "  $flag ... "
         flags="$flags $flag"
-        echo "$LD_CMD $o_exe_flag app$exe_ext test.$obj_ext $LDFLAGS $flags" >> $cstem_log
-        $LD_CMD $o_exe_flag app$exe_ext test.$obj_ext $LDFLAGS $flags >> $cstem_log 2>&1
+        echo "$LD_CMD $o_exe_flag $test_exe $test_obj $LDFLAGS $flags" >> $cstem_log
+        $LD_CMD $o_exe_flag $test_exe $test_obj $LDFLAGS $flags >> $cstem_log 2>&1
         _ret=$?
         if test $_ret -ne 0; then
           echo_status "%s\n" "Failed"
@@ -2549,17 +2535,17 @@ EOF
     log_title "TEST LIBRARIES"
     echo_status -l "%s" "checking libraries $op_libs ... "
 
-    cat <<EOF >test.$c_ext
+    cat <<EOF >$test_src
 int main(int argc, char *argv[]) {
   return 0;
 }
 EOF
-    log_src test.$c_ext
-    echo "$prop_cmd $CFLAGS $op_test_flags $c_flag $o_obj_flag test.$obj_ext test.$c_ext" >> $cstem_log
-    $prop_cmd $CFLAGS $op_test_flags $c_flag $o_obj_flag test.$obj_ext test.$c_ext>> $cstem_log 2>&1
+    log_src $test_src
+    echo "$cc_cf $o_obj_flag $test_obj $test_src" >> $cstem_log
+    $cc_cf $o_obj_flag $test_obj $test_src>> $cstem_log 2>&1
 
-    echo "$LD_CMD $o_exe_flag app$exe_ext test.$obj_ext $LDFLAGS $op_test_ldflags $op_libs" >> $cstem_log
-    $LD_CMD $o_exe_flag app$exe_ext test.$obj_ext $LDFLAGS $op_test_ldflags $op_libs >> $cstem_log 2>&1
+    echo "$LD_CMD $o_exe_flag $test_exe $test_obj $linker_flags $op_libs" >> $cstem_log
+    $LD_CMD $o_exe_flag $test_exe $test_obj $linker_flags $op_libs >> $cstem_log 2>&1
     ret=$?
     if test $ret -ne 0; then
       echo_status "%s\n" "Failed"
@@ -2567,8 +2553,8 @@ EOF
       for lib in $op_libs; do
         echo_status "%s" "  $lib ... "
         libs="$libs $lib"
-        echo "$LD_CMD $o_exe_flag app$exe_ext test.$obj_ext $LDFLAGS $op_test_ldflags $libs" >> $cstem_log
-        $LD_CMD $o_exe_flag app$exe_ext test.$obj_ext $LDFLAGS $op_test_ldflags $libs >> $cstem_log 2>&1
+        echo "$LD_CMD $o_exe_flag $test_exe $test_obj $linker_flags $libs" >> $cstem_log
+        $LD_CMD $o_exe_flag $test_exe $test_obj $linker_flags $libs >> $cstem_log 2>&1
         _ret=$?
         if test $_ret -ne 0; then
           echo_status "%s\n" "Failed"
@@ -2603,8 +2589,8 @@ EOF
   
     echo_status -l "%s" "checking source string $op_cstr ... "
     log_src $test_src
-    echo "$prop_cmd $CFLAGS $op_test_flags $c_flag $o_obj_flag test.$obj_ext $test_src" >> $cstem_log
-    $prop_cmd $CFLAGS $op_test_flags $c_flag $o_obj_flag test.$obj_ext $test_src >> $cstem_log 2>&1
+    echo "$cc_cf $o_obj_flag $test_obj $test_src" >> $cstem_log
+    $cc_cf $o_obj_flag $test_obj $test_src >> $cstem_log 2>&1
     ret=$?
     if test $ret -ne 0; then
       echo_status "%s\n" "Failed"
@@ -2614,16 +2600,16 @@ EOF
       fi
     else
       if test x$op_disable_ld = x; then
-        echo "$LD_CMD $o_exe_flag app$exe_ext test.$obj_ext $LDFLAGS $op_test_ldflags $op_libs" >> $cstem_log
-        $LD_CMD $o_exe_flag app$exe_ext test.$obj_ext $LDFLAGS $op_test_ldflags $op_libs >> $cstem_log 2>&1
+        echo "$LD_CMD $o_exe_flag $test_exe $test_obj $linker_flags $op_libs" >> $cstem_log
+        $LD_CMD $o_exe_flag $test_exe $test_obj $linker_flags $op_libs >> $cstem_log 2>&1
         ret=$?
         if test $ret -ne 0; then
           rm -f test.o*
           echo "test again ..." >> $cstem_log
           echo "int main(int argc, char *argv[]) { return 0;}" >>$test_src
           log_src $test_src
-          echo "$prop_cmd $CFLAGS $op_test_flags $c_flag $o_obj_flag test.$obj_ext $test_src" >> $cstem_log
-          $prop_cmd $CFLAGS $op_test_flags $c_flag $o_obj_flag test.$obj_ext $test_src >> $cstem_log 2>&1
+          echo "$cc_cf $o_obj_flag $test_obj $test_src" >> $cstem_log
+          $cc_cf $o_obj_flag $test_obj $test_src >> $cstem_log 2>&1
           ret=$?
           if test $ret -ne 0; then
             echo_status "%s\n" "Failed"
@@ -2632,8 +2618,8 @@ EOF
               clean_exit $ret
             fi
           else
-            echo "$LD_CMD $o_exe_flag app$exe_ext test.$obj_ext $LDFLAGS $op_test_ldflags $op_libs" >> $cstem_log
-            $LD_CMD $o_exe_flag app$exe_ext test.$obj_ext $LDFLAGS $op_test_ldflags $op_libs >> $cstem_log 2>&1
+            echo "$LD_CMD $o_exe_flag $test_exe $test_obj $linker_flags $op_libs" >> $cstem_log
+            $LD_CMD $o_exe_flag $test_exe $test_obj $linker_flags $op_libs >> $cstem_log 2>&1
             ret=$?
             if test $ret -ne 0; then
               echo_status "%s\n" "Failed"
@@ -2667,8 +2653,8 @@ EOF
       echo "int main(int argc, char *argv[]) {int cstem_var = (int) $var; return 0;}" >> $test_src
     
       log_src $test_src
-      echo "$prop_cmd $CFLAGS $op_test_flags $c_flag $o_obj_flag test.$obj_ext $test_src" >> $cstem_log
-      $prop_cmd $CFLAGS $op_test_flags $c_flag $o_obj_flag test.$obj_ext $test_src >> $cstem_log 2>&1
+      echo "$cc_cf $o_obj_flag $test_obj $test_src" >> $cstem_log
+      $cc_cf $o_obj_flag $test_obj $test_src >> $cstem_log 2>&1
       ret=$?
       if test $ret -ne 0; then
         test_failed=1
@@ -2679,8 +2665,8 @@ EOF
       fi
     
       if test x$op_disable_ld = x; then
-        echo "$LD_CMD $o_exe_flag app$exe_ext test.$obj_ext $LDFLAGS $op_test_ldflags $op_libs" >> $cstem_log
-        $LD_CMD $o_exe_flag app$exe_ext test.$obj_ext $LDFLAGS $op_test_ldflags $op_libs >> $cstem_log 2>&1
+        echo "$LD_CMD $o_exe_flag $test_exe $test_obj $linker_flags $op_libs" >> $cstem_log
+        $LD_CMD $o_exe_flag $test_exe $test_obj $linker_flags $op_libs >> $cstem_log 2>&1
         ret=$?
         if test $ret -ne 0; then
           test_failed=1
@@ -2723,8 +2709,8 @@ EOF
       echo "int main(int argc, char *argv[]) {void *cstem_sym = $sym; return 0;}" >> $test_src
     
       log_src $test_src
-      echo "$prop_cmd $CFLAGS $op_test_flags $c_flag $o_obj_flag test.$obj_ext $test_src" >> $cstem_log
-      $prop_cmd $CFLAGS $op_test_flags $c_flag $o_obj_flag test.$obj_ext $test_src >> $cstem_log 2>&1
+      echo "$cc_cf $o_obj_flag $test_obj $test_src" >> $cstem_log
+      $cc_cf $o_obj_flag $test_obj $test_src >> $cstem_log 2>&1
       ret=$?
       if test $ret -ne 0; then
         echo_status "%s\n" "Failed"
@@ -2735,8 +2721,8 @@ EOF
       fi
     
       if test x$op_disable_ld = x; then
-        echo "$LD_CMD $o_exe_flag app$exe_ext test.$obj_ext $LDFLAGS $op_test_ldflags $op_libs" >> $cstem_log
-        $LD_CMD $o_exe_flag app$exe_ext test.$obj_ext $LDFLAGS $op_test_ldflags $op_libs >> $cstem_log 2>&1
+        echo "$LD_CMD $o_exe_flag $test_exe $test_obj $linker_flags $op_libs" >> $cstem_log
+        $LD_CMD $o_exe_flag $test_exe $test_obj $linker_flags $op_libs >> $cstem_log 2>&1
         ret=$?
         if test $ret -ne 0; then
           echo_status "%s\n" "Failed"
@@ -2778,8 +2764,8 @@ EOF
       echo "int main(int argc, char *argv[]) {int cstem_var = (int) $var; return 0;}" >> $test_src
     
       log_src $test_src
-      echo "$prop_cmd $CFLAGS $op_test_flags $c_flag $o_obj_flag test.$obj_ext $test_src" >> $cstem_log
-      $prop_cmd $CFLAGS $op_test_flags $c_flag $o_obj_flag test.$obj_ext $test_src >> $cstem_log 2>&1
+      echo "$cc_cf $o_obj_flag $test_obj $test_src" >> $cstem_log
+      $cc_cf $o_obj_flag $test_obj $test_src >> $cstem_log 2>&1
       ret=$?
       if test $ret -ne 0; then
         echo_status "%s\n" "Failed"
@@ -2790,8 +2776,8 @@ EOF
       fi
     
       if test x$op_disable_ld = x; then
-        echo "$LD_CMD $o_exe_flag app$exe_ext test.$obj_ext $LDFLAGS $op_test_ldflags $op_libs" >> $cstem_log
-        $LD_CMD $o_exe_flag app$exe_ext test.$obj_ext $LDFLAGS $op_test_ldflags $op_libs >> $cstem_log 2>&1
+        echo "$LD_CMD $o_exe_flag $test_exe $test_obj $linker_flags $op_libs" >> $cstem_log
+        $LD_CMD $o_exe_flag $test_exe $test_obj $linker_flags $op_libs >> $cstem_log 2>&1
         ret=$?
         if test $ret -ne 0; then
           echo_status "%s\n" "Failed"
@@ -2834,8 +2820,8 @@ EOF
       echo "int main(int argc, char *argv[]) { int cstem_var = $func(1); return cstem_var; }" >> $test_src
     
       log_src $test_src
-      echo "$prop_cmd $CFLAGS $op_test_flags $c_flag $o_obj_flag test.$obj_ext $test_src" >> $cstem_log
-      $prop_cmd $CFLAGS $op_test_flags $c_flag $o_obj_flag test.$obj_ext $test_src >> $cstem_log 2>&1
+      echo "$cc_cf $o_obj_flag $test_obj $test_src" >> $cstem_log
+      $cc_cf $o_obj_flag $test_obj $test_src >> $cstem_log 2>&1
       ret=$?
       if test $ret -ne 0; then
         echo_status "%s\n" "Failed"
@@ -2846,8 +2832,8 @@ EOF
       fi
     
       if test x$op_disable_ld = x; then
-        echo "$LD_CMD $o_exe_flag app$exe_ext test.$obj_ext $LDFLAGS $op_test_ldflags $op_libs" >> $cstem_log
-        $LD_CMD $o_exe_flag app$exe_ext test.$obj_ext $LDFLAGS $op_test_ldflags $op_libs >> $cstem_log 2>&1
+        echo "$LD_CMD $o_exe_flag $test_exe $test_obj $linker_flags $op_libs" >> $cstem_log
+        $LD_CMD $o_exe_flag $test_exe $test_obj $linker_flags $op_libs >> $cstem_log 2>&1
         ret=$?
         if test $ret -ne 0; then
           echo_status "%s\n" "Failed"
@@ -2899,8 +2885,8 @@ EOF
       src_base=`basename "$src_full"`
     
       log_src $src_base
-      echo "$prop_cmd $CFLAGS $op_test_flags $c_flag $o_obj_flag test.$obj_ext $src_base" >> $cstem_log
-      $prop_cmd $CFLAGS $op_test_flags $c_flag $o_obj_flag test.$obj_ext $src_base >> $cstem_log 2>&1
+      echo "$cc_cf $o_obj_flag $test_obj $src_base" >> $cstem_log
+      $cc_cf $o_obj_flag $test_obj $src_base >> $cstem_log 2>&1
       ret=$?
       if test $ret -ne 0; then
         echo_status "%s\n" "Failed"
@@ -2911,8 +2897,8 @@ EOF
       fi
     
       if test x$op_disable_ld = x; then
-        echo "$LD_CMD $o_exe_flag app$exe_ext test.$obj_ext $LDFLAGS $op_test_ldflags $op_libs" >> $cstem_log
-        $LD_CMD $o_exe_flag app$exe_ext test.$obj_ext $LDFLAGS $op_test_ldflags $op_libs >> $cstem_log 2>&1
+        echo "$LD_CMD $o_exe_flag $test_exe $test_obj $linker_flags $op_libs" >> $cstem_log
+        $LD_CMD $o_exe_flag $test_exe $test_obj $linker_flags $op_libs >> $cstem_log 2>&1
         ret=$?
         if test $ret -ne 0; then
           echo_status "%s\n" "Failed"
@@ -3024,13 +3010,13 @@ if test x$mode_def = x1; then
     clean_exit 0
   fi
   CFLAGS=`echo "$op_flags_add $CFLAGS" | sed 's/^ *//' | sed 's/ *$//'`
-
-
   op_with_inc=`echo "$op_with_inc" | sed 's/^ *//' | sed 's/ *$//'`
 
 ################################################################################
 # TEST COMPILER
   probe_base
+  cc_c="$prop_cmd $c_flag"
+
   cd $test_dir
 
   if test x$probe_base_ok != x1; then
@@ -3051,22 +3037,23 @@ if test x$mode_def = x1; then
   setup_test_dir
   test_src=test_src.$c_ext
   test_pp=test_src.pp
+  test_obj=test.$obj_ext
 
 ################################################################################
 # TEST CFLAGS
   if test -n "$CFLAGS"; then
-    cat <<EOF >test.$c_ext
+    cat <<EOF >$test_src
 int main(int argc, char *argv[]) {
   return 0;
 }
 EOF
-    $prop_cmd $CFLAGS $c_flag $o_obj_flag test.$obj_ext test.$c_ext 2>&1
+    $cc_c $CFLAGS $o_obj_flag $test_obj $test_src 2>&1
     ret=$?
     if test $ret -ne 0; then
       echo "%s" "checking compiler flags '$CFLAGS'... Failed" >&2
       clean_exit $ret
     fi
-    rm -f test.$c_ext
+    rm -f $test_src
     rm -f test.o*
   fi
 
@@ -3076,7 +3063,7 @@ EOF
     cat $test_src_base > $test_src
     echo "int cstem_test = 1;" >> $test_src
 
-    $prop_cmd $CFLAGS $c_flag $o_obj_flag test.$obj_ext $test_src 2>&1
+    $cc_c $CFLAGS $o_obj_flag $test_obj $test_src 2>&1
     ret=$?
     if test $ret -ne 0; then
       echo "%s" "checking headers '$op_with_inc'... Failed" >&2
