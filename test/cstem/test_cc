@@ -1,6 +1,6 @@
 #!/bin/sh
 
-export LM_LICENSE_FILE=/home/alex/heap/projects/formake/compilers/pgi/license.dat
+#export LM_LICENSE_FILE=/home/alex/heap/projects/formake/compilers/pgi/license.dat
 
 cstem="./cstem test CC=gcc"
 #cstem="./cstem test CC=x86_64-w64-mingw32-gcc"
