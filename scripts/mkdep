@@ -250,7 +250,7 @@ for file in $op_sources; do
 #          mv $tmp_file1 $tmp_file2
           ;;
         *)
-          $cc_cmd -E $cc_flags $file | sed -n 's!^# *[0-9][0-9]* *"\([^<][^"]*\)".*!\1!p' | sort | uniq >$tmp_file
+          $cc_cmd -E $cc_flags $file | sed -n 's!^# *[0-9][0-9]* *"\([^<][^"]*\)".*!\1!p' | sort | uniq >$tmp_file1
           cat $tmp_file1 | sed "s/^/$out_dir\/${base_name}.o: /" >$tmp_file2
           cat $tmp_file1 | sed 's/ *$/:/' >>$tmp_file2
           ;;
@@ -272,7 +272,7 @@ for file in $op_sources; do
     if test ! -d "$out_dir"; then
       mkdir "$out_dir"
       if test ! -d "$out_dir"; then
-        rm -f $tmp_file
+        rm -f $tmp_file1
         rm -f $tmp_file2
         rm -f $tmp_file3
         exit 1
@@ -283,12 +283,12 @@ for file in $op_sources; do
 done
 
 if test -n "$op_out_file" && test -f $op_out_file; then
-  cat $op_out_file | sort | uniq >$tmp_file
+  cat $op_out_file | sort | uniq >$tmp_file1
   cat $tmp_file1 > $op_out_file
 elif test x$op_stdout = x1 && test -f $tmp_file3; then
   cat $tmp_file3 | sort | uniq
 fi
-rm -f $tmp_file
+rm -f $tmp_file1
 rm -f $tmp_file2
 rm -f $tmp_file3
 
