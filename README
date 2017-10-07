@@ -6,7 +6,7 @@ Formake provides generic project that builds several executables and libraries.
 
 Formake declares to be bloatless, portable, conform to known UNIX standards and be
 simple in sense of using only standard Shell and Make.
-Formake is for those power users and developer that know and respect Shell and Make.
+Formake is for those power users and developers that know and respect Shell and Make.
 
 It is expected that user takes Formake template project and tunes it to his needs.
 
