@@ -31,7 +31,7 @@ $PROGRAM: $OBJECTS
 	$CC_CMD -o \$@ $OBJECTS $LDFLAGS
 
 install: $PROGRAM
-	install -m 0755 -D $PROGRAM $BINDIR
+	install -m 0755 -D $PROGRAM $BINDIR/$PROGRAM
 
 uninstall:
 	rm -f $BINDIR/$PROGRAM
