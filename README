@@ -1,0 +1,69 @@
+Formake is a generic build system template OR build system from scratch project.
+
+Formake provides generic project that builds several executables and libraries.
+
+Formake declares to be bloatless, portable, conform to known UNIX standards and be
+simple in sense of using only standard Shell and Make.
+Formake is for those power users and developer that know and respect Shell and Make.
+
+It is expected that user takes Formake template project and tunes it to his needs.
+
+Formake builds system must be able to run on most modern and/or widely used systems.
+It covers 99.99**% of all systems.
+
+Formake intentionally ignores support of very old, hardly specialized systems that are
+not widely adopted. It is in order to be not another Autohell.
+
+Formake declares several principles:
+  * no need to invent new automation tool when we have Shell
+  * no need to use any other scripting language when we have Shell
+  * no need to use freaky Make extentions when we have ...
+  * use standard Make and write Make rules manually when no automation is required
+  * use Shell to automate Makefile generation only in parts and only when it is really needed (sometimes it is)
+
+Of course Shell does not replace Make. Make itself is good but lacks automation for
+configurations that are little more complex than Hello Word project. Normally most of Makefile can be
+written in standard Make language. Make is declarative language. This is good for simple parts but
+not enough when we need conditional setup. For example, based on compiler type we must select
+proper C flags. One solution is to generate global config.mk that will be included by Makefiles. This
+solution works but more convenient and flexible approach would be to put the whole Makefile inside
+Shell script, mkmf script, and in this file we can wrap Makefile script inside here-document. So we wrap
+Makefile in Shell and thus extend solely declarative Make with imperative full fledged programming
+language. In mkmf we use Make language in most parts and get simplicity and readibility, and use Shell where
+we need some sort of automation and there we get Shell power.
+
+Normal build system configuration is split on 2 stages:
+  * configuration stage
+  * Makefile generation stage
+
+Configuration stage is concentrated in toplevel 'configure' script.
+Makefile generation stage is spread in many scripts that generate Makefiles in
+subdirectories. In Formake such scripts are named 'mkmf'. Every mkmf script
+generates one Makefile. All scripts are chained. It means that every mkmf script
+runs other mkmf scripts in it's subdirectories starting from toplevel mkmf. Toplevel
+configure script starts toplevel mkmf script and the call-chain goes down the build
+project hierarchy. So we get a tree of correctly generated Makefiles.
+
+First of all, 'configure' script must be written manually, it must be simple. It be
+structures and be easy to read. 'configure' performs the following 2 base tasks:
+  * test dependencies
+  * configure build system
+
+configure script is split on the following parts:
+  - base configuration variables at the head. Such variables define base project parameters:
+    name, version etc.
+  - parse user options. Formake 'configure' provides standard 'GNU configure' options for C/C++
+    projects.
+  - probe host system parameters. It is performed using 'pofig' script. It gives everything you
+    need to know about build host.
+  - check dependencies: tools, compilers, libraries. It is performed using cmdok, cprobe, cltest
+    and cppdef scripts. If your project depends on any tools or libraries, these scripts are
+    what you need.
+  - generate build configuration file, build.conf. This config file contains configuration
+    variables global for the whole build system. Other build scripts include it to get data
+    about host system, compiler, user options, found dependencies etc.
+  - run Makefiles generation. Makefiles are generated using 'mkmf' chained scripts.
+
+
+To be continued ...
+
