@@ -1,0 +1,1230 @@
+#!/bin/sh
+#
+# cltest
+#
+# Copyright (c) 2015-2017, Oleksii Cherniavskyi
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+################################################################################
+# JUMP TO MODERN SHELL IF POSSIBLE
+(test_exit_code_127_sdfjsdfksjdhfksjdhf  >/dev/null) 2>/dev/null
+if test $? -ne 127; then
+  if test -z "$CLTEST_BASH_REDIRECT"; then
+    CLTEST_BASH_REDIRECTED=1
+    export CLTEST_BASH_REDIRECTED
+    if test -x /bin/bash; then
+      exec /bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/bin/bash; then
+      exec /usr/bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/local/bin/bash; then
+      exec /usr/local/bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/pkg/bin/bash; then
+      exec /usr/pkg/bin/bash "$0" ${1+"$@"}
+    else
+      (bash -c "pwd" >/dev/null) 2>/dev/null
+      if test $? -eq 0; then
+        exec bash "$0" ${1+"$@"}
+      fi
+    fi
+  fi
+fi
+CLTEST_BASH_REDIRECTED=
+export CLTEST_BASH_REDIRECTED
+################################################################################
+
+script_name=`basename "$0"`
+orig_dir=`pwd`
+lang_mode=c
+test_dir=/tmp/cltest_$$
+tmp_buf="$test_dir/cltest_buf.txt"
+cltest_log=$test_dir/cltest.log
+c_ext="c"
+script_cmd=`echo "$0" | sed "s#^\(\.\.*\)/#$orig_dir/\1/#"`
+
+print_help() {
+cat <<EOF
+C/C++ test tool
+
+Usage: $script_name [cmd] [options]
+
+Options:
+ cmd                    optional 1st parameter specifies compiler command
+ "#if* ..."             preprocessor conditional directives
+ -d, -def=<list>        preprocessor defines
+ "*() .."               library functions
+ -f, -func=<list>       library functions
+ -t, -type=<list>       types (space or ; separated list)
+ -e, -enum=<list>       enum constants
+ -g, -var=<list>        extern variables
+ -s, -sym=<list>        library symbols
+ =*                     rvalue (define, enum, variable)
+ -r, -rval=<list>       rvalues
+ -c, -cstr=<text>       source string
+ *.c|*.C|*.cpp          source files. Other file extensions are recognized
+ *.h|*.H|*.hpp          header files. Other file extensions are recognized
+ -i, -inc=<list>        header files
+ -l*|lib*|*.so          dynamic libraries
+ *.a                    static libraries
+ -I* -D* -U*            compiler flags
+ -L*                    linker flags
+ -cflags=<flags>        compiler flags
+ -ldflags=<flags>       linker flags
+ -n                     no echo
+ -w                     echo only on fail
+ -out=<file>            for every subtest generate status variable and write it to a FILE
+ -def-out=<file>        for every subtest generate status define and write it to a FILE
+ -status=<var>          generate status variable/define VAR=1 if test passed ok
+ -no-break              do not break on test fail
+ -log[=<file>]          print log to stdout or to a specified file
+ -v                     display version information and exit
+ -                      disable interpretation of the following parameters and pass them as compiler flags
+ ...                    unrecognized parameters are forwarded as compiler and linker flags
+EOF
+}
+
+print_version() {
+  cat <<EOF
+cltest 1.1
+Copyright (C) 2015-2017 Oleksii Cherniavskyi
+EOF
+}
+
+
+probe_cc() {
+  check_cc_found=
+  ($op_cmd >/dev/null) 2>/dev/null
+  if test $? -ge 126; then
+    return
+  fi
+  check_cc_found=1
+
+  probe_out=/tmp/cc_probe_$$.txt
+  rm -f $probe_out
+  cc_cmd0=`echo "$op_cmd" | sed 's# [^/]*$##'`
+  ($cc_cmd0 -version >>$probe_out) 2>>$probe_out
+  ($cc_cmd0 --version >>$probe_out) 2>>$probe_out
+  ($cc_cmd0 -V >>$probe_out) 2>>$probe_out
+  ($cc_cmd0 -qversion >>$probe_out) 2>>$probe_out
+  ($cc_cmd0 -h >>$probe_out) 2>>$probe_out
+  ($cc_cmd0 --help >>$probe_out) 2>>$probe_out
+  ($cc_cmd0 >>$probe_out) 2>>$probe_out
+
+  if grep "Texas Instruments" $probe_out | grep "Tools Copyright" >/dev/null; then
+    op_cctype=ticc
+  elif grep -i mingw $probe_out >/dev/null; then
+    op_cctype=mingw
+  elif grep -i gcc $probe_out >/dev/null && grep -i "free software foundation" $probe_out >/dev/null; then
+    op_cctype=gcc
+  elif grep -i "clang version" $probe_out >/dev/null; then
+    op_cctype=clang
+  elif grep "tcc version" $probe_out >/dev/null; then
+    op_cctype=tinyc
+  elif grep -i "Sun C" $probe_out >/dev/null; then
+    op_cctype=sunpro
+  elif grep -i "IBM XL C" $probe_out >/dev/null; then
+    op_cctype=xlc
+  elif grep -i "MIPSpro Compilers" $probe_out >/dev/null; then
+    op_cctype=mipspro
+  elif grep -i microsoft $probe_out >/dev/null; then
+    op_cctype=msc
+  elif grep -i "PGI Compilers and Tools" $probe_out >/dev/null; then
+    op_cctype=pgi
+  elif grep "SDCC" $probe_out >/dev/null; then
+    op_cctype=sdcc
+  else
+    op_cctype=cc
+  fi
+  rm -f $probe_out
+}
+
+echo_status() {
+  if test "$1" = "-l"; then
+    p1=$2
+    p2=$3
+    printf "\n# $p1\n" "$p2" >> $cltest_log
+  else
+    p1=$1
+    p2=$2
+  fi
+  if test x$op_no_echo = x; then
+    printf "$p1" "$p2"
+  elif test x$op_echo_fail = x1; then
+    printf "$p1" "$p2" >> $tmp_buf
+  fi
+}
+
+clean_exit() {
+  exit_status=$1
+
+  if test $exit_status != 0; then
+    if test x$op_echo_fail = x1 && test -f $tmp_buf; then
+      cat $tmp_buf
+    fi
+
+    if test x$CLTEST_NO_RECURSE = x && test x$op_no_echo = x || test x$op_echo_fail = x1; then
+      CLTEST_NO_RECURSE=1
+      export CLTEST_NO_RECURSE
+      rm -f $tmp_buf
+      if test -n "$have_flags$have_libs$have_src"; then
+        $script_cmd "$op_cmd" -w >$tmp_buf 2>&1
+        ret=$?
+        if test $ret = 0 && test -n "$have_libs$have_src" && test -n "$have_flags"; then
+          if test -n "$op_cflags"; then
+            $script_cmd "$op_cmd" -w -cflags="$op_cflags" >$tmp_buf 2>&1
+            ret=$?
+          fi
+          if test $ret = 0 && test -n "$op_ldflags"; then
+            $script_cmd "$op_cmd" -w -ldflags="$op_ldflags" >$tmp_buf 2>&1
+            ret=$?
+          fi
+        fi
+        if test $ret = 0 && test -n "$have_src" && test -n "$have_libs"; then
+          if test -n "$op_inc"; then
+            $script_cmd "$op_cmd" -w -inc="$op_inc" -cflags="$op_cflags" -ldflags="$op_ldflags" >$tmp_buf 2>&1
+          fi
+          if test $ret = 0 && test -n "$op_libs"; then
+            $script_cmd "$op_cmd" -w $op_libs -cflags="$op_cflags" -ldflags="$op_ldflags" >$tmp_buf 2>&1
+          fi
+        fi
+      fi
+      if test -f $tmp_buf; then
+        cat $tmp_buf | sed 's/^/  /'
+        rm -f $tmp_buf
+      fi
+    fi
+  fi
+
+  if test -f $cltest_log; then
+    if test x$op_echo_log = x1; then
+      printf "\n%s\n%s\n" "LOG" "----------------------------------------" >&2
+      cat $cltest_log >&2
+    fi
+    if test -n "$op_log_file"; then
+      cat $cltest_log >> $op_log_file
+    fi
+  fi
+  cd $orig_dir
+  if test -d $test_dir; then
+    rm -rf $test_dir
+  fi
+  exit $exit_status
+}
+
+
+log_title() {
+  cat <<EOF >>$cltest_log
+
+################################################################################
+# $1
+EOF
+}
+
+log_src() {
+  echo "****************************************">>$cltest_log
+  cat $1 | sed 's/^/* /g' >>$cltest_log
+  echo "****************************************">>$cltest_log
+}
+
+first_param=1
+op_cmd=
+op_cctype=
+def_num=0
+type_num=0
+op_func=
+op_enum=
+op_sym=
+op_rval=
+op_var=
+op_cstr=
+op_src=
+op_inc=
+op_libs=
+op_libs_rev=
+op_cflags=
+op_ldflags=
+op_no_echo=
+op_echo_fail=
+op_out=
+op_def_out=
+op_status_id=
+op_no_break=
+op_echo_log=
+op_log_file=
+have_src=
+have_libs=
+have_flags=
+forward_next=
+pass_over=
+
+while test $# -gt 0; do
+  if test -z "$pass_over"; then
+    case `echo "$1" | sed 's/^\s*//'` in
+      "") : ;;
+      -h|-help|--help)
+        print_help
+        exit 0
+        ;;
+      \#if*)
+        eval def$def_num=\$1
+        def_num=`expr $def_num + 1`
+        have_src=1
+        ;;
+      -d|-def=*)
+        test "$1" = "-d" && shift
+        def_str=`echo " $1" | sed 's/^ -def=//' | sed 's/^\s*//'`
+        if test -n "$def_str"; then
+          case "$def_str" in
+            '#'*)
+              eval def$def_num=\$def_str
+              def_num=`expr $def_num + 1`
+              ;;
+            *)
+              for def_name in $def_str; do
+                eval def$def_num=\$def_name
+                def_num=`expr $def_num + 1`
+              done
+              ;;
+          esac
+          have_src=1
+        fi
+        ;;
+      -t|-type=*)
+        test "$1" = "-t" && shift
+        types=$1
+        echo "$types" | grep ";" > /dev/null || types=`echo "$types" | sed 's/  */;/g'`
+        types=`echo ";$types" | sed 's/^;-type=//' | sed 's/^;*//' | sed 's/;*$//' | sed 's/;;*/;/g'`
+        if test -n "$types"; then
+          IFS_save=$IFS
+          IFS=';'
+          for type_str in $types; do
+            eval type$type_num=\$type_str
+            type_num=`expr $type_num + 1`
+          done
+          IFS=$IFS_save
+          have_src=1
+        fi
+        ;;
+      -e|-enum=*)
+        test "$1" = "-e" && shift
+        arg=`echo " $1" | sed 's/^ -enum=//' | sed 's/^\s*//'`
+        if test -n "$arg"; then
+          op_enum="$op_enum $arg"
+          have_src=1
+        fi
+        ;;
+      -g|-var=*)
+        test "$1" = "-g" && shift
+        arg=`echo " $1" | sed 's/^ -var=//' | sed 's/^\s*//'`
+        if test -n "$arg"; then
+          op_var="$op_var $arg"
+          have_src=1
+        fi
+        ;;
+      -s|-sym=*)
+        test "$1" = "-s" && shift
+        arg=`echo " $1" | sed 's/^ -sym=//' | sed 's/^\s*//'`
+        if test -n "$arg"; then
+          op_sym="$op_sym $arg"
+          have_src=1
+        fi
+        ;;
+      -r|=*|-rval=*)
+        test "$1" = "-r" && shift
+        arg=`echo " $1" | sed 's/^ [^=]*=//' | sed 's/^\s*//'`
+        if test -n "$arg"; then
+          op_rval="$op_rval $arg"
+          have_src=1
+        fi
+        ;;
+      -c|-cstr=*)
+        test "$1" = "-c" && shift
+        arg=`echo " $1" | sed 's/^ -cstr=//' | sed 's/^\s*//'`
+        if test -n "$arg"; then
+          op_cstr=$arg
+          have_src=1
+        fi
+        ;;
+      -i|-inc=*)
+        test "$1" = "-i" && shift
+        arg=`echo " $1" | sed 's/^ -inc=//' | sed 's/^\s*//'`
+        if test -n "$arg"; then
+          op_inc="$op_inc $arg"
+          have_libs=1
+        fi
+        ;;
+      -log)
+        op_echo_log=1
+        ;;
+      -log=*)
+        op_log_file=`echo "$1" | sed 's/^[^=]*=//'`
+        ;;
+      -ldflags=*)
+        arg=`echo "$1" | sed 's/^[^=]*=//'`
+        op_ldflags="$op_ldflags $arg"
+        have_flags=1
+        ;;
+      -cflags=*)
+        arg=`echo "$1" | sed 's/^[^=]*=//'`
+        op_cflags="$op_cflags $arg"
+        have_flags=1
+        ;;
+      -n)
+        op_no_echo=1
+        op_echo_fail=
+        ;;
+      -w)
+        op_echo_fail=1
+        op_no_echo=1
+        ;;
+      -out=*)
+        op_out=`echo "$1" | sed 's/^[^=]*=//'`
+        ;;
+      -def-out=*)
+        op_def_out=`echo "$1" | sed 's/^[^=]*=//'`
+        ;;
+      -status=*)
+        op_status_id=`echo "$1" | sed 's/^[^=]*=//' | sed 's/[^a-zA-Z0-9_]//g'`
+        ;;
+      -no-break)
+        op_no_break=1
+        ;;
+      -v|--version)
+        print_version
+        exit 0
+        ;;
+      [a-zA-Z_]*"("*|-f|-func=*)
+        test "$1" = "-f" && shift
+        funcs=`echo " $1" | sed 's/^ -func=//' | sed 's/([^()]*/(/g' | sed 's/(\s*)/ /g' | sed 's/([^()]*)/ /g' | sed 's/^\s*//'`
+        if test -n "$funcs"; then
+          op_func="$op_func $funcs"
+          have_src=1
+        fi
+        ;;
+      -l*)
+        op_libs="$op_libs $1"
+        op_libs_rev="$1 $op_libs_rev"
+        have_libs=1
+        ;;
+      -*|-)
+        forward_next=1
+        ;;
+      *.c)
+        op_src="$op_src $1"
+        have_src=1
+        ;;
+      *.C|*.[Cc][Cc]|*.[Cc][Pp][Pp]|*.[Cc][Xx][Xx]|*.[Cc]++)
+        op_src="$op_src $1"
+        lang_mode=c++
+        have_src=1
+        ;;
+      *.h)
+        op_inc="$op_inc $1"
+        have_libs=1
+        ;;
+      *.H|*.[Hh]++|*.[Hh][Hh]|*.[Hh][Xx][Xx]|*.[Hh][Pp][Pp])
+        op_inc="$op_inc $1"
+        lang_mode=c++
+        have_libs=1
+        ;;
+      lib*|*.so|*.so.*|*.a)
+        op_libs="$op_libs $1"
+        op_libs_rev="$1 $op_libs_rev"
+        have_libs=1
+        ;;
+      *)
+        if test x$first_param = x1; then
+          op_cmd=`echo "$1" | sed "s#^\(\.\.*\)/#$orig_dir/\1/#"`
+        else
+          printf "%s\n" "$script_name: invalid parameter $1" >&2
+          exit 1
+        fi
+        ;;
+    esac
+  fi
+  if test x$forward_next = x1 || test x$pass_over = x1; then
+    case `echo "$1" | sed 's/^\s*//'` in
+      "") : ;;
+      -)
+        if test -z "$pass_over"; then
+          pass_over=1
+        else
+          op_cflags="$op_cflags $1"
+          op_ldflags="$op_ldflags $1"
+          have_flags=1
+        fi
+        ;;
+      -[IDU]*)
+        op_cflags="$op_cflags $1"
+        have_flags=1
+        ;;
+      -L*)
+        op_ldflags="$op_ldflags $1"
+        have_flags=1
+        ;;
+      *)
+        op_cflags="$op_cflags $1"
+        op_ldflags="$op_ldflags $1"
+        have_flags=1
+        ;;
+    esac
+  fi
+  shift
+  first_param=
+  forward_next=
+done
+
+if test -n "$op_log_file"; then
+  if echo "$op_log_file" | grep "^/" > /dev/null; then : ; else
+    op_log_file="$orig_dir/$op_log_file"
+  fi
+fi
+if test -n "$op_out"; then
+  if echo "$op_out" | grep "^/" > /dev/null; then : ; else
+    op_out="$orig_dir/$op_out"
+  fi
+fi
+if test -n "$op_def_out"; then
+  if echo "$op_def_out" | grep "^/" > /dev/null; then : ; else
+    op_def_out="$orig_dir/$op_def_out"
+  fi
+fi
+
+if test $lang_mode = "c++"; then
+  c_ext="cpp"
+fi
+
+if test -z "$op_cmd"; then
+  if test $lang_mode = "c++"; then
+    op_cmd="g++"
+  else
+    op_cmd=gcc
+  fi
+fi
+
+probe_cc
+if test x$check_cc_found = x; then
+  echo "$script_name: compiler not found: $op_cmd" >&2
+  exit 1
+fi
+
+c_flag="-c"
+o_obj_flag="-o"
+o_exe_flag="-o"
+exe_ext=
+obj_ext="o"
+ld_cmd=$op_cmd
+case "$op_cctype" in
+  mingw)
+    exe_ext=".exe"
+    obj_ext="obj"
+    ;;
+  msc)
+    c_flag="/c"
+    o_obj_flag="/Fo:"
+    o_exe_flag="/Fe:"
+    exe_ext=".exe"
+    obj_ext="obj"
+    ;;
+esac
+
+cc_c="$op_cmd $c_flag"
+cc_cf="$cc_c $op_cflags"
+
+rm -rf $test_dir 2>/dev/null
+(mkdir $test_dir >/dev/null) 2>/dev/null
+if test ! -d $test_dir; then
+  echo "$script_name: error: could not create temporary directory $test_dir" >&2
+  exit 1
+fi
+cd $test_dir
+  
+
+test_src=test_src.$c_ext
+test_obj=test.$obj_ext
+test_exe=app$exe_ext
+
+exit_status=0
+
+if test x$have_src = x1; then
+################################################################################
+# TEST SOURCES
+  test_src_base=test_src_base.$c_ext
+  echo "" >$test_src_base
+  for inc in $op_inc; do
+    inc=`echo "$inc" | sed 's/[<]//' | sed 's/[>]//'`
+    echo "#include <$inc>" >> $test_src_base
+  done
+
+  # TEST CPP DEFINES
+  if test $def_num -gt 0; then
+    log_title "TEST CPP DEFINES"
+    def_idx=0
+    while test $def_idx -lt $def_num; do
+      cat $test_src_base > $test_src
+    
+      eval def_string=\$def$def_idx
+      echo_status -l "%s" "checking define $def_string ... "
+      case "$def_string" in
+        '#'*)
+          cat >>$test_src <<EOF
+$def_string
+#else
+#error cltest: false directive: $def_string
+#endif
+
+EOF
+          ;;
+        *)
+          cat >>$test_src <<EOF
+#ifndef $def_string
+#error cltest: $def_string not defined
+#endif
+
+EOF
+          ;;
+      esac
+    
+      log_src $test_src
+      echo "$cc_cf $test_src" >> $cltest_log
+      $cc_cf $test_src >> $cltest_log 2>&1
+      ret=$?
+      if test $ret -ne 0; then
+        echo_status "%s\n" "Failed"
+        if test x$op_no_break = x; then
+          clean_exit $ret
+        fi
+        exit_status=$ret
+      else
+        echo_status "%s\n" "OK"
+      fi
+      rm -f test.o*
+      def_idx=`expr $def_idx + 1`
+    done
+  fi
+
+  # TEST TYPES
+  if test $type_num -gt 0; then
+    log_title "TEST TYPES"
+    type_idx=0
+    while test $type_idx -lt $type_num; do
+      cat $test_src_base > $test_src
+  
+      eval type_string=\$type$type_idx
+      type_string=`echo "$type_string" | sed 's/^ *//' | sed 's/ *$//'`
+  
+      type_base=`echo "$type_string" | sed 's/\**$//'`
+      echo "$type_base *cltest_var123123;" >> $test_src
+    
+      echo_status -l "%s" "checking type $type_base ... "
+      log_src $test_src
+      echo "$cc_cf $test_src" >> $cltest_log
+      $cc_cf $test_src >> $cltest_log 2>&1
+      ret=$?
+      if test $ret -ne 0; then
+        echo_status "%s\n" "Failed"
+        if test x$op_no_break = x; then
+          clean_exit $ret
+        fi
+        exit_status=$ret
+      else
+        echo_status "%s\n" "OK"
+        if test -n "$op_out$op_def_out"; then
+          out_var=`echo "CT_HAVE_TYPE_$type_base" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
+          if test -n "$op_out"; then
+            echo "$out_var=1" >>$op_out
+          fi
+          if test -n "$op_def_out"; then
+            echo "#define $out_var 1" >>$op_def_out
+          fi
+        fi
+      fi
+      rm -f test.o*
+      type_idx=`expr $type_idx + 1`
+    done
+  fi
+  
+  # TEST ENUMS
+  if test -n "$op_enum"; then
+    log_title "TEST ENUMS"
+    for enum in $op_enum; do
+      cat $test_src_base > $test_src
+  
+      echo "int cltest_enum123123 = $enum;" >> $test_src
+    
+      echo_status -l "%s" "checking enum $enum ... "
+      log_src $test_src
+      echo "$cc_cf $test_src" >> $cltest_log
+      $cc_cf $test_src >> $cltest_log 2>&1
+      ret=$?
+      if test $ret -ne 0; then
+        echo_status "%s\n" "Failed"
+        if test x$op_no_break = x; then
+          clean_exit $ret
+        fi
+        exit_status=$ret
+      else
+        echo_status "%s\n" "OK"
+        if test -n "$op_out$op_def_out"; then
+          out_var=`echo "CT_HAVE_ENUM_$enum" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
+          if test -n "$op_out"; then
+            echo "$out_var=1" >>$op_out
+          fi
+          if test -n "$op_def_out"; then
+            echo "#define $out_var 1" >>$op_def_out
+          fi
+        fi
+      fi
+      rm -f test.o*
+    done
+  fi
+  
+  # TEST CSTR
+  if test -n "$op_cstr"; then
+    log_title "TEST CSTR"
+    cat $test_src_base > $test_src
+    echo "$op_cstr" >> $test_src
+  
+    echo_status -l "%s" "checking source string $op_cstr ... "
+    log_src $test_src
+    echo "$cc_cf $o_obj_flag $test_obj $test_src" >> $cltest_log
+    $cc_cf $o_obj_flag $test_obj $test_src >> $cltest_log 2>&1
+    ret=$?
+    if test $ret -ne 0; then
+      echo_status "%s\n" "Failed"
+      if test x$op_no_break = x; then
+        clean_exit $ret
+      fi
+      exit_status=$ret
+    else
+      echo "$ld_cmd $o_exe_flag $test_exe $test_obj $op_ldflags $op_libs" >> $cltest_log
+      $ld_cmd $o_exe_flag $test_exe $test_obj $op_ldflags $op_libs >> $cltest_log 2>&1
+      ret=$?
+      if test $ret -ne 0; then
+        rm -f test.o*
+        echo "test again ..." >> $cltest_log
+        echo "int main(int argc, char *argv[]) { return 0;}" >>$test_src
+        log_src $test_src
+        echo "$cc_cf $o_obj_flag $test_obj $test_src" >> $cltest_log
+        $cc_cf $o_obj_flag $test_obj $test_src >> $cltest_log 2>&1
+        ret=$?
+        if test $ret -ne 0; then
+          echo_status "%s\n" "Failed"
+          if test x$op_no_break = x; then
+            clean_exit $ret
+          fi
+          exit_status=$ret
+        else
+          echo "$ld_cmd $o_exe_flag $test_exe $test_obj $op_ldflags $op_libs" >> $cltest_log
+          $ld_cmd $o_exe_flag $test_exe $test_obj $op_ldflags $op_libs >> $cltest_log 2>&1
+          ret=$?
+          if test $ret -ne 0; then
+            echo_status "%s\n" "Failed"
+            if test x$op_no_break = x; then
+              clean_exit $ret
+            fi
+            exit_status=$ret
+          else
+            echo_status "%s\n" "OK"
+          fi
+        fi
+      else
+        echo_status "%s\n" "OK"
+      fi
+    fi
+    rm -f test.o*
+  fi
+  
+  # TEST VARIABLES
+  if test -n "$op_var"; then
+    log_title "TEST VARIABLES"
+    for var in $op_var; do
+      cat $test_src_base > $test_src
+  
+      echo_status -l "%s" "checking variable $var ... "
+    
+      echo "int main(int argc, char *argv[]) {int cltest_var = (int) $var; return 0;}" >> $test_src
+    
+      log_src $test_src
+      echo "$cc_cf $o_obj_flag $test_obj $test_src" >> $cltest_log
+      $cc_cf $o_obj_flag $test_obj $test_src >> $cltest_log 2>&1
+      ret=$?
+      if test $ret -ne 0; then
+        echo_status "%s\n" "Failed"
+        if test x$op_no_break = x; then
+          clean_exit $ret
+        fi
+        exit_status=$ret
+      else
+        echo "$ld_cmd $o_exe_flag $test_exe $test_obj $op_ldflags $op_libs" >> $cltest_log
+        $ld_cmd $o_exe_flag $test_exe $test_obj $op_ldflags $op_libs >> $cltest_log 2>&1
+        ret=$?
+        if test $ret -ne 0; then
+          echo_status "%s\n" "Failed"
+          if test x$op_no_break = x; then
+            clean_exit $ret
+          fi
+          exit_status=$ret
+        else
+          echo_status "%s\n" "OK"
+          if test -n "$op_out$op_def_out"; then
+            out_var=`echo "CT_HAVE_VAR_$var" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
+            if test -n "$op_out"; then
+              echo "$out_var=1" >>$op_out
+            fi
+            if test -n "$op_def_out"; then
+              echo "#define $out_var 1" >>$op_def_out
+            fi
+          fi
+        fi
+      fi
+      rm -f test.o*
+    done
+  fi
+  
+  # TEST SYMBOLS
+  if test -n "$op_sym"; then
+    log_title "TEST SYMBOLS"
+    for sym in $op_sym; do
+      echo_status -l "%s" "checking symbol $sym ... "
+    
+      echo "extern void *$sym;" > $test_src
+      echo "int main(int argc, char *argv[]) {void *cltest_sym = $sym; return 0;}" >> $test_src
+    
+      log_src $test_src
+      echo "$cc_cf $o_obj_flag $test_obj $test_src" >> $cltest_log
+      $cc_cf $o_obj_flag $test_obj $test_src >> $cltest_log 2>&1
+      ret=$?
+      if test $ret -ne 0; then
+        echo_status "%s\n" "Failed"
+        if test x$op_no_break = x; then
+          clean_exit $ret
+        fi
+        exit_status=$ret
+      else
+        echo "$ld_cmd $o_exe_flag $test_exe $test_obj $op_ldflags $op_libs" >> $cltest_log
+        $ld_cmd $o_exe_flag $test_exe $test_obj $op_ldflags $op_libs >> $cltest_log 2>&1
+        ret=$?
+        if test $ret -ne 0; then
+          echo_status "%s\n" "Failed"
+          if test x$op_no_break = x; then
+            clean_exit $ret
+          fi
+          exit_status=$ret
+        else
+          echo_status "%s\n" "OK"
+          if test -n "$op_out$op_def_out"; then
+            out_var=`echo "CT_HAVE_SYM_$sym" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
+            if test -n "$op_out"; then
+              echo "$out_var=1" >>$op_out
+            fi
+            if test -n "$op_def_out"; then
+              echo "#define $out_var 1" >>$op_def_out
+            fi
+          fi
+        fi
+      fi
+      rm -f test.o*
+    done
+  fi
+  
+  # TEST RVALS
+  if test -n "$op_rval"; then
+    log_title "TEST RVALS"
+    for var in $op_rval; do
+      echo_status -l "%s" "checking rval $var ... "
+
+      cat $test_src_base > $test_src
+      echo "int main(int argc, char *argv[]) {int cltest_var = (int) $var; return 0;}" >> $test_src
+    
+      log_src $test_src
+      echo "$cc_cf $o_obj_flag $test_obj $test_src" >> $cltest_log
+      $cc_cf $o_obj_flag $test_obj $test_src >> $cltest_log 2>&1
+      ret=$?
+      if test $ret -ne 0; then
+        echo_status "%s\n" "Failed"
+        if test x$op_no_break = x; then
+          clean_exit $ret
+        fi
+        exit_status=$ret
+      else
+        echo "$ld_cmd $o_exe_flag $test_exe $test_obj $op_ldflags $op_libs" >> $cltest_log
+        $ld_cmd $o_exe_flag $test_exe $test_obj $op_ldflags $op_libs >> $cltest_log 2>&1
+        ret=$?
+        if test $ret -ne 0; then
+          echo_status "%s\n" "Failed"
+          if test x$op_no_break = x; then
+            clean_exit $ret
+          fi
+          exit_status=$ret
+        else
+          echo_status "%s\n" "OK"
+          if test -n "$op_out$op_def_out"; then
+            out_var=`echo "CT_HAVE_RVAL_$var" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
+            if test -n "$op_out"; then
+              echo "$out_var=1" >>$op_out
+            fi
+            if test -n "$op_def_out"; then
+              echo "#define $out_var 1" >>$op_def_out
+            fi
+          fi
+        fi
+      fi
+      rm -f test.o*
+    done
+  fi
+  
+  # TEST FUNCTIONS
+  if test -n "$op_func"; then
+    log_title "TEST FUNCTIONS"
+    for func in $op_func; do
+      func=`echo "$func" | sed 's/[(]//' | sed 's/[)]//'`
+    
+      echo_status -l "%s" "checking function $func ... "
+    
+      echo "int $func(int);" > $test_src
+      echo "int main(int argc, char *argv[]) { int cltest_var = $func(1); return cltest_var; }" >> $test_src
+    
+      log_src $test_src
+      echo "$cc_cf $o_obj_flag $test_obj $test_src" >> $cltest_log
+      $cc_cf $o_obj_flag $test_obj $test_src >> $cltest_log 2>&1
+      ret=$?
+      if test $ret -ne 0; then
+        echo_status "%s\n" "Failed"
+        if test x$op_no_break = x; then
+          clean_exit $ret
+        fi
+        exit_status=$ret
+      else
+        echo "$ld_cmd $o_exe_flag $test_exe $test_obj $op_ldflags $op_libs" >> $cltest_log
+        $ld_cmd $o_exe_flag $test_exe $test_obj $op_ldflags $op_libs >> $cltest_log 2>&1
+        ret=$?
+        if test $ret -ne 0; then
+          echo_status "%s\n" "Failed"
+          if test x$op_no_break = x; then
+            clean_exit $ret
+          fi
+          exit_status=$ret
+        else
+          echo_status "%s\n" "OK"
+          if test -n "$op_out$op_def_out"; then
+            out_var=`echo "CT_HAVE_FUNC_$func" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
+            if test -n "$op_out"; then
+              echo "$out_var=1" >>$op_out
+            fi
+            if test -n "$op_def_out"; then
+              echo "#define $out_var 1" >>$op_def_out
+            fi
+          fi
+        fi
+      fi
+      rm -f test.o*
+    done
+  fi
+  
+  # TEST SOURCE FILES
+  if test -n "$op_src"; then
+    log_title "TEST SOURCE FILES"
+    for src in $op_src; do
+      if echo "$src" | grep "^/" > /dev/null; then 
+        src_full=$src
+      else
+        src_full="$orig_dir/$src"
+      fi
+    
+      echo_status -l "%s" "checking source file $src ... "
+    
+      if test ! -f $src_full; then
+        echo_status "%s\n" "Failed"
+        echo_status "%s\n" "  file $src not found"
+        clean_exit 1
+      fi
+      cp $src_full .
+      src_base=`basename "$src_full"`
+    
+      log_src $src_base
+      echo "$cc_cf $o_obj_flag $test_obj $src_base" >> $cltest_log
+      $cc_cf $o_obj_flag $test_obj $src_base >> $cltest_log 2>&1
+      ret=$?
+      if test $ret -ne 0; then
+        echo_status "%s\n" "Failed"
+        if test x$op_no_break = x; then
+          clean_exit $ret
+        fi
+        exit_status=$ret
+      else
+        echo "$ld_cmd $o_exe_flag $test_exe $test_obj $op_ldflags $op_libs" >> $cltest_log
+        $ld_cmd $o_exe_flag $test_exe $test_obj $op_ldflags $op_libs >> $cltest_log 2>&1
+        ret=$?
+        if test $ret -ne 0; then
+          echo_status "%s\n" "Failed"
+          if test x$op_no_break = x; then
+            clean_exit $ret
+          fi
+          exit_status=$ret
+        else
+          echo_status "%s\n" "OK"
+        fi
+      fi
+      rm -f test.o* $src_base
+    done
+  fi
+
+elif test x$have_libs = x1; then
+################################################################################
+# TEST LIBRARIES
+
+  # TEST HEADERS
+  if test -n "$op_inc"; then
+    log_title "TEST HEADERS"
+    for inc in $op_inc; do
+      inc=`echo "$inc" | sed 's/[<]//' | sed 's/[>]//'`
+      echo_status -l "%s" "checking header $inc ... "
+      echo "#include <$inc>" > $test_src
+      echo "int ct_i=1;" >> $test_src
+      log_src $test_src
+      echo "$cc_cf $test_src" >> $cltest_log
+      $cc_cf $test_src >> $cltest_log 2>&1
+      ret=$?
+      if test $ret -ne 0; then
+        echo_status "%s\n" "Failed"
+        if test x$op_no_break = x; then
+          clean_exit $ret
+        fi
+        exit_status=$ret
+      else
+        echo_status "%s\n" "OK"
+        if test -n "$op_out$op_def_out"; then
+          out_var=`echo "CT_HAVE_INC_$inc" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[a-z]' '[A-Z]'`
+          if test -n "$op_out"; then
+            echo "$out_var=1" >>$op_out
+          fi
+          if test -n "$op_def_out"; then
+            echo "#define $out_var 1" >>$op_def_out
+          fi
+        fi
+      fi
+      rm -f test.o*
+    done
+  fi
+  
+  # TEST LIBRARIES
+  if test -n "$op_libs"; then
+    log_title "TEST LIBRARIES"
+    echo_status -l "%s" "checking libraries $op_libs ... "
+  
+    cat <<EOF >$test_src
+int main(int argc, char *argv[]) {
+  return 0;
+}
+EOF
+    log_src $test_src
+    echo "$cc_cf $o_obj_flag $test_obj $test_src" >> $cltest_log
+    $cc_cf $o_obj_flag $test_obj $test_src>> $cltest_log 2>&1
+  
+    echo "$ld_cmd $o_exe_flag $test_exe $test_obj $op_ldflags $op_libs" >> $cltest_log
+    $ld_cmd $o_exe_flag $test_exe $test_obj $op_ldflags $op_libs >> $cltest_log 2>&1
+    ret=$?
+    if test $ret -ne 0; then
+      echo_status "%s\n" "Failed"
+      libs=
+      for lib in $op_libs_rev; do
+        echo_status "%s" "  $lib ... "
+        libs="$lib $libs"
+        echo "$ld_cmd $o_exe_flag $test_exe $test_obj $op_ldflags $libs" >> $cltest_log
+        $ld_cmd $o_exe_flag $test_exe $test_obj $op_ldflags $libs >> $cltest_log 2>&1
+        if test $? -ne 0; then
+          echo_status "%s\n" "Failed"
+          if test x$op_no_break = x; then
+            clean_exit $ret
+          else
+            break
+          fi
+        else
+          echo_status "%s\n" "OK"
+        fi
+      done
+      if test x$op_no_break = x; then
+        clean_exit $ret
+      fi
+      exit_status=$ret
+    else
+      echo_status "%s\n" "OK"
+    fi
+    rm -f app*
+    rm -f test.o*
+  fi
+  
+elif test x$have_flags = x1; then
+################################################################################
+# TEST FLAGS
+
+  # TEST COMPILER FLAGS
+  if test -n "$op_cflags"; then
+    log_title "TEST COMPILER FLAGS"
+    echo_status -l "%s" "checking compiler flags $op_cflags ... "
+  
+    cat <<EOF >$test_src
+int main(int argc, char *argv[]) {
+  return 0;
+}
+EOF
+    log_src $test_src
+    echo "$cc_c $op_cflags $test_src" >> $cltest_log
+    $cc_c $op_cflags $test_src>> $cltest_log 2>&1
+    ret=$?
+    if test $ret -ne 0; then
+      echo_status "%s\n" "Failed"
+      flags=
+      for flag in $op_cflags; do
+       echo_status "%s" "  $flag ... "
+       flags="$flags $flag"
+       echo "$cc_c $flags $test_src" >> $cltest_log
+       $cc_c $flags $test_src>> $cltest_log 2>&1
+       if test $? -ne 0; then
+         echo_status "%s\n" "Failed"
+         clean_exit $ret
+       fi
+       echo_status "%s\n" "OK"
+      done
+      clean_exit $ret
+    fi
+    echo_status "%s\n" "OK"
+    rm -f $test_src
+    rm -f test.o*
+  fi
+ 
+  # TEST LINKER FLAGS
+  if test -n "$op_ldflags"; then
+    log_title "TEST LD FLAGS"
+    echo_status -l "%s" "checking linker flags $op_ldflags ... "
+  
+    cat <<EOF >$test_src
+int main(int argc, char *argv[]) {
+  return 0;
+}
+EOF
+    log_src $test_src
+    echo "$cc_cf $o_obj_flag $test_obj $test_src" >> $cltest_log
+    $cc_cf $o_obj_flag $test_obj $test_src>> $cltest_log 2>&1
+  
+    echo "$ld_cmd $o_exe_flag $test_exe $test_obj $op_ldflags" >> $cltest_log
+    $ld_cmd $o_exe_flag $test_exe $test_obj $op_ldflags >> $cltest_log 2>&1
+    ret=$?
+    if test $ret -ne 0; then
+      echo_status "%s\n" "Failed"
+      flags=
+      for flag in $op_ldflags; do
+        echo_status "%s" "  $flag ... "
+        flags="$flags $flag"
+        echo "$ld_cmd $o_exe_flag $test_exe $test_obj $flags" >> $cltest_log
+        $ld_cmd $o_exe_flag $test_exe $test_obj $flags >> $cltest_log 2>&1
+        if test $? -ne 0; then
+          echo_status "%s\n" "Failed"
+          clean_exit $ret
+        fi
+        echo_status "%s\n" "OK"
+      done
+      clean_exit $ret
+    fi
+    echo_status "%s\n" "OK"
+  fi
+
+else
+################################################################################
+# TEST TOOLS (COMPILER, LINKER) ONLY
+
+  # TEST COMPILER
+  log_title "TEST COMPILER"
+  echo_status -l "%s" "checking compiler $op_cmd ... "
+  
+  cat <<EOF >$test_src
+/*check fake compiler command*/
+sp0f89s-0 f89-9;23'2r2="sdf's df'"'wsrf's d'"=+)(&()*^@!@*(&^$
+aaaaaaa
+bbbbbbb
+ddddddd
+EOF
+  log_src $test_src
+  echo "$cc_c $test_src" >> $cltest_log
+  $cc_c $test_src>> $cltest_log 2>&1
+  ret=$?
+  if test $ret -eq 0; then
+    echo_status "%s\n" "Failed"
+    clean_exit $ret
+  fi
+  rm -f $test_src
+  rm -f test.o*
+  
+  cat <<EOF >$test_src
+int main(int argc, char *argv[]) {
+  return 0;
+}
+EOF
+  log_src $test_src
+  echo "$cc_c $test_src" >> $cltest_log
+  $cc_c $test_src>> $cltest_log 2>&1
+  ret=$?
+  if test $ret -ne 0; then
+    echo_status "%s\n" "Failed"
+    clean_exit $ret
+  fi
+  echo_status "%s\n" "OK"
+  rm -f $test_src
+  rm -f test.o*
+
+  # TEST LINKER
+  log_title "TEST LD"
+  echo_status -l "%s" "checking linker $ld_cmd ... "
+  
+  cat <<EOF >$test_src
+int main(int argc, char *argv[]) {
+  return 0;
+}
+EOF
+  log_src $test_src
+  echo "$cc_c $o_obj_flag $test_obj $test_src" >> $cltest_log
+  $cc_c $o_obj_flag $test_obj $test_src >> $cltest_log 2>&1
+  
+  echo "$ld_cmd $o_exe_flag $test_exe $test_obj" >> $cltest_log
+  $ld_cmd $o_exe_flag $test_exe $test_obj>> $cltest_log 2>&1
+  ret=$?
+  if test $ret -ne 0 || test ! -f $test_exe; then
+    echo_status "%s\n" "Failed"
+    clean_exit $ret
+  fi
+  echo_status "%s\n" "OK"
+fi
+
+if test -n "$op_status_id" && test -n "$op_out$op_def_out"; then
+  if test x$exit_status = x0; then
+    if test -n "$op_out"; then
+      echo "$op_status_id=1" >>$op_out
+    fi
+    if test -n "$op_def_out"; then
+      echo "#define $op_status_id 1" >>$op_def_out
+    fi
+  fi
+fi
+
+clean_exit $exit_status
+

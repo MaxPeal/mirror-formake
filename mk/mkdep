@@ -1,0 +1,277 @@
+#!/bin/sh
+#
+# mkdep
+#
+# Copyright (c) 2015-2017, Oleksii Cherniavskyi
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+################################################################################
+# JUMP TO MODERN SHELL IF POSSIBLE
+(test_exit_code_127_sdfjsdfksjdhfksjdhf  >/dev/null) 2>/dev/null
+if test $? -ne 127; then
+  if test -z "$MKDEP_BASH_REDIRECT"; then
+    MKDEP_BASH_REDIRECTED=1
+    export MKDEP_BASH_REDIRECTED
+    if test -x /bin/bash; then
+      exec /bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/bin/bash; then
+      exec /usr/bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/local/bin/bash; then
+      exec /usr/local/bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/pkg/bin/bash; then
+      exec /usr/pkg/bin/bash "$0" ${1+"$@"}
+    else
+      (bash -c "pwd" >/dev/null) 2>/dev/null
+      if test $? -eq 0; then
+        exec bash "$0" ${1+"$@"}
+      fi
+    fi
+  fi
+fi
+MKDEP_BASH_REDIRECTED=
+export MKDEP_BASH_REDIRECTED
+################################################################################
+
+script_name=`basename "$0"`
+orig_dir=`pwd`
+
+print_help() {
+  cat <<EOF
+Generate Make dependency rules for C/C++ sources
+
+Usage: $script_name [<compiler>] <compiler_options>
+
+EOF
+}
+
+print_version() {
+  cat <<EOF
+mkdep 1.0
+Copyright (C) 2015-2017 Oleksii Cherniavskyi
+EOF
+}
+
+probe_cc() {
+  check_cc_found=
+  ($op_cmd >/dev/null) 2>/dev/null
+  if test $? -ge 126; then
+    return
+  fi
+  check_cc_found=1
+
+  probe_out=/tmp/cc_probe_$$.txt
+  rm -f $probe_out
+  cc_cmd0=`echo "$op_cmd" | sed 's# [^/]*$##'`
+  ($cc_cmd0 -version >>$probe_out) 2>>$probe_out
+  ($cc_cmd0 --version >>$probe_out) 2>>$probe_out
+  ($cc_cmd0 -V >>$probe_out) 2>>$probe_out
+  ($cc_cmd0 -qversion >>$probe_out) 2>>$probe_out
+  ($cc_cmd0 -h >>$probe_out) 2>>$probe_out
+  ($cc_cmd0 --help >>$probe_out) 2>>$probe_out
+  ($cc_cmd0 >>$probe_out) 2>>$probe_out
+
+  if grep "Texas Instruments" $probe_out | grep "Tools Copyright" >/dev/null; then
+    op_cctype=ticc
+  elif grep -i mingw $probe_out >/dev/null; then
+    op_cctype=mingw
+  elif grep -i gcc $probe_out >/dev/null && grep -i "free software foundation" $probe_out >/dev/null; then
+    op_cctype=gcc
+  elif grep -i "clang version" $probe_out >/dev/null; then
+    op_cctype=clang
+  elif grep "tcc version" $probe_out >/dev/null; then
+    op_cctype=tinyc
+  elif grep -i "Sun C" $probe_out >/dev/null; then
+    op_cctype=sunpro
+  elif grep -i "IBM XL C" $probe_out >/dev/null; then
+    op_cctype=xlc
+  elif grep -i "MIPSpro Compilers" $probe_out >/dev/null; then
+    op_cctype=mipspro
+  elif grep -i microsoft $probe_out >/dev/null; then
+    op_cctype=msc
+  elif grep -i "PGI Compilers and Tools" $probe_out >/dev/null; then
+    op_cctype=pgi
+  elif grep "SDCC" $probe_out >/dev/null; then
+    op_cctype=sdcc
+  else
+    op_cctype=cc
+  fi
+  rm -f $probe_out
+}
+
+if test $# -eq 0; then
+  echo "$script_name: error: no parameters specified" >&2
+  exit 1
+fi
+
+first_param=1
+op_cmd=
+op_src=
+op_cflags=
+op_ofile=
+src_multi=1
+op_compile=
+out_obj=
+lang_mode=c
+while test $# -gt 0; do
+  case "$1" in
+    -h|-help|--help)
+      print_help
+      exit 0
+      ;;
+    -c)
+      op_compile=1
+      ;;
+    "/c")
+      op_compile=1
+      ;;
+    "/Fo:")
+      shift
+      op_ofile=$1
+      out_obj=$1
+      ;;
+    -o)
+      shift
+      op_ofile=$1
+      ;;
+    -v|--version)
+      if test x$first_param = x1; then
+        print_version
+        exit 0
+      fi
+      op_cflags="$op_cflags $1"
+      ;;
+    -*)
+      op_cflags="$op_cflags $1"
+      ;;
+    *.c)
+      test -n "$op_src" && src_multi=1
+      op_src="$op_src $1"
+      ;;
+    *.C|*.[Cc][Cc]|*.[Cc][Pp][Pp]|*.[Cc][Xx][Xx]|*.[Cc]++)
+      test -n "$op_src" && src_multi=1
+      op_src="$op_src $1"
+      lang_mode=c++
+      ;;
+    *.h)
+      test -n "$op_src" && src_multi=1
+      op_src="$op_src $1"
+      ;;
+    *.H|*.[Hh]++|*.[Hh][Hh]|*.[Hh][Xx][Xx]|*.[Hh][Pp][Pp])
+      test -n "$op_src" && src_multi=1
+      op_src="$op_src $1"
+      lang_mode=c++
+      ;;
+    *)
+      if test x$first_param = x1; then
+        op_cmd=`echo "$1" | sed "s#^\(\.\.*\)/#$orig_dir/\1/#"`
+      fi
+      ;;
+  esac
+  shift
+  first_param=
+done
+
+if test -z "$op_src"; then
+  echo "$script_name: no source files specified" >&2
+  exit 1
+fi
+
+if test -n "$op_ofile" && test x$op_compile = x1 && test x$src_multi = x; then
+  out_obj=$op_ofile
+fi
+
+if test -z "$op_cmd"; then
+  if test $lang_mode = "c++"; then
+    op_cmd="g++"
+  else
+    op_cmd=gcc
+  fi
+fi
+
+probe_cc
+if test x$check_cc_found = x; then
+  echo "$script_name: compiler not found: $op_cmd" >&2
+  exit 1
+fi
+
+cpp_flag=-E
+obj_ext="o"
+case "$op_cctype" in
+  mingw)
+    obj_ext="obj"
+    ;;
+  ticc)
+    cpp_flag=-ppl
+    ;;
+  msc)
+    cpp_flag="/E"
+    obj_ext="obj"
+    ;;
+esac
+
+work_dir=/tmp/mkdep$$
+(mkdir $work_dir) 2>/dev/null
+rm -f $work_dir/*
+tmp_file1=dep$$.t
+tmp_file2=dep$$.t2
+
+for file in $op_src; do
+  cd $orig_dir
+  if test ! -f $file; then
+    echo "$script_name: error: file not found $file"
+    exit 1
+  fi
+  cp $file $work_dir
+  cd $work_dir
+
+  base_name=`basename "$file" | sed 's/\.[^.]*$//'`
+  if test -n "$out_obj"; then
+    object=$out_obj
+  elif test -n "$op_out_dir"; then
+    object="$op_out_dir/${base_name}.$obj_ext"
+  else
+    object="${base_name}.$obj_ext"
+  fi
+
+  if test "$op_cctype" = ticc; then
+    src_pp="${base_name}.pp"
+    rm -f $src_pp
+    $op_cmd $cpp_flag $op_cflags $file
+    if test -f $src_pp; then
+      cat $src_pp | sed -n 's!^# *[0-9][0-9]* *"\([^<][^"]*\)".*!\1!p' | sort | uniq >$tmp_file1
+    fi
+    echo "" >>$tmp_file1
+  else
+    $op_cmd $cpp_flag $op_cflags $file | sed -n 's!^# *[0-9][0-9]* *"\([^<][^"]*\)".*!\1!p' | sort | uniq >$tmp_file1
+  fi
+
+  cat $tmp_file1 | sed "s/^/$object: /" >>$tmp_file2
+  cat $tmp_file1 | sed 's/ *$/:/' >>$tmp_file2
+done
+
+cat $tmp_file2 | sort | uniq
+cd $orig_dir
+rm -rf $work_dir
+
+exit 0
+

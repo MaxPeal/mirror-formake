@@ -1,8 +1,8 @@
 #!/bin/sh
 #
-# Formake pofig
+# pofig
 #
-# Copyright (c) 2015-2017, Oleksiy Chernyavskyy
+# Copyright (c) 2015-2017, Oleksii Cherniavskyi
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -105,9 +105,9 @@
 # JUMP TO MODERN SHELL IF POSSIBLE
 (test_exit_code_127_sdfjsdfksjdhfksjdhf  >/dev/null) 2>/dev/null
 if test $? -ne 127; then
-  if test -z "$FORMAKE_BASH_REDIRECT"; then
-    FORMAKE_BASH_REDIRECTED=1
-    export FORMAKE_BASH_REDIRECTED
+  if test -z "$POFIG_BASH_REDIRECT"; then
+    POFIG_BASH_REDIRECTED=1
+    export POFIG_BASH_REDIRECTED
     if test -x /bin/bash; then
       exec /bin/bash "$0" ${1+"$@"}
     elif test -x /usr/bin/bash; then
@@ -124,12 +124,9 @@ if test $? -ne 127; then
     fi
   fi
 fi
-FORMAKE_BASH_REDIRECTED=
-export FORMAKE_BASH_REDIRECTED
+POFIG_BASH_REDIRECTED=
+export POFIG_BASH_REDIRECTED
 ################################################################################
-
-
-version_string="Formake pofig 1.3"
 
 print_help() {
 cat <<EOF
@@ -137,16 +134,16 @@ Portable figure out system properties
 
 $script_name [OPTIONS]
 
- -os          print OS
- -osver       print OS version
- -kernver     print kernel version
- -distro      print distro
- -distver     print distro version
- -arch        print architecture
- -id          print system id
- -v           verbose mode
- -version     print version
- -help-props  print a detailed list of properties
+ -o, -os        print OS
+ -s, -osver     print OS version
+ -k, -kernver   print kernel version
+ -d, -distro    print distro
+ -r, -distver   print distro version
+ -a, -arch      print architecture
+ -i, -id        print system id
+ -l             long listing format
+ -v             display version information and exit
+ -hprops        display a detailed list of properties
 EOF
 }
 
@@ -207,7 +204,10 @@ EOF
 }
 
 print_version() {
-  echo "$version_string"
+  cat <<EOF
+pofig 1.5
+Copyright (C) 2015-2017 Oleksii Cherniavskyi
+EOF
 }
 
 gen_system_id() {
@@ -788,15 +788,15 @@ for arg in "$@"; do
       print_help
       exit 0
       ;;
-    -help-props)
+    -hprops)
       print_help_props
       exit 0
       ;;
-    -version)
+    -v|--version)
       print_version
       exit 0
       ;;
-    -v)
+    -l)
       op_verbose=1
       ;;
   esac
@@ -817,35 +817,35 @@ fi
 
 while test $# -gt 0; do
   case "$1" in
-    -os)
+    -o|-os)
       print_string="$print_string $config_os"
       op_os=1
       ;;
-    -osver)
+    -s|-osver)
       print_string="$print_string $config_os_version"
       op_osver=1
       ;;
-    -kernver)
+    -k|-kernver)
       print_string="$print_string $config_kernel_version"
       op_kernver=1
       ;;
-    -distro)
+    -d|-distro)
       print_string="$print_string $config_distro"
       op_distro=1
       ;;
-    -distver)
+    -r|-distver)
       print_string="$print_string $config_distro_version"
       op_distver=1
       ;;
-    -arch)
+    -a|-arch)
       print_string="$print_string $config_arch"
       op_arch=1
       ;;
-    -id)
+    -i|-id)
       print_string="$print_string $config_system_id"
       op_id=1
       ;;
-    -v) : ;;
+    -l) : ;;
     *)
       printf "%s\n" "$script_name: invalid parameter $1" >&2
       exit 1

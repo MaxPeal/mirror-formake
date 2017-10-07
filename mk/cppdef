@@ -1,0 +1,268 @@
+#!/bin/sh
+#
+# cppdef
+#
+# Copyright (c) 2015-2017, Oleksii Cherniavskyi
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+################################################################################
+# JUMP TO MODERN SHELL IF POSSIBLE
+(test_exit_code_127_sdfjsdfksjdhfksjdhf  >/dev/null) 2>/dev/null
+if test $? -ne 127; then
+  if test -z "$CPPDEF_BASH_REDIRECT"; then
+    CPPDEF_BASH_REDIRECTED=1
+    export CPPDEF_BASH_REDIRECTED
+    if test -x /bin/bash; then
+      exec /bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/bin/bash; then
+      exec /usr/bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/local/bin/bash; then
+      exec /usr/local/bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/pkg/bin/bash; then
+      exec /usr/pkg/bin/bash "$0" ${1+"$@"}
+    else
+      (bash -c "pwd" >/dev/null) 2>/dev/null
+      if test $? -eq 0; then
+        exec bash "$0" ${1+"$@"}
+      fi
+    fi
+  fi
+fi
+CPPDEF_BASH_REDIRECTED=
+export CPPDEF_BASH_REDIRECTED
+################################################################################
+
+script_name=`basename "$0"`
+test_dir=/tmp/cppdef_$$
+c_ext="c"
+orig_dir=`pwd`
+
+print_help() {
+cat <<EOF
+Read CPP defines
+
+Usage: $script_name [options] <defines>...
+
+Options:
+ -c, -cc=<cmd>      specify compiler command
+ *.h|*.H|*.hpp      header files. Other file extensions are recognized
+ -i, -inc=<list>    header files
+ -v                 display version information and exit
+ -*                 compiler flags
+ -                  disable interpretation of the following parameters and pass them as compiler flags
+ <defines>..        preprocessor defines to read
+EOF
+}
+
+print_version() {
+  cat <<EOF
+cppdef 1.1
+Copyright (C) 2015-2017 Oleksii Cherniavskyi
+EOF
+}
+
+clean_exit() {
+  ecode=$1
+  cd /tmp
+  rm -rf $test_dir
+  exit $ecode
+}
+
+probe_cc() {
+  check_cc_found=
+  ($op_cmd >/dev/null) 2>/dev/null
+  if test $? -ge 126; then
+    return
+  fi
+  check_cc_found=1
+
+  probe_out=/tmp/cc_probe_$$.txt
+  rm -f $probe_out
+  cc_cmd0=`echo "$op_cmd" | sed 's# [^/]*$##'`
+  ($cc_cmd0 -version >>$probe_out) 2>>$probe_out
+  ($cc_cmd0 --version >>$probe_out) 2>>$probe_out
+  ($cc_cmd0 -V >>$probe_out) 2>>$probe_out
+  ($cc_cmd0 -qversion >>$probe_out) 2>>$probe_out
+  ($cc_cmd0 -h >>$probe_out) 2>>$probe_out
+  ($cc_cmd0 --help >>$probe_out) 2>>$probe_out
+  ($cc_cmd0 >>$probe_out) 2>>$probe_out
+
+  if grep "Texas Instruments" $probe_out | grep "Tools Copyright" >/dev/null; then
+    op_cctype=ticc
+  elif grep -i mingw $probe_out >/dev/null; then
+    op_cctype=mingw
+  elif grep -i gcc $probe_out >/dev/null && grep -i "free software foundation" $probe_out >/dev/null; then
+    op_cctype=gcc
+  elif grep -i "clang version" $probe_out >/dev/null; then
+    op_cctype=clang
+  elif grep "tcc version" $probe_out >/dev/null; then
+    op_cctype=tinyc
+  elif grep -i "Sun C" $probe_out >/dev/null; then
+    op_cctype=sunpro
+  elif grep -i "IBM XL C" $probe_out >/dev/null; then
+    op_cctype=xlc
+  elif grep -i "MIPSpro Compilers" $probe_out >/dev/null; then
+    op_cctype=mipspro
+  elif grep -i microsoft $probe_out >/dev/null; then
+    op_cctype=msc
+  elif grep -i "PGI Compilers and Tools" $probe_out >/dev/null; then
+    op_cctype=pgi
+  elif grep "SDCC" $probe_out >/dev/null; then
+    op_cctype=sdcc
+  else
+    op_cctype=cc
+  fi
+  rm -f $probe_out
+}
+
+op_cmd=
+op_inc=
+op_cflags=
+op_def=
+pass_over=
+while test $# -gt 0; do
+  if test -z "$pass_over"; then
+    case `echo "$1" | sed 's/^\s*//'` in
+      "") : ;;
+      -)
+        pass_over=1
+        ;;
+      -h|-help|--help)
+        print_help
+        exit 0
+        ;;
+      -c|-cc=*)
+        test "$1" = "-c" && shift
+        arg=`echo " $1" | sed 's/^ -cc=//' | sed 's/^\s*//'`
+        if test -n "$arg"; then
+          op_cmd=`echo "$arg" | sed "s#^\(\.\.*\)/#$orig_dir/\1/#"`
+        fi
+        ;;
+      -i|-inc=*)
+        test "$1" = "-i" && shift
+        arg=`echo " $1" | sed 's/^ -inc=//' | sed 's/^\s*//'`
+        test -n "$arg" && op_inc="$op_inc $arg"
+        ;;
+      -v|--version)
+        print_version
+        exit 0
+        ;;
+      -*)
+        op_cflags="$op_cflags $1"
+        ;;
+      *.h)
+        op_inc="$op_inc $1"
+        ;;
+      *.H|*.[Hh]++|*.[Hh][Hh]|*.[Hh][Xx][Xx]|*.[Hh][Pp][Pp])
+        op_inc="$op_inc $1"
+        ;;
+      *)
+        op_def="$op_def $1"
+        ;;
+    esac
+  else
+    op_cflags="$op_cflags $1"
+  fi
+  shift
+done
+
+test -z "$op_def" && exit 0
+test -z "$op_cmd" && op_cmd=gcc
+
+probe_cc
+if test x$check_cc_found = x; then
+  echo "$script_name: compiler not found: $op_cmd" >&2
+  exit 1
+fi
+
+cpp_flag=-E
+case "$op_cctype" in
+  ticc)
+    cpp_flag=-ppl
+    ;;
+  msc)
+    cpp_flag="/E"
+    ;;
+esac
+
+rm -rf $test_dir 2>/dev/null
+(mkdir $test_dir >/dev/null) 2>/dev/null
+if test ! -d $test_dir; then
+  echo "$script_name: error: could not create temporary directory $test_dir" >&2
+  exit 1
+fi
+cd $test_dir
+
+################################################################################
+# SET UP TEST DIR
+test_src_base=test_src_base.$c_ext
+
+echo "" >$test_src_base
+for inc in $op_inc; do
+  inc=`echo "$inc" | sed 's/[<]//' | sed 's/[>]//'`
+  echo "#include <$inc>" >> $test_src_base
+done
+
+test_src=test_src.$c_ext
+test_pp=test_src.pp
+
+################################################################################
+# READ DEFINES
+defvals=
+for def in $op_def; do
+  cat $test_src_base > $test_src
+
+  cat <<EOF >>$test_src
+#ifdef $def
+CPPDEF_DEFVAL=$def
+#endif
+EOF
+  if test "$op_cctype" = ticc; then
+    $op_cmd $op_cflags $cpp_flag $test_src 2>/dev/null
+    if test $? != 0; then
+      echo "$script_name: CPP error" >&2
+      clean_exit 1
+    fi
+    cat $test_pp > test_c.out
+    rm -f $test_pp
+  else
+    $op_cmd $op_cflags $cpp_flag $test_src 2>/dev/null > test_c.out
+    if test $? != 0; then
+      echo "$script_name: CPP error" >&2
+      clean_exit 1
+    fi
+  fi
+
+  defval=`cat test_c.out | grep "^ *CPPDEF_DEFVAL" | sed 's/^ *CPPDEF_DEFVAL=//' | sed 's/ *$//' | sed 's/"$//' |  sed 's/^"//' | tr -d '\n'`
+  if test -n "$defval"; then
+    if test -n "$defvals"; then
+      defvals="$defvals $defval"
+    else
+      defvals=$defval
+    fi
+  fi
+done
+
+echo "$defvals" | sed 's/^ *//'
+clean_exit 0
+

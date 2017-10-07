@@ -1,0 +1,2408 @@
+#!/bin/sh
+#
+# cprobe
+#
+# Copyright (c) 2015-2017, Oleksii Cherniavskyi
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+################################################################################
+# JUMP TO MODERN SHELL IF POSSIBLE
+(test_exit_code_127_sdfjsdfksjdhfksjdhf  >/dev/null) 2>/dev/null
+if test $? -ne 127; then
+  if test -z "$CPROBE_BASH_REDIRECT"; then
+    CPROBE_BASH_REDIRECTED=1
+    export CPROBE_BASH_REDIRECTED
+    if test -x /bin/bash; then
+      exec /bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/bin/bash; then
+      exec /usr/bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/local/bin/bash; then
+      exec /usr/local/bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/pkg/bin/bash; then
+      exec /usr/pkg/bin/bash "$0" ${1+"$@"}
+    else
+      (bash -c "pwd" >/dev/null) 2>/dev/null
+      if test $? -eq 0; then
+        exec bash "$0" ${1+"$@"}
+      fi
+    fi
+  fi
+fi
+CPROBE_BASH_REDIRECTED=
+export CPROBE_BASH_REDIRECTED
+################################################################################
+
+
+abs_path() {
+  _sub_orig_dir=`pwd`
+  if test $# = 0; then
+    abs_path_ret=
+    return
+  fi
+  if test $# = 2; then
+    _arg_orig_dir=$1
+    _arg=$2
+    if echo "$_arg" | grep "^/" > /dev/null; then
+      :
+    else
+      _arg=`echo "$_arg_orig_dir/$_arg" | sed 's!//*!/!g'`
+    fi
+  else
+    _arg=$1
+  fi
+  if test -e "$_arg"; then
+    if test -d $_arg; then
+      _file=
+    else
+      _file=`basename "$_arg"`
+      _arg=`dirname "$_arg"`
+    fi
+
+    cd $_cd_param $_arg
+    abs_path_ret=`pwd`
+    if test x"$_file" != "x"; then
+      abs_path_ret="$abs_path_ret/$_file"
+    fi
+
+    cd $_cd_param $_sub_orig_dir
+  else
+    if echo "$_arg" | grep "^/" > /dev/null; then
+      abs_path_ret="$_arg"
+    else
+      abs_path_ret="$_sub_orig_dir/$_arg"
+    fi
+    abs_path_ret=`echo "$abs_path_ret" | sed 's#//*#/#g'`
+    abs_path_ret=`echo "$abs_path_ret" | sed 's#/*$#/#'`
+    string_prev=
+    while test "x$abs_path_ret" != "x$string_prev" ; do
+      string_prev=$abs_path_ret
+      abs_path_ret=`echo "$abs_path_ret" | sed 's#/[^/][^/][^/][^/]*/\.\./#/#g' | sed 's#/[^/][^/.]/\.\./#/#g' | sed 's#/[^/.][^/]/\.\./#/#g' | sed 's#/[^/.]/\.\./#/#g'`
+      abs_path_ret=`echo "$abs_path_ret" | sed 's#^/\.\./#/#' | sed 's#^/\.\.$#/#'`
+      abs_path_ret=`echo "$abs_path_ret" | sed 's#/\./#/#g' | sed 's#/\.$#/#'`
+    done
+    abs_path_ret=`echo "$abs_path_ret" | sed 's#/$##' | sed 's#^$#/#'`
+  fi
+}
+
+script_name=`basename "$0"`
+orig_dir=`pwd`
+abs_path $0
+script_abs=$abs_path_ret
+script_dir=`dirname "$script_abs"`
+out_format=
+c_ext="c"
+cxx_ext="cpp"
+test_dir=/tmp/cprobe_$$
+cc_is_cross=0
+headers=$test_dir/cprobe_inc_headers
+cc_macros_loaded=
+CC=
+CFLAGS=
+
+print_help() {
+cat <<EOF
+Probe C/C++ compiler
+
+Usage: $script_name [cmd] [options]
+
+Options:
+ cmd           optional 1st parameter specifies compiler command
+ -t, -type     get compiler type
+ -r, -ver      get compiler version
+ -c, -cmd      get compiler command
+ -l, -std      get language standard
+ -n, -cxxstd   get C++ language standard
+ -o, -os       get target OS
+ -s, -osver    get target OS version
+ -a, -arch     get target architecture
+ -b, -bits     get target bitness
+ -e, -endian   get target endianness
+ -d, -dm       get target data model
+ -z, -cross    print 'true' and return 0 if compiler is cross-compiler
+ -x, -cxx      print 'true' and return 0 if compiler is C++ compiler
+ -p, -posix    get POSIX support version
+ -u, -sus      get SUS support version
+ -1            print in format VAR="VALUE"
+ -2            print in format FIELD: VALUE
+ -3            print in format VALUE
+ -4            print in format TYPE:OS:ARCH:CMD
+ -5            print in format TYPE:VER:STD:OS:OSVER:ARCH:BITS:ENDIAN:DM:CROSS:POSIX:SUS:CMD
+ -v            display version information and exit
+ -hprops       display a detailed list of predefined compiler properties
+ -             disable interpretation of the following parameters and pass them as compiler flags
+ ...           unrecognized parameters are forwarded as compiler flags
+EOF
+}
+
+print_help_props() {
+cat <<EOF
+COMPILER TYPES
+--------------------------------------------------------------------------------
+armc              ARM Compiler (by ARM)
+clang             Clang
+compcert          CompCert C
+gcc               GCC
+hpacc             HP aC++
+hpansic           HP ANSI C
+intel             Intel C/C++
+mipspro           SGI MIPSPro
+msc               Microsoft Visual C/C++
+pgi               Portland Group C/C++
+sdcc              SDCC (Small Device C Compiler)
+sunpro            Solaris Studio (Sun Studio, SunPro)
+ticc              Texas Instruments C/C++ Compiler
+tinyc             Tiny C Compiler (TCC, TinyCC)
+watcom            Watcom C/C++ (Open Watcom C/C++)
+xlc               IBM XL C/C++
+
+LANGUAGE STANDARDS
+--------------------------------------------------------------------------------
+c89               C89 (ANSI C, ANSI X3.159-1989, C90, ISO C, ISO/IEC 9899:1990)
+c95               C95 (ISO/IEC 9899-1:1994)
+c99               C99 (ISO/IEC 9899:1999)
+c11               C11 (ISO/IEC 9899:2011)
+cxx98             C++98 (ISO/IEC 14882:1998)
+cxx11             C++11 (ISO/IEC 14882:2011)
+cxx14             C++14 (ISO/IEC 14882:2014)
+cxx_cli           C++/CLI (ECMA-372)
+embedded_cxx      Embedded C++ (EC++)
+
+TARGET OPERATING SYSTEMS
+--------------------------------------------------------------------------------
+aix               AIX (Advanced Interactive eXecutive)
+android           Android
+cygwin            Cygwin
+dragonfly         DragonFly BSD
+freebsd           FreeBSD
+gnuhurd           GNU/Hurd
+gnulinux          GNU/Linux
+hpux              HP-UX (Hewlett-Packard UniX)
+irix              IRIX
+macos             Apple macOS
+minix             MINIX
+netbsd            NetBSD
+openbsd           OpenBSD
+qnx               QNX
+sco               SCO UNIX
+solaris           Solaris
+windows           Windows
+
+TARGET ARCHITECTURES
+--------------------------------------------------------------------------------
+alpha             Alpha
+arm               ARM (Advanced RISC Machine)
+arm64             ARM 64-bit (ARMv8, AArch64 or ARM64)
+hppa              PA-RISC
+ia64              IA-64
+mips              MIPS
+powerpc           PowerPC
+sparc             SPARC
+x86               x86
+x86_64            x86-64 (AMD64)
+
+TARGET BITNESS
+--------------------------------------------------------------------------------
+16                16-bit CPU
+32                32-bit CPU
+64                64-bit CPU
+
+TARGET ENDIANNESS
+--------------------------------------------------------------------------------
+big               Big-endian
+little            Little-endian
+
+TARGET DATA MODELS        char|short|int32|int|long|pointer|long long (int64)
+------------------------------+-----+-----+---+----+-------+--------------------
+lp32              LP32    8   |16   |     |16 |32  |32     |
+ilp32             ILP32   8   |16   |     |32 |32  |32     |
+ilp64             ILP64   8   |16   |32   |64 |64  |64     |64
+llp64             LLP64   8   |16   |     |32 |32  |64     |64
+lp64              LP64    8   |16   |     |32 |64  |64     |64
+
+POSIX VERSIONS
+--------------------------------------------------------------------------------
+posix1-1988       POSIX.1:1988 | IEEE Std 1003.1-198
+posix1-1990       POSIX.1:1990 | IEEE Std 1003.1-1990 | ISO/IEC 9945-1:1990
+posix1b-1993      POSIX.1b     | IEEE 1003.1b-1993
+posix1-1996       POSIX.1:1996 | IEEE 1003.1-1996     | ISO/IEC 9945-1:1996
+posix1-2001       POSIX.1:2001 | IEEE 1003.1-2001     | ISO/IEC 9945:2002
+posix1-2008       POSIX.1:2008 | IEEE 1003.1-2008     | ISO/IEC 9945:2009
+
+X/OPEN|SUS VERSIONS
+--------------------------------------------------------------------------------
+xpg3              X/Open Portability Guide 3 (1989)
+xpg4              X/Open Portability Guide 4 (1992)
+sus               SUS   | X/Open Single UNIX Specification (UNIX95)
+susv2             SUSv2 | X/Open Single UNIX Specification, Version 2 (UNIX98)
+susv3             SUSv3 | Open Group Single UNIX Specification, Version 3 (UNIX03)
+susv4             SUSv4 | Open Group Single UNIX Specification, Version 4
+EOF
+}
+
+print_version() {
+  cat <<EOF
+cprobe 1.4
+Copyright (C) 2015-2017 Oleksii Cherniavskyi
+EOF
+}
+
+check_cc() {
+  check_cc_found=
+  check_cpp_ok=
+  check_cc_ok=
+  check_cxx_ok=
+  cmd_type=
+  cc_is_cross=1
+  c_flag="-c"
+  o_exe_flag="-o"
+  exe_ext=
+
+  ($prop_cmd >/dev/null) 2>/dev/null
+  if test $? -ge 126; then
+    return
+  fi
+  check_cc_found=1
+
+  probe_out=/tmp/cc_probe_$$.txt
+  rm -f $probe_out
+  cc_cmd0=`echo "$prop_cmd" | sed 's# [^/]*$##'`
+  ($cc_cmd0 -version >>$probe_out) 2>>$probe_out
+  ($cc_cmd0 --version >>$probe_out) 2>>$probe_out
+  ($cc_cmd0 -V >>$probe_out) 2>>$probe_out
+  ($cc_cmd0 -qversion >>$probe_out) 2>>$probe_out
+  ($cc_cmd0 -h >>$probe_out) 2>>$probe_out
+  ($cc_cmd0 --help >>$probe_out) 2>>$probe_out
+  ($cc_cmd0 >>$probe_out) 2>>$probe_out
+
+  CPP_FLAG=-E
+  if grep "Texas Instruments" $probe_out | grep "Tools Copyright" >/dev/null; then
+    cmd_type=ticc
+    CPP_FLAG=-ppl
+  elif grep -i mingw $probe_out >/dev/null; then
+    cmd_type=mingw
+  elif grep -i gcc $probe_out >/dev/null && grep -i "free software foundation" $probe_out >/dev/null; then
+    cmd_type=gcc
+  elif grep -i "clang version" $probe_out >/dev/null; then
+    cmd_type=clang
+  elif grep "tcc version" $probe_out >/dev/null; then
+    cmd_type=tinyc
+  elif grep -i "Sun C" $probe_out >/dev/null; then
+    cmd_type=sunpro
+  elif grep -i "IBM XL C" $probe_out >/dev/null; then
+    cmd_type=xlc
+  elif grep -i "MIPSpro Compilers" $probe_out >/dev/null; then
+    cmd_type=mipspro
+  elif grep -i microsoft $probe_out >/dev/null; then
+    cmd_type=msc
+    CPP_FLAG="/E"
+    c_flag="/c"
+    o_exe_flag="/Fe:"
+    exe_ext=".exe"
+  elif grep -i "PGI Compilers and Tools" $probe_out >/dev/null; then
+    cmd_type=pgi
+  elif grep "SDCC" $probe_out >/dev/null; then
+    cmd_type=sdcc
+  else
+    cmd_type=cc
+  fi
+  rm -f $probe_out
+
+  rm -f $test_dir/*
+  cd $test_dir
+
+# !!! IMPORTANT: <base_name> must be same in <base_name>.$c_ext and <base_name>.pp !!!
+  test_src="test.$c_ext"
+  test_pp="test.pp"
+
+  cat >$test_src <<EOF
+#define MY_DEFINE 1
+#ifdef MY_DEFINE
+  #define CPP_OK 1234
+#endif
+
+int cpp_result = CPP_OK;
+
+EOF
+
+  if test $cmd_type = ticc; then
+    rm -f $test_pp
+    ($prop_cmd $prop_cflags $CPP_FLAG $test_src >/dev/null) 2>/dev/null
+    ret_code=$?
+    if test ! -f $test_pp; then
+      cd $orig_dir
+      return
+    fi
+    if cat $test_pp | grep cpp_result | grep 1234 >/dev/null; then
+      :
+    else
+      cd $orig_dir
+      return
+    fi
+  else
+    ($prop_cmd $prop_cflags $CPP_FLAG $test_src >cc_test_out) 2>/dev/null
+    ret_code=$?
+    if test $ret_code -ne 0; then
+      cd $orig_dir
+      return
+    fi
+    if cat cc_test_out | grep cpp_result | grep 1234 >/dev/null; then
+      :
+    else
+      cd $orig_dir
+      return
+    fi
+  fi
+  check_cpp_ok=1
+
+  cat > $test_src <<EOF
+int main(int argc, char** argv)
+{
+  return 0;
+}
+EOF
+  if ($prop_cmd $prop_cflags $c_flag $test_src >/dev/null) 2>/dev/null; then
+    check_cc_ok=1
+    rm -f testapp$exe_ext
+    ($prop_cmd $prop_cflags $o_exe_flag testapp$exe_ext $test_src >/dev/null) 2>/dev/null
+    if test -x testapp$exe_ext; then
+      (./testapp$exe_ext >/dev/null) 2>/dev/null
+      if test $? -eq 0; then
+        cc_is_cross=0
+      fi
+    fi
+  fi
+
+
+  if test x$check_cc_ok = x1; then
+    test_src_cxx="test.$cxx_ext"
+    cat > $test_src_cxx <<EOF
+class test_class
+{
+  public:
+    int i;
+};
+
+int main(int argc, char** argv)
+{
+  test_class t;
+  return 0;
+}
+EOF
+    if ($prop_cmd $prop_cflags $c_flag $test_src_cxx >/dev/null) 2>/dev/null; then
+      check_cxx_ok=1
+      rm -f testapp$exe_ext
+      ($prop_cmd $prop_cflags $o_exe_flag testapp$exe_ext $test_src_cxx >/dev/null) 2>/dev/null
+      if test -x testapp$exe_ext; then
+        (./testapp$exe_ext >/dev/null) 2>/dev/null
+        if test $? -eq 0; then
+          cc_is_cross=0
+        fi
+      fi
+    fi
+  fi
+
+  cd $orig_dir
+}
+
+inc_headers() {
+  test_src="test.$c_ext"
+  cd $test_dir
+  rm -f $headers
+
+  for hdr in "<android/api-level.h>" "<sys/neutrino.h>" "<version.h>" "<limits.h>" "<stdint.h>" "<sys/types.h>" "<sys/cdefs.h>" "<features.h>" "<limits.h>" "<unistd.h>"; do
+    cat > $test_src <<EOF
+#include $hdr
+int main(int argc, char** argv)
+{
+  return 0;
+}
+EOF
+    if ($prop_cmd $prop_cflags $c_flag $test_src >/dev/null) 2>/dev/null; then
+      echo "#include $hdr" >>$headers
+    fi
+  done
+
+  cd $orig_dir
+}
+
+load_cc_macros() {
+  inc_headers
+  
+  cd $test_dir
+  probe_h="cprobe_$$.$c_ext"
+  probe_hxx="cprobe_$$.$cxx_ext"
+  probe_pp="cprobe_$$.pp"
+  probe_h_out="cprobe_$$_out"
+  probe_sh="cprobe_$$.sh"
+  rm -f $probe_h $probe_pp
+  if test -f $headers; then
+    cat $headers >$probe_h
+  fi
+  cat $script_abs | sed -n -e '/\* COMPILER DEFINES \*/,$p' | grep -v "^EOF" >> $probe_h
+  if test $cmd_type = ticc; then
+    $prop_cmd $CFLAGS $CPP_FLAG $probe_h 2>/dev/null
+    cat $probe_pp > $probe_h_out
+    if test x$check_cxx_ok = x1; then
+      rm -f $probe_pp
+      cat $probe_h > $probe_hxx
+      $prop_cmd $CFLAGS $CPP_FLAG $probe_hxx 2>/dev/null
+      cat $probe_pp >> $probe_h_out
+    fi
+  else
+    $prop_cmd $CFLAGS $CPP_FLAG $probe_h 2>/dev/null > $probe_h_out
+    if test x$check_cxx_ok = x1; then
+      cat $probe_h > $probe_hxx
+      $prop_cmd $CFLAGS $CPP_FLAG $probe_hxx 2>/dev/null >> $probe_h_out
+    fi
+  fi
+  cat $probe_h_out | grep "^D[SV][EA][TL]" | sed 's/= */=/' | sed 's/ *$//' | sed 's/=\(.*\)$/="\1"/' | sed 's/""*/"/g' | sed 's/ *= */=/' | sed 's/="*$/=/' | sed 's///' > $probe_sh
+  . ./$probe_sh
+
+  cc_macros_loaded=1
+}
+
+read_cc_props_base() {
+  prop_type=
+  prop_version=
+
+  load_cc_macros $c_ext
+
+################################################################################
+# DETECT COMPILER AND VERSION
+
+  if test -n "$DSET__CC_ARM"; then
+    prop_type=armc
+
+    if test -n "$DVAL__ARMCC_VERSION"; then
+      prop_vmajor=`expr "0$DVAL__ARMCC_VERSION" / 100000`
+      tbuf=`expr "0$DVAL__ARMCC_VERSION" % 100000`
+      prop_vminor=`expr "0$tbuf" / 10000`
+      tbuf=`expr "0$DVAL__ARMCC_VERSION" % 10000`
+      prop_vrevision=`expr "0$tbuf" / 1000`
+    fi
+  fi
+
+  if test -n "$DSET__clang__"; then
+    prop_type=clang
+
+    prop_vmajor=$DVAL__clang_major__
+    prop_vminor=$DVAL__clang_minor__
+    prop_vrevision=$DVAL__clang_patchlevel__
+  fi
+
+  if test -n "$DSET__COMPCERT__"; then
+    prop_type=compcert
+  fi
+
+  if test -n "$DSET__HP_cc"; then
+    prop_type=hpansic
+  fi
+
+  if test -n "$DSET__HP_aCC"; then
+    prop_type=hpacc
+
+    if test -n "$DVAL__HP_aCC"; then
+      if test "x$DVAL__HP_aCC" = "x1"; then
+        prop_vmajor=1
+      else
+        prop_vmajor=`expr "0$DVAL__HP_aCC" / 10000`
+        tbuf=`expr "0$DVAL__HP_aCC" % 10000`
+        prop_vminor=`expr "0$tbuf" / 100`
+        prop_vrevision=`expr "0$DVAL__HP_aCC" % 100`
+      fi
+    fi
+  fi
+
+  if test -n "$DSET__IBMC__" || test -n "$DVAL__IBMCPP__"; then
+    prop_type=xlc
+
+    if test -n "$DSET__COMPILER_VER__"; then
+      tbuf=`echo "$DVAL__COMPILER_VER__" | sed 's/0[xX].\(.\).*/\1/g'`
+      prop_vmajor=`printf "%d" "0x$tbuf"`
+      tbuf=`echo "$DVAL__COMPILER_VER__" | sed 's/0[xX]..\(..\).*/\1/g'`
+      prop_vminor=`printf "%d" "0x$tbuf"`
+      tbuf=`echo "$DVAL__COMPILER_VER__" | sed 's/0[xX]....\(....\).*/\1/g'`
+      prop_vrevision=`printf "%d" "0x$tbuf"`
+    elif test -n "$DVAL__xlc__"; then
+      tbuf=`echo "0${DVAL__xlc__}" | sed 's/^\([0-9]*\).*/\1/g'`
+      prop_vmajor=`expr "0$tbuf" + 0`
+      tbuf=`echo "0${DVAL__xlc__}." | sed 's/^[^\.]*\.\([0-9]*\).*/\1/g'`
+      prop_vminor=`expr "0$tbuf" + 0`
+      tbuf=`echo "0${DVAL__xlc__}.." | sed 's/^[^\.]*\.[^\.]*\.\([0-9]*\).*/\1/g'`
+      prop_vrevision=`expr "0$tbuf" + 0`
+    elif test -n "$DVAL__IBMC__"; then
+      prop_vmajor=`expr "0$DVAL__IBMC__" / 100`
+      tbuf=`expr "0$DVAL__IBMC__" % 100`
+      prop_vminor=`expr "0$tbuf" / 10`
+      prop_vrevision=`expr "0$DVAL__IBMC__" % 10`
+    elif test -n "$DVAL__xlC__"; then
+      tbuf=`echo "$DVAL__xlC__" | sed 's/0[xX]\(..\).*/\1/g'`
+      prop_vmajor=`printf "%d" "0x$tbuf"`
+      tbuf=`echo "$DVAL__xlC__" | sed 's/0[xX]..\(..\).*/\1/g'`
+      prop_vminor=`printf "%d" "0x$tbuf"`
+    elif test -n "$DVAL__IBMCPP__"; then
+      prop_vmajor=`expr "0$DVAL__IBMCPP__" / 100`
+      tbuf=`expr "0$DVAL__IBMCPP__" % 100`
+      prop_vminor=`expr "0$tbuf" / 10`
+      prop_vrevision=`expr "0$DVAL__IBMCPP__" % 10`
+    fi
+  fi
+
+  if test -n "$DSET__INTEL_COMPILER" || test -n "$DSET__ICC" || test -n "$DSET__ECC" || test -n "$DSET__ICL"; then
+    prop_type=intel
+
+    if test -n "$DVAL__INTEL_COMPILER"; then
+      prop_vmajor=`expr "0$DVAL__INTEL_COMPILER" / 100`
+      tbuf=`expr "0$DVAL__INTEL_COMPILER" % 100`
+      prop_vminor=`expr "0$tbuf" / 10`
+      prop_vrevision=`expr "0$DVAL__INTEL_COMPILER" % 10`
+    fi
+  fi
+
+  if test -n "$DSET_MSC_VER"; then
+    prop_type=msc
+
+    if test -n "$DVAL_MSC_VER"; then
+      prop_vmajor=`expr "0$DVAL_MSC_VER" / 100`
+      prop_vminor=`expr "0$DVAL_MSC_VER" % 100`
+    elif test -n "$DVAL_MSC_FULL_VER"; then
+      tbuf=`echo "$DVAL_MSC_FULL_VER" | sed 's/^\(....\).*/\1/'`
+      prop_vmajor=`expr "0$tbuf" / 100`
+      prop_vminor=`expr "0$tbuf" % 100`
+    fi
+  fi
+
+  if test -n "$DSET__SUNPRO_C" || test -n "$DSET__SUNPRO_CC"; then
+    prop_type=sunpro
+
+    version_string=${DVAL__SUNPRO_C:-$DVAL__SUNPRO_CC}
+    version_string=`echo "$version_string" | sed 's/ *//g'`
+
+    if test -n "$version_string"; then
+      tbuf=`echo "$version_string" | sed 's/0[xX]\(.\).*/\1/g'`
+      prop_vmajor=`expr "0$tbuf" + 0`
+      nchars=`echo -n "$version_string" | wc -c`
+      if test "$nchars" -gt 5; then
+        tbuf=`echo "$version_string" | sed 's/0[xX].\(..\).*/\1/g'`
+        prop_vminor=`expr "0$tbuf" + 0`
+      else
+        tbuf=`echo "$version_string" | sed 's/0[xX].\(.\).*/\1/g'`
+        prop_vminor=`expr "0$tbuf" + 0`
+      fi
+    fi
+  fi
+
+  if test -n "$DSET__PGI"; then
+    prop_type=pgi
+
+    prop_vmajor=$DVAL__PGIC__
+    prop_vminor=$DVAL__PGIC_MINOR__
+    prop_vrevision=$DVAL__PGIC_PATCHLEVEL__
+  fi
+
+  if test -n "$DSETSDCC"; then
+    prop_type=sdcc
+
+    if test -n "$DVALSDCC"; then
+      prop_vmajor=`expr "0$DVALSDCC" / 100`
+      tbuf=`expr "0$DVALSDCC" % 100`
+      prop_vminor=`expr "0$tbuf" / 10`
+      prop_vrevision=`expr "0$DVALSDCC" % 10`
+    fi
+  fi
+
+  if test -n "$DSET__TI_COMPILER_VERSION__"; then
+    prop_type=ticc
+
+    if test -n "$DVAL__TI_COMPILER_VERSION__"; then
+      prop_vmajor=`expr "0$DVAL__TI_COMPILER_VERSION__" / 1000000`
+      tbuf=`expr "0$DVAL__TI_COMPILER_VERSION__" % 1000000`
+      prop_vminor=`expr "0$tbuf" / 1000`
+      prop_vrevision=`expr "0$DVAL__TI_COMPILER_VERSION__" % 1000`
+    fi
+  fi
+
+  if test -n "$DSET__TINYC__"; then
+    prop_type=tinyc
+  fi
+
+  if test -n "$DSET__WATCOMC__"; then
+    prop_type=watcom
+
+    if test -n "$DVAL__WATCOMC__"; then
+      prop_vmajor=`expr "0$DVAL__WATCOMC__" / 100`
+      prop_vminor=`expr "0$DVAL__WATCOMC__" % 100`
+    fi
+  fi
+
+  if test -z "$prop_type" && (test -n "$DSET__GNUC__" || test -n "$DSET__GNUG__"); then
+    prop_type=gcc
+
+    if test -n "$DVAL__GNUC_VERSION__"; then
+      prop_vmajor=`expr "0$DVAL__GNUC_VERSION__" / 10000`
+      tbuf=`expr "0$DVAL__GNUC_VERSION__" % 10000`
+      prop_vminor=`expr "0$tbuf" / 100`
+      prop_vrevision=`expr "0$DVAL__GNUC_VERSION__" % 100`
+    else
+      prop_vmajor=$DVAL__GNUC__
+      prop_vminor=$DVAL__GNUC_MINOR__
+      prop_vrevision=$DVAL__GNUC_PATCHLEVEL__
+    fi
+  elif test -n "$DSET__sgi" || test -n "$DSETsgi"; then
+    version_string=${DVAL_SGI_COMPILER_VERSION:-$DVAL_COMPILER_VERSION}
+    if test -n "$version_string"; then
+      prop_type=mipspro
+      prop_vmajor=`expr "0$version_string" / 100`
+      tbuf=`expr "0$version_string" % 100`
+      prop_vminor=`expr "0$tbuf" / 10`
+      prop_vrevision=`expr "0$version_string" % 10`
+    fi
+  fi
+
+  prop_version=$prop_vmajor
+  if test -n "$prop_vminor"; then
+    prop_version="${prop_version}.${prop_vminor}"
+    if test -n "$prop_vrevision"; then
+      prop_version="${prop_version}.${prop_vrevision}"
+    fi
+  fi
+}
+
+read_cc_props_ext() {
+  prop_std=
+  prop_cxx_std=
+  prop_os=
+  prop_os_version=
+  prop_arch=
+  prop_bitness=
+  prop_endianness=
+  prop_data_model=
+  prop_posix=
+  prop_sus=
+
+  if test -n "$DSET__cplusplus_cli"; then
+    prop_cxx_std=cxx_cli
+  elif test -n "$DSET__embedded_cplusplus"; then
+    prop_cxx_std=embedded_cxx
+  elif test -n "$DSET__cplusplus"; then
+    std_version=`echo "$DVAL__cplusplus" | sed 's/[a-zA-Z_]//g'`
+    if test "$std_version" -ge 201402; then
+      prop_cxx_std=cxx14
+    elif test "$std_version" -ge 201103; then
+      prop_cxx_std=cxx11
+    elif test "$std_version" -ge 199711; then
+      prop_cxx_std=cxx98
+    fi
+  fi
+
+  if test -n "$DSET__STDC__"; then
+    prop_std=c89
+  fi
+
+  if test -n "$DSET__STDC_VERSION__"; then
+    std_version=`echo "$DVAL__STDC_VERSION__" | sed 's/[a-zA-Z_]//g'`
+    if test "$std_version" -ge 201112; then
+      prop_std=c11
+    elif test "$std_version" -ge 199901; then
+      prop_std=c99
+    elif test "$std_version" -ge 199409; then
+      prop_std=c95
+    else
+      prop_std=c89
+    fi
+  fi
+
+################################################################################
+# DETECT OS AND VERSION
+
+  if test -n "$DSET_AIX" || test -n "$DSET__TOS_AIX__"; then
+    prop_os=aix
+
+    if test -n "$DSET_AIX3"; then
+      prop_os_vmajor=3
+    fi
+    if test -n "$DSET_AIX31"; then
+      prop_os_vmajor=3
+    fi
+    if test -n "$DSET_AIX4"; then
+      prop_os_vmajor=4
+    fi
+    if test -n "$DSET_AIX41"; then
+      prop_os_vmajor=4
+    fi
+    if test -n "$DSET_AIX5"; then
+      prop_os_vmajor=5
+    fi
+    if test -n "$DSET_AIX51"; then
+      prop_os_vmajor=5
+    fi
+    if test -n "$DSET_AIX6"; then
+      prop_os_vmajor=6
+    fi
+    if test -n "$DSET_AIX61"; then
+      prop_os_vmajor=6
+    fi
+    if test -n "$DSET_AIX7"; then
+      prop_os_vmajor=7
+    fi
+    if test -n "$DSET_AIX71"; then
+      prop_os_vmajor=7
+    fi
+    if test -n "$DSET_AIX8"; then
+      prop_os_vmajor=8
+    fi
+    if test -n "$DSET_AIX81"; then
+      prop_os_vmajor=8
+    fi
+    if test -n "$DSET_AIX9"; then
+      prop_os_vmajor=9
+    fi
+    if test -n "$DSET_AIX91"; then
+      prop_os_vmajor=9
+    fi
+  fi
+
+  if test -n "$DSET__ANDROID__"; then
+    prop_os=android
+    prop_os_vmajor=$DVAL__ANDROID_API__
+  fi
+
+  if test -n "$DSET__FreeBSD__"; then
+    prop_os=freebsd
+    prop_os_vmajor=$DVAL__FreeBSD__
+  fi
+
+  if test -n "$DSET__NetBSD__"; then
+    prop_os=netbsd
+  fi
+
+  if test -n "$DSET__OpenBSD__"; then
+    prop_os=openbsd
+  fi
+
+  if test -n "$DSET__DragonFly__"; then
+    prop_os=dragonfly
+  fi
+
+  if test -n "$DSET__CYGWIN__"; then
+    prop_os=cygwin
+  fi
+
+  if test -n "$DSET__gnu_hurd__"; then
+    prop_os=gnuhurd
+  fi
+
+  if test -n "$DSET__gnu_linux__" || test -n "$DSET__gnu_linux"; then
+    prop_os=gnulinux
+  fi
+
+  if test -n "$DSET__linux__" || test -n "$DSETlinux" || test -n "$DSET__linux"; then
+    prop_os=gnulinux
+  fi
+
+  if test -n "$DSET_hpux" || test -n "$DSEThpux" || test -n "$DSET__hpux"; then
+    prop_os=hpux
+  fi
+
+  if test -n "$DSETsgi" || test -n "$DSET__sgi"; then
+    prop_os=irix
+  fi
+
+  if test -n "$DSET__APPLE__" && test -n "$DSET__MACH__"; then
+    prop_os=macos
+  fi
+
+  if test -n "$DSET__minix"; then
+    prop_os=minix
+  fi
+
+  if test -n "$DSET__QNX__" || test -n "$DSET__QNXNTO__"; then
+    prop_os=qnx
+    if test -n "$DVAL_NTO_VERSION"; then
+      prop_os_vmajor=`expr "0$DVAL_NTO_VERSION" / 100`
+    fi
+  fi
+
+  if test -n "$DSET_XENIX" || test -n "$DSET_SCO_DS"; then
+    prop_os=sco
+  fi
+
+  if test -n "$DSETsun" || test -n "$DSET__sun" || test -n "$DSET__sun__" || test -n "$DSET__SunOS"; then
+    if test -n "$DSET__SVR4" || test -n "$DSET__svr4__"; then
+      prop_os=solaris
+    fi
+
+    if test -n "$DSET__SunOS_5_8"; then
+      prop_os_vmajor=8
+    elif test -n "$DSET__SunOS_5_9"; then
+      prop_os_vmajor=9
+    elif test -n "$DSET__SunOS_5_10"; then
+      prop_os_vmajor=10
+    elif test -n "$DSET__SunOS_5_11"; then
+      prop_os_vmajor=11
+    fi
+  fi
+
+  if test -n "$DSET_WIN32$DSETWIN32$DSET__WIN32__$__WIN32" || test -n "$DSET_WIN64$DSETWIN64$DSET__WIN64$DSET__WIN64__" || test -n "$DSET__TOS_WIN__" || test -n "$DSET__WINDOWS__" || test -n "$DSETWINNT$DSET__WINNT$DSET__WINNT__"; then
+    prop_os=windows
+  fi
+
+  prop_os_version=$prop_os_vmajor
+
+
+################################################################################
+# DETECT ARCH & BITNESS
+  if test -n "$DSET__MINGW32__"; then
+    prop_bitness=32
+  fi
+
+  if test -n "$DSET__MINGW64__"; then
+    prop_bitness=64
+  fi
+
+  if test -n "$DSET__arch64__"; then
+    prop_bitness=64
+  fi
+
+  if test -n "$DSET__alpha__" || test -n "$DSET_M_ALPHA" || test -n "$DSET__alpha" || test -n "$DSET__ALPHA"; then
+    prop_arch=alpha
+    prop_bitness=64
+  fi
+
+  if test -n "$DSET__arm__" || test -n "$DSET__thumb__" || test -n "$DSET__TARGET_ARCH_ARM" || test -n "$DSET__TARGET_ARCH_THUMB" || test -n "$DSET_ARM" || test -n "$DSET_M_ARM" || test -n "$DSET_M_ARMT" || test -n "$DSET__arm" || test -n "$DSET__TI_ARM__"; then
+    prop_arch=arm
+  fi
+
+  if test -n "$DSET__aarch64__"; then
+    prop_arch=arm64
+    prop_bitness=64
+  fi
+
+  if test -n "$DSET__hppa__" || test -n "$DSET__HPPA__" || test -n "$DSET__hppa"; then
+    prop_arch=hppa
+  fi
+
+# X86 start
+  if test -n "$DSETi386" || test -n "$DSET__i386" || test -n "$DSET__i386__" || test -n "$DSET__386"; then
+    prop_arch=x86
+    prop_bitness=32
+  fi
+
+  if test -n "$DSET__i486__" || test -n "$DSET__i586__" || test -n "$DSET__i686__"; then
+    prop_arch=x86
+    prop_bitness=32
+  fi
+
+  if test -n "$DSET__IA32__" || test -n "$DSET__X86__" || test -n "$DSET_X86_" || test -n "$DSET__THW_INTEL__" || test -n "$DSET__INTEL__"; then
+    prop_arch=x86
+    prop_bitness=32
+  fi
+
+  if test -n "$DSET_M_IX86" || test -n "$DSET__I86__"; then
+    prop_arch=x86
+    prop_bitness=32
+  fi
+# X86 end
+
+  if test -n "$DSET__amd64__" || test -n "$DSET__amd64" || test -n "$DSET__x86_64__" || test -n "$DSET__x86_64" || test -n "$DSET_M_X64" || test -n "$DSET_M_AMD64"; then
+    prop_arch=x86_64
+    prop_bitness=64
+  fi
+
+  if test -n "$DSET__ia64__" || test -n "$DSET_IA64" || test -n "$DSET__IA64__" || test -n "$DSET__ia64" || test -n "$DSET_M_IA64" || test -n "$DSET__itanium__" || test -n "$DSETia64"; then
+    prop_arch=ia64
+    prop_bitness=64
+  fi
+
+  if test -n "$DSET__mips__" || test -n "$DSETmips" || test -n "$DSET__MIPS__" || test -n "$DSET__mips"; then
+    prop_arch=mips
+  fi
+
+  if test -n "$DSET__powerpc" || test -n "$DSET__powerpc__" || test -n "$DSET__powerpc64__" || test -n "$DSET__POWERPC__" || test -n "$DSET__ppc__" || test -n "$DSET__ppc64__" || test -n "$DSET__PPC__" || test -n "$DSET__PPC64__" || test -n "$DSET_ARCH_PPC" || test -n "$DSET_ARCH_PPC64" || test -n "$DSET_M_PPC" || test -n "$DSET__PPCGECKO__" || test -n "$DSET__PPCBROADWAY__" || test -n "$DSET_XENON" || test -n "$DSET__ppc" || test -n "$DSET__PowerPC__" || test -n "$DSET__PPC" || test -n "$DSET__ppc64"; then
+    prop_arch=powerpc
+  fi
+
+  if test -n "$DSET__sparc__" || test -n "$DSET__sparc" || test -n "$DSET__sparc64__"; then
+    prop_arch=sparc
+  fi
+
+
+################################################################################
+# DETECT DATA MODEL
+  if test -n "$DSET_ILP32" || test -n "$DSET__ILP32__"; then
+    prop_data_model=ilp32
+  fi
+
+  if test -n "$DSET_LP64" || test -n "$DSET__LP64__"; then
+    prop_data_model=lp64
+  fi
+
+  if test -z "$prop_data_model" && test $cc_is_cross = 0; then
+    cd $test_dir
+    dm_src=cprobe_dm_.$c_ext
+    dm_exe=cprobe_dm$exe_ext
+    rm -f $dm_exe
+    cat >$dm_src <<"EOF"
+#include <stdio.h>
+
+int main(int argc, char *argv[])
+{
+  int int_sz, long_sz, ptr_sz;
+
+  int_sz = sizeof(int);
+  long_sz = sizeof(long int);
+  ptr_sz = sizeof(int *);
+
+  if (int_sz == 2 && long_sz == 4 && ptr_sz == 4) {
+    printf("lp32\n");
+  } else if (int_sz == 4 && long_sz == 4 && ptr_sz == 4) {
+    printf("ilp32\n");
+  } else if (int_sz == 8 && long_sz == 8 && ptr_sz == 8) {
+    printf("ilp64\n");
+  } else if (int_sz == 4 && long_sz == 4 && ptr_sz == 8) {
+    printf("llp64\n");
+  } else if (int_sz == 4 && long_sz == 8 && ptr_sz == 8) {
+    printf("lp64\n");
+  }
+}
+
+EOF
+    $prop_cmd $CFLAGS $o_exe_flag $dm_exe $dm_src 2>/dev/null 1>&2
+    prop_data_model=`./$dm_exe`
+    rm -f $dm_src $dm_exe
+  fi
+
+  if test -z "$prop_data_model"; then
+    if test -n "$DVAL__SIZEOF_INT__"; then
+      int_sz=$DVAL__SIZEOF_INT__
+    elif test -n "$DVALUINT_MAX"; then
+      case "$DVALUINT_MAX" in
+        6553*)
+          int_sz=2
+          ;;
+        429496*)
+          int_sz=4
+          ;;
+        184467*)
+          int_sz=8
+          ;;
+      esac
+    fi
+
+    if test -n "$DVAL__SIZEOF_LONG__"; then
+      long_sz=$DVAL__SIZEOF_LONG__
+    elif test -n "$DVALULONG_MAX"; then
+      case "$DVALULONG_MAX" in
+        429496*)
+          long_sz=4
+          ;;
+        184467*)
+          long_sz=8
+          ;;
+      esac
+    fi
+
+    if test -n "$DVAL__SIZEOF_POINTER__"; then
+      ptr_sz=$DVAL__SIZEOF_POINTER__
+    elif test -n "$DVALUINTPTR_MAX"; then
+      case "$DVALUINTPTR_MAX" in
+        0xffffU)
+          ptr_sz=2
+          ;;
+        429496*)
+          ptr_sz=4
+          ;;
+        184467*)
+          ptr_sz=8
+          ;;
+      esac
+    elif test -n "$DVAL__UINTPTR_MAX__"; then
+      case "$DVAL__UINTPTR_MAX__" in
+        0xffffU)
+          ptr_sz=2
+          ;;
+        429496*)
+          ptr_sz=4
+          ;;
+        184467*)
+          ptr_sz=8
+          ;;
+      esac
+    fi
+
+    if test -z "$ptr_sz"; then
+      if test x$prop_bitness = x32; then
+        ptr_sz=4
+      elif test x$prop_bitness = x64; then
+        ptr_sz=8
+      fi
+    fi
+
+    if test x$int_sz = x2 && test x$long_sz = x4 && test x$ptr_sz = x4; then
+      prop_data_model=lp32
+    elif test x$int_sz = x4 && test x$long_sz = x4 && test x$ptr_sz = x4; then
+      prop_data_model=ilp32
+    elif test x$int_sz = x8 && test x$long_sz = x8 && test x$ptr_sz = x8; then
+      prop_data_model=ilp64
+    elif test x$int_sz = x4 && test x$long_sz = x4 && test x$ptr_sz = x8; then
+      prop_data_model=llp64
+    elif test x$int_sz = x4 && test x$long_sz = x8 && test x$ptr_sz = x8; then
+      prop_data_model=lp64
+    fi
+  fi
+
+  if test -z "$prop_bitness" && test -n "$prop_data_model"; then
+    case $prop_data_model in
+      lp32 | ilp32)
+        prop_bitness=32
+        ;;
+      ilp64 | llp64 | lp64)
+        prop_bitness=64
+        ;;
+    esac
+  elif test -z "$prop_bitness" && test -n "$ptr_sz"; then
+    case $ptr_sz in
+      2)
+        prop_bitness=16
+        ;;
+      4)
+        prop_bitness=32
+        ;;
+      8)
+        prop_bitness=64
+        ;;
+    esac
+  fi
+
+
+################################################################################
+# DETECT ENDIANESS
+  if test -n "$DSET__BIG_ENDIAN__" || test -n "$DSET__ARMEB__" || test -n "$DSET__THUMBEB__" || test -n "$DSET__AARCH64EB__" || test -n "$DSET_MIPSEB" || test -n "$DSET__MIPSEB" || test -n "$DSET__MIPSEB__"; then
+    prop_endianness=big
+  fi
+
+  if test x"$DVAL__BYTE_ORDER__" = x"$DVAL__ORDER_BIG_ENDIAN__" || test x"$DVAL__FLOAT_WORD_ORDER__" = x"$DVAL__ORDER_BIG_ENDIAN__"; then
+    prop_endianness=big
+  fi
+
+  if test -n "$DSET__LITTLE_ENDIAN__" || test -n "$DSET__ARMEL__" || test -n "$DSET__THUMBEL__" || test -n "$DSET__AARCH64EL__" || test -n "$DSET_MIPSEL" || test -n "$DSET__MIPSEL" || test -n "$DSET__MIPSEL__"; then
+    prop_endianness=little
+  fi
+
+  if test x"$DVAL__BYTE_ORDER__" = x"$DVAL__ORDER_LITTLE_ENDIAN__" || test x"$DVAL__FLOAT_WORD_ORDER__" = x"$DVAL__ORDER_LITTLE_ENDIAN__"; then
+    prop_endianness=little
+  fi
+
+  if test -z "$prop_endianness" && test $cc_is_cross = 0; then
+    cd $test_dir
+    border_src=cprobe_border_.$c_ext
+    border_exe=cprobe_border_$exe_ext
+    rm -f $border_exe
+    cat >$border_src <<"EOF"
+#include <stdio.h>
+
+int main(int argc, char *argv[])
+{
+   short int word = 0x0001;
+   char *byte = (char *) &word;
+   if (byte[0]) printf("little\n");
+   else printf("big\n");
+}
+
+EOF
+    $prop_cmd $CFLAGS $o_exe_flag $border_exe $border_src 2>/dev/null 1>&2
+    prop_endianness=`./$border_exe`
+    rm -f $border_src $border_exe
+  fi
+
+
+################################################################################
+# DETECT POSIX
+  if test -n "$DSET_POSIX_VERSION"; then
+    case "$DVAL_POSIX_VERSION" in
+      198808L)
+        prop_posix="posix1-1988"
+        ;;
+      199009L)
+        prop_posix="posix1-1990"
+        ;;
+      199309L)
+        prop_posix="posix1b-1993"
+        ;;
+      199506L)
+        prop_posix="posix1-1996"
+        ;;
+      200112L)
+        prop_posix="posix1-2001"
+        ;;
+      200809L)
+        prop_posix="posix1-2008"
+        ;;
+    esac
+  fi
+
+
+################################################################################
+# DETECT XPG
+  if test -n "$DSET_XOPEN_VERSION"; then
+    case "$DVAL_XOPEN_VERSION" in
+      3)
+        prop_sus=xpg3
+        ;;
+      4)
+        if test -n "$DSET_XOPEN_UNIX"; then
+          prop_sus=sus
+        else
+          prop_sus=xpg4
+        fi
+        ;;
+      500)
+        prop_sus=susv2
+        ;;
+      600)
+        prop_sus=susv3
+        ;;
+      700)
+        prop_sus=susv4
+        ;;
+    esac
+  fi
+}
+
+probe_os() {
+  config_os=
+
+  (uname >/dev/null) 2>/dev/null
+  if test $? -ge 126; then
+    return
+  fi
+
+  uname_s=`(uname -s) 2>/dev/null` || uname_s=
+  config_os=`echo "$uname_s" | tr [A-Z] [a-z]`
+# standard values: netbsd openbsd riscos aix freebsd minix qnx dragonfly unixware
+
+  case "$config_os" in
+    linux)
+      config_os=gnulinux ;;
+    darwin)
+      sw_vers >/dev/null 2>&1
+      if test $? -eq 0; then
+        sw_vers_prod_name=`sw_vers -productName | sed 's/ //g' | tr '[A-Z]' '[a-z]'`
+        case "$sw_vers_prod_name" in
+          macos*)
+            config_os=macos ;;
+        esac
+      fi ;;
+    cygwin*)
+      config_os=cygwin ;;
+    sunos)
+      config_os=solaris ;;
+    procnto*)
+      config_os=qnx ;;
+    gnu)
+      config_os=gnuhurd ;;
+    hp-ux)
+      config_os=hpux ;;
+    irix*)
+      config_os=irix ;;
+    mirbsd)
+      config_os=miros ;;
+    sco*)
+      config_os=sco ;;
+  esac
+
+  if test x$config_os = x; then
+    uname_o=`(uname -o) 2>/dev/null` || uname_o=
+    config_os=`echo "$uname_o" | tr [A-Z] [a-z]`
+    case "$config_os" in
+      msys*)
+        config_os=msys ;;
+    esac
+  fi
+}
+
+get_cc_list() {
+  probe_os
+
+  case "x$config_os" in
+    xmacos)
+      cc_list="clang gcc c99 cc c89 clang++ g++ c++ CC"
+      ;;
+    xaix)
+      cc_list="xlc gcc clang c99 cc c89 xlc++ xlC g++ clang++ c++ CC"
+      ;;
+    xcygwin | xmsys | xmks)
+      cc_list="gcc clang cl.exe c99 cc c89 g++ clang++ c++ CC"
+      ;;
+    *)
+      cc_list="gcc clang c99 cc c89 g++ clang++ c++ CC"
+      ;;
+  esac
+}
+
+probe_base() {
+  probe_base_ok=
+  prop_cmd=
+  prop_cflags=
+  probe_cc_ok=
+  probe_cflags_ok=
+  if test -z "$CC"; then
+    get_cc_list
+
+    for prop_cmd in $cc_list; do
+      check_cc
+      if test x$check_cc_ok = x1; then
+        break
+      fi
+    done
+    if test x$check_cc_ok != x1; then
+      prop_cmd=
+    fi
+  else
+    prop_cmd=$CC
+    check_cc
+  fi
+
+  if test x$check_cc_ok != x1; then
+    return
+  fi
+  probe_cc_ok=1
+
+  if test -n "$CFLAGS"; then
+    prop_cflags=$CFLAGS
+    check_cc
+    if test x$check_cc_ok != x1; then
+      return
+    fi
+  fi
+  probe_cflags_ok=1
+
+  if test x$cc_is_cross = x1; then
+    prop_flag_cross="true"
+  else
+    prop_flag_cross="false"
+  fi
+
+  if test x$check_cxx_ok = x1; then
+    prop_flag_cxx="true"
+  else
+    prop_flag_cxx="false"
+  fi
+
+  read_cc_props_base
+  probe_base_ok=1
+}
+
+probe_ext() {
+  probe_ext_ok=
+  probe_base
+
+  if test x$probe_base_ok != x1; then
+    if test x$probe_cc_ok != x1; then
+      if test -n "$CC" && test x$check_cc_found = x1; then
+        printf "%s\n" "${script_name}: invalid compiler: $CC" >&2
+      else
+        test -n "$CC" && cc_list=$CC
+        printf "%s\n" "${script_name}: compiler not found: $cc_list" >&2
+      fi
+    elif test x$probe_cflags_ok != x1; then
+      printf "%s\n" "${script_name}: invalid compiler flags: $CFLAGS" >&2
+    fi
+    return
+  fi
+
+  read_cc_props_ext
+  probe_ext_ok=1
+}
+
+clean_exit() {
+  exit_status=$1
+  cd $orig_dir
+  if test -d $test_dir; then
+    rm -rf $test_dir
+  fi
+  exit $exit_status
+}
+
+param1=1
+pass_over=
+while test $# -gt 0; do
+  if test -z "$pass_over"; then
+    case "$1" in
+      -)
+        pass_over=1
+        ;;
+      -h|-help|--help)
+        print_help
+        exit 0
+        ;;
+      -hprops)
+        print_help_props
+        exit 0
+        ;;
+      -v|--version)
+        print_version
+        exit 0
+        ;;
+      -t|-type)
+        print_string="$print_string type"
+        ;;
+      -r|-ver)
+        print_string="$print_string version"
+        ;;
+      -c|-cmd)
+        print_string="$print_string cmd"
+        ;;
+      -l|-std)
+        print_string="$print_string std"
+        ;;
+      -n|-cxxstd)
+        print_string="$print_string cxx_std"
+        ;;
+      -o|-os)
+        print_string="$print_string os"
+        ;;
+      -s|-osver)
+        print_string="$print_string os_version"
+        ;;
+      -a|-arch)
+        print_string="$print_string arch"
+        ;;
+      -b|-bits)
+        print_string="$print_string bitness"
+        ;;
+      -e|-endian)
+        print_string="$print_string endianness"
+        ;;
+      -d|-dm)
+        print_string="$print_string data_model"
+        ;;
+      -z|-cross)
+        print_string="$print_string flag_cross"
+        ;;
+      -x|-cxx)
+        print_string="$print_string flag_cxx"
+        ;;
+      -p|-posix)
+        print_string="$print_string posix"
+        ;;
+      -u|-sus)
+        print_string="$print_string sus"
+        ;;
+      -1|-2|-3|-4|-5)
+        out_format=`echo "$1" | sed 's/-//'`
+        ;;
+      -*)
+        CFLAGS="$CFLAGS $1"
+        ;;
+      *)
+        if test x$param1 = x1; then
+          CC=`echo "$1" | sed "s#^\(\.\.*\)/#$orig_dir/\1/#"`
+        else
+          CFLAGS="$CFLAGS $1"
+        fi
+        ;;
+    esac
+  else
+    CFLAGS="$CFLAGS $1"
+  fi
+  shift
+  param1=
+done
+
+rm -rf $test_dir 2>/dev/null
+(mkdir $test_dir >/dev/null) 2>/dev/null
+if test ! -d $test_dir; then
+  echo "$script_name: error: could not create temporary directory $test_dir" >&2
+  exit 1
+fi
+
+probe_ext
+if test x$probe_ext_ok != x1; then
+  clean_exit 1
+fi
+
+if test -z "$print_string" && test -z "$out_format"; then
+  cat <<EOF
+type:               ${prop_type:--}
+version:            ${prop_version:--}
+command:            ${prop_cmd:--}
+C standard:         ${prop_std:--}
+C++ standard:       ${prop_cxx_std:--}
+target os:          ${prop_os:--}
+target os version:  ${prop_os_version:--}
+target arch:        ${prop_arch:--}
+bitness:            ${prop_bitness:--}
+endianness:         ${prop_endianness:--}
+data model:         ${prop_data_model:--}
+cross compiler:     $prop_flag_cross
+C++ compiler:       $prop_flag_cxx
+posix version:      ${prop_posix:--}
+sus version:        ${prop_sus:--}
+EOF
+elif test x$out_format = x4; then
+  printf "%s\n" "$prop_type:$prop_os:$prop_arch:$prop_cmd"
+elif test x$out_format = x5; then
+  printf "%s\n" "$prop_type:$prop_version:$prop_std:$prop_cxx_std:$prop_os:$prop_os_version:$prop_arch:$prop_bitness:$prop_endianess:$prop_data_model:$prop_flag_cross:$prop_flag_cxx:$prop_posix:$prop_sus:$prop_cmd"
+else
+  if test -z "$print_string"; then
+    print_string="cmd type version std cxx_std os os_version arch bitness endianness data_model flag_cross flag_cxx posix sus"
+  fi
+  print_space=
+  for prop in $print_string; do
+    prop_var=`echo "CC_$prop" | tr [a-z] [A-Z]`
+    eval prop_val=\$prop_$prop
+    case x$out_format in
+      x)
+        printf "%s" "$print_space$prop_val"
+        print_space=" "
+        ;;
+      x1)
+        printf "%s\n" "$prop_var=\"$prop_val\""
+        ;;
+      x2) 
+        printf "%s\n" "$prop_var: $prop_val"
+        ;;
+      x3) 
+        printf "%s\n" "${prop_val:--}"
+        ;;
+    esac
+  done
+  if test x$out_format = x; then
+    printf "\n"
+  fi
+fi
+
+clean_exit 0
+
+
+cat <<EOF
+/* COMPILER DEFINES */
+
+/* STANDARDS */
+
+#ifdef __STDC__
+DSET__STDC__=1
+#endif
+
+#ifdef __STDC_VERSION__
+DSET__STDC_VERSION__=1
+DVAL__STDC_VERSION__=__STDC_VERSION__
+#endif
+
+#ifdef __cplusplus
+DSET__cplusplus=1
+DVAL__cplusplus=__cplusplus
+#endif
+
+#ifdef __cplusplus_cli
+DSET__cplusplus_cli=1
+DVAL__cplusplus_cli=__cplusplus_cli
+#endif
+
+#ifdef __embedded_cplusplus
+DSET__embedded_cplusplus=1
+#endif
+
+
+/* COMPILERS */
+
+#ifdef __CC_ARM
+DSET__CC_ARM=1
+#endif
+
+#ifdef __ARMCC_VERSION
+DSET__ARMCC_VERSION=1
+DVAL__ARMCC_VERSION=__ARMCC_VERSION
+#endif
+
+#ifdef __clang__
+DSET__clang__=1
+#endif
+
+#ifdef __clang_major__
+DSET__clang_major__=1
+DVAL__clang_major__=__clang_major__
+#endif
+
+#ifdef __clang_minor__
+DSET__clang_minor__=1
+DVAL__clang_minor__=__clang_minor__
+#endif
+
+#ifdef __clang_patchlevel__
+DSET__clang_patchlevel__=1
+DVAL__clang_patchlevel__=__clang_patchlevel__
+#endif
+
+#ifdef __COMPCERT__
+DSET__COMPCERT__=1
+#endif
+
+#ifdef __GNUC__
+DSET__GNUC__=1
+DVAL__GNUC__=__GNUC__
+#endif
+
+#ifdef __GNUG__
+DSET__GNUG__=1
+DVAL__GNUG__=__GNUG__
+#endif
+
+#ifdef __GNUC_MINOR__
+DSET__GNUC_MINOR__=1
+DVAL__GNUC_MINOR__=__GNUC_MINOR__
+#endif
+
+#ifdef __GNUC_PATCHLEVEL__
+DSET__GNUC_PATCHLEVEL__=1
+DVAL__GNUC_PATCHLEVEL__=__GNUC_PATCHLEVEL__
+#endif
+
+#ifdef __GNUC_VERSION__
+DSET__GNUC_VERSION__=1
+DVAL__GNUC_VERSION__=__GNUC_VERSION__
+#endif
+
+#ifdef __HP_cc
+DSET__HP_cc=1
+#endif
+
+#ifdef __HP_aCC
+DSET__HP_aCC=1
+DVAL__HP_aCC=__HP_aCC
+#endif
+
+#ifdef __xlc__
+DSET__xlc__=1
+DVAL__xlc__=__xlc__
+#endif
+
+#ifdef __xlC__
+DSET__xlC__=1
+DVAL__xlC__=__xlC__
+#endif
+
+#ifdef __IBMC__
+DSET__IBMC__=1
+DVAL__IBMC__=__IBMC__
+#endif
+
+#ifdef __IBMCPP__
+DSET__IBMCPP__=1
+DVAL__IBMCPP__=__IBMCPP__
+#endif
+
+#ifdef __COMPILER_VER__
+DSET__COMPILER_VER__=1
+DVAL__COMPILER_VER__=__COMPILER_VER__
+#endif
+
+#ifdef __INTEL_COMPILER
+DSET__INTEL_COMPILER=1
+DVAL__INTEL_COMPILER=__INTEL_COMPILER
+#endif
+
+#ifdef __ICC
+DSET__ICC=1
+#endif
+
+#ifdef __ECC
+DSET__ECC=1
+#endif
+
+#ifdef __ICL
+DSET__ICL=1
+#endif
+
+#ifdef _MSC_VER
+DSET_MSC_VER=1
+DVAL_MSC_VER=_MSC_VER
+#endif
+
+#ifdef _MSC_FULL_VER
+DSET_MSC_FULL_VER=1
+DVAL_MSC_FULL_VER=_MSC_FULL_VER
+#endif
+
+#ifdef __MINGW32__
+DSET__MINGW32__=1
+#endif
+
+#ifdef __MINGW64__
+DSET__MINGW64__=1
+#endif
+
+#ifdef __sgi
+DSET__sgi=1
+#endif
+
+#ifdef sgi
+DSETsgi=1
+#endif
+
+#ifdef _COMPILER_VERSION
+DSET_COMPILER_VERSION=1
+DVAL_COMPILER_VERSION=_COMPILER_VERSION
+#endif
+
+#ifdef _SGI_COMPILER_VERSION
+DSET_SGI_COMPILER_VERSION=1
+DVAL_SGI_COMPILER_VERSION=_SGI_COMPILER_VERSION
+#endif
+
+#ifdef __SUNPRO_C
+DSET__SUNPRO_C=1
+DVAL__SUNPRO_C=__SUNPRO_C
+#endif
+
+#ifdef __SUNPRO_CC
+DSET__SUNPRO_CC=1
+DVAL__SUNPRO_CC=__SUNPRO_CC
+#endif
+
+#ifdef __PGI
+DSET__PGI=1
+#endif
+
+#ifdef __PGIC__
+DSET__PGIC__=1
+DVAL__PGIC__=__PGIC__
+#endif
+
+#ifdef __PGIC_MINOR__
+DSET__PGIC_MINOR__=1
+DVAL__PGIC_MINOR__=__PGIC_MINOR__
+#endif
+
+#ifdef __PGIC_PATCHLEVEL__
+DSET__PGIC_PATCHLEVEL__=1
+DVAL__PGIC_PATCHLEVEL__=__PGIC_PATCHLEVEL__
+#endif
+
+#ifdef SDCC
+DSETSDCC=1
+DVALSDCC=SDCC
+#endif
+
+#ifdef __TI_COMPILER_VERSION__
+DSET__TI_COMPILER_VERSION__=1
+DVAL__TI_COMPILER_VERSION__=__TI_COMPILER_VERSION__
+#endif
+
+#ifdef __TINYC__
+DSET__TINYC__=1
+#endif
+
+#ifdef __WATCOMC__
+DSET__WATCOMC__=1
+DVAL__WATCOMC__=__WATCOMC__
+#endif
+
+
+/* OPERATING SYSTEMS */
+
+#ifdef _AIX
+DSET_AIX=1
+#endif
+
+#ifdef __TOS_AIX__
+DSET__TOS_AIX__=1
+#endif
+
+#ifdef _AIX3
+DSET_AIX3=1
+#endif
+
+#ifdef _AIX31
+DSET_AIX31=1
+#endif
+
+#ifdef _AIX4
+DSET_AIX4=1
+#endif
+
+#ifdef _AIX41
+DSET_AIX41=1
+#endif
+
+#ifdef _AIX5
+DSET_AIX5=1
+#endif
+
+#ifdef _AIX51
+DSET_AIX51=1
+#endif
+
+#ifdef _AIX6
+DSET_AIX6=1
+#endif
+
+#ifdef _AIX61
+DSET_AIX61=1
+#endif
+
+#ifdef _AIX7
+DSET_AIX7=1
+#endif
+
+#ifdef _AIX71
+DSET_AIX71=1
+#endif
+
+#ifdef _AIX8
+DSET_AIX8=1
+#endif
+
+#ifdef _AIX81
+DSET_AIX81=1
+#endif
+
+#ifdef _AIX9
+DSET_AIX9=1
+#endif
+
+#ifdef _AIX91
+DSET_AIX91=1
+#endif
+
+#ifdef __ANDROID__
+DSET__ANDROID__=1
+#endif
+
+#ifdef __ANDROID_API__
+DSET__ANDROID_API__=1
+DVAL__ANDROID_API__=__ANDROID_API__
+#endif
+
+#ifdef __FreeBSD__
+DSET__FreeBSD__=1
+DVAL__FreeBSD__=__FreeBSD__
+#endif
+
+#ifdef __NetBSD__
+DSET__NetBSD__=1
+#endif
+
+#ifdef __OpenBSD__
+DSET__OpenBSD__=1
+#endif
+
+#ifdef __DragonFly__
+DSET__DragonFly__=1
+#endif
+
+#ifdef __CYGWIN__
+DSET__CYGWIN__=1
+#endif
+
+#ifdef __gnu_hurd__
+DSET__gnu_hurd__=1
+#endif
+
+#ifdef __gnu_linux__
+DSET__gnu_linux__=1
+#endif
+
+#ifdef linux
+DSETlinux=1
+#endif
+
+#ifdef __linux
+DSET__linux=1
+#endif
+
+#ifdef __linux__
+DSET__linux__=1
+#endif
+
+#ifdef __gnu_linux
+DSET__gnu_linux=1
+#endif
+
+#ifdef _hpux
+DSET_hpux=1
+#endif
+
+#ifdef hpux
+DSEThpux=1
+#endif
+
+#ifdef __hpux
+DSET__hpux=1
+#endif
+
+#ifdef __APPLE__
+DSET__APPLE__=1
+#endif
+
+#ifdef __MACH__
+DSET__MACH__=1
+#endif
+
+#ifdef __minix
+DSET__minix=1
+#endif
+
+#ifdef __QNX__
+DSET__QNX__=1
+#endif
+
+#ifdef __QNXNTO__
+DSET__QNXNTO__=1
+#endif
+
+#ifdef _NTO_VERSION
+DSET_NTO_VERSION=1
+DVAL_NTO_VERSION=_NTO_VERSION
+#endif
+
+#ifdef M_XENIX
+DSETM_XENIX=1
+#endif
+
+#ifdef _SCO_DS
+DSET_SCO_DS=1
+#endif
+
+#ifdef sun
+DSETsun=1
+#endif
+
+#ifdef __sun
+DSET__sun=1
+#endif
+
+#ifdef __sun__
+DSET__sun__=1
+#endif
+
+#ifdef __SVR4
+DSET__SVR4=1
+#endif
+
+#ifdef __svr4__
+DSET__svr4__=1
+#endif
+
+#ifdef __SunOS
+DSET__SunOS=1
+#endif
+
+#ifdef __SunOS_5_8
+DSET__SunOS_5_8=1
+#endif
+
+#ifdef __SunOS_5_9
+DSET__SunOS_5_9=1
+#endif
+
+#ifdef __SunOS_5_10
+DSET__SunOS_5_10=1
+#endif
+
+#ifdef __SunOS_5_11
+DSET__SunOS_5_11=1
+#endif
+
+#ifdef _WIN32
+DSET_WIN32=1
+#endif
+
+#ifdef _WIN64
+DSET_WIN64=1
+#endif
+
+#ifdef __WIN32__
+DSET__WIN32__=1
+#endif
+
+#ifdef __TOS_WIN__
+DSET__TOS_WIN__=1
+#endif
+
+#ifdef __WINDOWS__
+DSET__WINDOWS__=1
+#endif
+
+#ifdef WIN32
+DSETWIN32=1
+#endif
+
+#ifdef __WIN32
+DSET__WIN32=1
+#endif
+
+#ifdef WIN64
+DSETWIN64=1
+#endif
+
+#ifdef __WIN64
+DSET__WIN64=1
+#endif
+
+#ifdef __WIN64__
+DSET__WIN64__=1
+#endif
+
+#ifdef WINNT
+DSETWINNT=1
+#endif
+
+#ifdef __WINNT
+DSET__WINNT=1
+#endif
+
+#ifdef __WINNT__
+DSET__WINNT__=1
+#endif
+
+
+/* ARCHITECTURES */
+
+#ifdef __alpha__
+DSET__alpha__=1
+#endif
+
+#ifdef _M_ALPHA
+DSET_M_ALPHA=1
+#endif
+
+#ifdef __arch64__
+DSET__arch64__=1
+#endif
+
+#ifdef __ALPHA
+DSET__ALPHA=1
+#endif
+
+#ifdef __alpha
+DSET__alpha=1
+#endif
+
+#ifdef __amd64__
+DSET__amd64__=1
+#endif
+
+#ifdef __amd64
+DSET__amd64=1
+#endif
+
+#ifdef __x86_64__
+DSET__x86_64__=1
+#endif
+
+#ifdef __x86_64
+DSET__x86_64=1
+#endif
+
+#ifdef _M_X64
+DSET_M_X64=1
+#endif
+
+#ifdef _M_AMD64
+DSET_M_AMD64=1
+#endif
+
+#ifdef __arm__
+DSET__arm__=1
+#endif
+
+#ifdef __thumb__
+DSET__thumb__=1
+#endif
+
+#ifdef __TARGET_ARCH_ARM
+DSET__TARGET_ARCH_ARM=1
+#endif
+
+#ifdef __TARGET_ARCH_THUMB
+DSET__TARGET_ARCH_THUMB=1
+#endif
+
+#ifdef _ARM
+DSET_ARM=1
+#endif
+
+#ifdef _M_ARM
+DSET_M_ARM=1
+#endif
+
+#ifdef _M_ARMT
+DSET_M_ARMT=1
+#endif
+
+#ifdef __TI_ARM__
+DSET__TI_ARM__=1
+#endif
+
+#ifdef __arm
+DSET__arm=1
+#endif
+
+#ifdef __aarch64__
+DSET__aarch64__=1
+#endif
+
+#ifdef __hppa__
+DSET__hppa__=1
+#endif
+
+#ifdef __HPPA__
+DSET__HPPA__=1
+#endif
+
+#ifdef __hppa
+DSET__hppa=1
+#endif
+
+#ifdef i386
+DSETi386=1
+#endif
+
+#ifdef __i386
+DSET__i386=1
+#endif
+
+#ifdef __i386__
+DSET__i386__=1
+#endif
+
+#ifdef __i486__
+DSET__i486__=1
+#endif
+
+#ifdef __i586__
+DSET__i586__=1
+#endif
+
+#ifdef __i686__
+DSET__i686__=1
+#endif
+
+#ifdef __IA32__
+DSET__IA32__=1
+#endif
+
+#ifdef _M_IX86
+DSET_M_IX86=1
+#endif
+
+#ifdef __X86__
+DSET__X86__=1
+#endif
+
+#ifdef _X86_
+DSET_X86_=1
+#endif
+
+#ifdef __THW_INTEL__
+DSET__THW_INTEL__=1
+#endif
+
+#ifdef __I86__
+DSET__I86__=1
+#endif
+
+#ifdef __INTEL__
+DSET__INTEL__=1
+#endif
+
+#ifdef __386
+DSET__386=1
+#endif
+
+#ifdef __ia64__
+DSET__ia64__=1
+#endif
+
+#ifdef _IA64
+DSET_IA64=1
+#endif
+
+#ifdef __IA64__
+DSET__IA64__=1
+#endif
+
+#ifdef __ia64
+DSET__ia64=1
+#endif
+
+#ifdef _M_IA64
+DSET_M_IA64=1
+#endif
+
+#ifdef __itanium__
+DSET__itanium__=1
+#endif
+
+#ifdef ia64
+DSETia64=1
+#endif
+
+#ifdef __mips__
+DSET__mips__=1
+#endif
+
+#ifdef mips
+DSETmips=1
+#endif
+
+#ifdef __mips
+DSET__mips=1
+#endif
+
+#ifdef __MIPS__
+DSET__MIPS__=1
+#endif
+
+#ifdef __powerpc
+DSET__powerpc=1
+#endif
+
+#ifdef __powerpc__
+DSET__powerpc__=1
+#endif
+
+#ifdef __powerpc64__
+DSET__powerpc64__=1
+#endif
+
+#ifdef __POWERPC__
+DSET__POWERPC__=1
+#endif
+
+#ifdef __ppc__
+DSET__ppc__=1
+#endif
+
+#ifdef __ppc64__
+DSET__ppc64__=1
+#endif
+
+#ifdef __PPC__
+DSET__PPC__=1
+#endif
+
+#ifdef __PPC64__
+DSET__PPC64__=1
+#endif
+
+#ifdef _ARCH_PPC
+DSET_ARCH_PPC=1
+#endif
+
+#ifdef _ARCH_PPC64
+DSET_ARCH_PPC64=1
+#endif
+
+#ifdef _M_PPC
+DSET_M_PPC=1
+#endif
+
+#ifdef __PPCGECKO__
+DSET__PPCGECKO__=1
+#endif
+
+#ifdef __PPCBROADWAY__
+DSET__PPCBROADWAY__=1
+#endif
+
+#ifdef _XENON
+DSET_XENON=1
+#endif
+
+#ifdef __ppc
+DSET__ppc=1
+#endif
+
+#ifdef __PowerPC__
+DSET__PowerPC__=1
+#endif
+
+#ifdef __PPC
+DSET__PPC=1
+#endif
+
+#ifdef __ppc64
+DSET__ppc64=1
+#endif
+
+#ifdef __sparc__
+DSET__sparc__=1
+#endif
+
+#ifdef __sparc
+DSET__sparc=1
+#endif
+
+#ifdef __sparc64__
+DSET__sparc64__=1
+#endif
+
+/* ENDIANNESS */
+
+#ifdef __BIG_ENDIAN__
+DSET__BIG_ENDIAN__=1
+#endif
+
+#ifdef __ARMEB__
+DSET__ARMEB__=1
+#endif
+
+#ifdef __THUMBEB__
+DSET__THUMBEB__=1
+#endif
+
+#ifdef __AARCH64EB__
+DSET__AARCH64EB__=1
+#endif
+
+#ifdef _MIPSEB
+DSET_MIPSEB=1
+#endif
+
+#ifdef __MIPSEB
+DSET__MIPSEB=1
+#endif
+
+#ifdef __MIPSEB__
+DSET__MIPSEB__=1
+#endif
+
+#ifdef __BYTE_ORDER__
+DSET__BYTE_ORDER__=1
+DVAL__BYTE_ORDER__=__BYTE_ORDER__
+#endif
+
+#ifdef __FLOAT_WORD_ORDER__
+DSET__FLOAT_WORD_ORDER__=1
+DVAL__FLOAT_WORD_ORDER__=__FLOAT_WORD_ORDER__
+#endif
+
+#ifdef __ORDER_LITTLE_ENDIAN__
+DSET__ORDER_LITTLE_ENDIAN__=1
+DVAL__ORDER_LITTLE_ENDIAN__=__ORDER_LITTLE_ENDIAN__
+#endif
+
+#ifdef __ORDER_BIG_ENDIAN__
+DSET__ORDER_BIG_ENDIAN__=1
+DVAL__ORDER_BIG_ENDIAN__=__ORDER_BIG_ENDIAN__
+#endif
+
+#ifdef __LITTLE_ENDIAN__
+DSET__LITTLE_ENDIAN__=1
+#endif
+
+#ifdef __ARMEL__
+DSET__ARMEL__=1
+#endif
+
+#ifdef __THUMBEL__
+DSET__THUMBEL__=1
+#endif
+
+#ifdef __AARCH64EL__
+DSET__AARCH64EL__=1
+#endif
+
+#ifdef _MIPSEL
+DSET_MIPSEL=1
+#endif
+
+#ifdef __MIPSEL
+DSET__MIPSEL=1
+#endif
+
+#ifdef __MIPSEL__
+DSET__MIPSEL__=1
+#endif
+
+
+/* DATA MODELS */
+
+#ifdef _ILP32
+DSET_ILP32=1
+#endif
+
+#ifdef __ILP32__
+DSET__ILP32__=1
+#endif
+
+#ifdef _LP64
+DSET_LP64=1
+#endif
+
+#ifdef __LP64__
+DSET__LP64__=1
+#endif
+
+#ifdef UINT_MAX
+DSETUINT_MAX=1
+DVALUINT_MAX=UINT_MAX
+#endif
+
+#ifdef ULONG_MAX
+DSETULONG_MAX=1
+DVALULONG_MAX=ULONG_MAX
+#endif
+
+#ifdef UINTPTR_MAX
+DSETUINTPTR_MAX=1
+DVALUINTPTR_MAX=UINTPTR_MAX
+#endif
+
+#ifdef __UINTPTR_MAX__
+DSET__UINTPTR_MAX__=1
+DVAL__UINTPTR_MAX__=__UINTPTR_MAX__
+#endif
+
+#ifdef __SIZEOF_INT__
+DSET__SIZEOF_INT__=1
+DVAL__SIZEOF_INT__=__SIZEOF_INT__
+#endif
+
+#ifdef __SIZEOF_LONG__
+DSET__SIZEOF_LONG__=1
+DVAL__SIZEOF_LONG__=__SIZEOF_LONG__
+#endif
+
+#ifdef __SIZEOF_POINTER__
+DSET__SIZEOF_POINTER__=1
+DVAL__SIZEOF_POINTER__=__SIZEOF_POINTER__
+#endif
+
+#ifdef _POSIX_VERSION
+DSET_POSIX_VERSION=1
+DVAL_POSIX_VERSION=_POSIX_VERSION
+#endif
+
+#ifdef _XOPEN_VERSION
+DSET_XOPEN_VERSION=1
+DVAL_XOPEN_VERSION=_XOPEN_VERSION
+#endif
+
+#ifdef _XOPEN_UNIX
+DSET_XOPEN_UNIX=1
+#endif
+EOF
