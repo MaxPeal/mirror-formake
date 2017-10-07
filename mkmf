@@ -48,6 +48,7 @@ dist:
 	cp -R -P configure dist_tree
 	cp -R -P mkmf      dist_tree
 	cp -R -P COPYING   dist_tree
+	cp -R -P README    dist_tree
 	cp -R -P mk/cltest dist_tree/mk
 	cp -R -P mk/cmdok  dist_tree/mk
 	cp -R -P mk/cppdef dist_tree/mk
