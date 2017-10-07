@@ -2,8 +2,8 @@
 
 ################################################################################
 # set base project variables
-PACKAGE_NAME="PROJECT_X"
-PACKAGE_VERSION="1.0.0"
+PACKAGE_NAME="formake"
+PACKAGE_VERSION="0.15"
 CONFIG_OUT="build.conf"
 
 ################################################################################
