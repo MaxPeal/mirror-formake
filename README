@@ -10,7 +10,7 @@ Formake is for those power users and developer that know and respect Shell and M
 
 It is expected that user takes Formake template project and tunes it to his needs.
 
-Formake builds system must be able to run on most modern and/or widely used systems.
+Formake builds system must be able to run on most modern and/or widely adopted systems.
 It covers 99.99**% of all systems.
 
 Formake intentionally ignores support of very old, hardly specialized systems that are
@@ -31,23 +31,26 @@ proper C flags. One solution is to generate global config.mk that will be includ
 solution works but more convenient and flexible approach would be to put the whole Makefile inside
 Shell script, mkmf script, and in this file we can wrap Makefile script inside here-document. So we wrap
 Makefile in Shell and thus extend solely declarative Make with imperative full fledged programming
-language. In mkmf we use Make language in most parts and get simplicity and readibility, and use Shell where
-we need some sort of automation and there we get Shell power.
+language. In mkmf we use Make language in most parts that brings simplicity and readibility, and use Shell where
+we need some sort of automation and there we get the power of full-fledged programming language.
 
 Normal build system configuration is split on 2 stages:
   * configuration stage
   * Makefile generation stage
 
 Configuration stage is concentrated in toplevel 'configure' script.
-Makefile generation stage is spread in many scripts that generate Makefiles in
+Makefile generation stage is spread across a build tree in many scripts that generate Makefiles in
 subdirectories. In Formake such scripts are named 'mkmf'. Every mkmf script
 generates one Makefile. All scripts are chained. It means that every mkmf script
 runs other mkmf scripts in it's subdirectories starting from toplevel mkmf. Toplevel
-configure script starts toplevel mkmf script and the call-chain goes down the build
-project hierarchy. So we get a tree of correctly generated Makefiles.
+'configure' script starts toplevel mkmf script that starts other mkmf scripts in subdirs.
+This call-chain goes down the build hierarchy. So we get a tree of correctly generated Makefiles.
 
-First of all, 'configure' script must be written manually, it must be simple. It be
-structures and be easy to read. 'configure' performs the following 2 base tasks:
+First of all, 'configure' script must be written manually. But starting writing from scratch is
+rather unafficient abd buggy. This is why Formake provides ready 'configure' script that must be
+just tuned for a custom project needs.
+
+'configure' script must be structured and be easy to read. 'configure' performs the following 2 base tasks:
   * test dependencies
   * configure build system
 
@@ -67,5 +70,13 @@ configure script is split on the following parts:
   - run Makefiles generation. Makefiles are generated using 'mkmf' chained scripts.
 
 
-To be continued ...
+Formake provides also ready to use 'mkmf' scripts. Currently there are only 2 scripts: toplevel mkmf and
+src/mkmf. Toplevel mkmf performs rather basic part. src/mkmf builds a simple 'hello' programs. This is
+just for start. In the following releases it will be much extended to reflect complex projects from real world.
+Anyway even current Formake template can be taken as a basis for any project.
+
+Current Formake project is in active development. It is expected to receive feedback. Contribution is very wellcome.
+
+Alex Cherniavskyi
+ochern@rocketmail.com
 
