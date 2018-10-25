@@ -105,7 +105,7 @@
 # JUMP TO MODERN SHELL IF POSSIBLE
 (test_exit_code_127_sdfjsdfksjdhfksjdhf  >/dev/null) 2>/dev/null
 if test $? -ne 127; then
-  if test -z "$POFIG_BASH_REDIRECT"; then
+  if test -z "$POFIG_BASH_REDIRECTED"; then
     POFIG_BASH_REDIRECTED=1
     export POFIG_BASH_REDIRECTED
     if test -x /bin/bash; then
