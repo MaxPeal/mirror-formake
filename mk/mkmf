@@ -1,0 +1,1490 @@
+#!/bin/sh
+#
+# Formake mkmf
+#
+# Copyright (c) 2018, Oleksiy Chernyavskyy
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+################################################################################
+# SWITCH TO MODERN SHELL IF POSSIBLE
+(test_exit_code_127_sdfjsdfksjdhfksjdhf  >/dev/null) 2>/dev/null
+if test $? -ne 127; then
+  if test -z "$MKMF_BASH_REDIRECTED"; then
+    MKMF_BASH_REDIRECTED=1
+    export MKMF_BASH_REDIRECTED
+    if test -x /bin/bash; then
+      exec /bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/bin/bash; then
+      exec /usr/bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/local/bin/bash; then
+      exec /usr/local/bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/pkg/bin/bash; then
+      exec /usr/pkg/bin/bash "$0" ${1+"$@"}
+    else
+      (bash -c "pwd" >/dev/null) 2>/dev/null
+      if test $? -eq 0; then
+        exec bash "$0" ${1+"$@"}
+      fi
+    fi
+  fi
+fi
+MKMF_BASH_REDIRECTED=
+export MKMF_BASH_REDIRECTED
+################################################################################
+
+version_string="Formake mkmf 1.0"
+script_name=`basename "$0"`
+
+op_out_mkfile=Makefile
+if test -z "$CONFIG_SRCROOT"; then
+  CONFIG_SRCROOT=`pwd`
+  export CONFIG_SRCROOT
+fi
+op_srcroot=$CONFIG_SRCROOT
+dist_files=
+default_static_dir="_static"
+default_pic_dir="_pic"
+
+cd_param=
+orig_dir=`pwd`
+(cd -P / >/dev/null) 2>/dev/null
+if test $? -eq 0; then
+  cd_param="-P"
+fi
+cd "$orig_dir"
+
+op_dir=`pwd`
+
+if test -z "$MKMF_PATH_SET"; then
+  if test -z "$CONFIG_MK_DIR"; then
+    if test -n "$CONFIG_SRCROOT" && test -d $CONFIG_SRCROOT/mk; then
+      cd $CONFIG_SRCROOT/mk
+    else
+      cd `dirname "$0"`
+    fi
+    CONFIG_MK_DIR=`pwd`
+    export CONFIG_MK_DIR
+    cd $orig_dir
+  fi
+  PATH=$CONFIG_MK_DIR:$PATH
+  export PATH
+  MKMF_PATH_SET=1
+  export MKMF_PATH_SET
+fi
+
+
+install_vars="
+INSTALL_BIN
+INSTALL_SBIN
+INSTALL_LIB
+INSTALL_LIBEXEC
+INSTALL_INC
+INSTALL_MAN0
+INSTALL_MAN1
+INSTALL_MAN2
+INSTALL_MAN3
+INSTALL_MAN4
+INSTALL_MAN5
+INSTALL_MAN6
+INSTALL_MAN7
+INSTALL_MAN8
+INSTALL_MAN9
+INSTALL_DOC
+INSTALL_SHARE
+INSTALL_ETC
+"
+
+standard_vars="
+SOURCES
+OBJECTS
+DOBJECTS
+TYPE
+NAME
+CFLAGS
+CXXFLAGS
+LDFLAGS
+NO_INSTALL
+VERSION
+OBJDIR
+IS_COMMON
+LANG
+
+PREFIXES
+"
+standard_common_vars="
+CC
+CXX
+SRCROOT
+SUBDIRS
+COMMON_SOURCES
+COMMON_OBJECTS
+COMMON_DOBJECTS
+COMMON_CFLAGS
+COMMON_CXXFLAGS
+COMMON_LDFLAGS
+DEFAULT_TYPE
+DEFAULT_VERSION
+DEFAULT_NO_INSTALL
+DEFAULT_OBJDIR
+DEFAULT_LANG
+$install_vars
+"
+
+print_help() {
+  cat <<EOF
+Generate Makefile
+
+$script_name [options]
+ -d DIR               directory with sources [./]
+ -srcroot PATH        source root dir relative path (SRCROOT) [./]
+ -subdirs ..          build subdirectories
+ -*src ..             source files
+ -*obj ..             object files
+ -*dobj ..            PIC object files
+ -*type TYPE          output target type:
+                        prog       - build program
+                        lib|tlib   - build static library
+                        dlib       - build dynamic library
+                        xlib       - build static and dynamic libraries
+                        obj|tobj   - compile objects for static linking
+                        dobj       - compile objects for dynamic linking
+                        xobj       - compile objects for static and dynamic linking
+ -*name NAME          program/library name
+ -*cflags=FLAGS       C compiler flags
+ -*cxxflags=FLAGS     C++ compiler flags
+ -*ldflags=FLAGS      linker flags
+ -*no-install         do not add target to the install rule
+ -*ver X[.Y[.Z]]      library version
+ -*objdir DIR         output directory for compiled objects
+ -*common             make objects common for other targets (option is valid only for *obj target type)
+ -*lang c|c++         compiler/linker type [autodetect]
+ -add-src ..          add sources for all targets
+ -add-obj ..          add objects for all targets
+ -add-dobj ..         add PIC objects for all targets
+ -add-cflags=FLAGS    add C flags for all targets
+ -add-cxxflags=FLAGS  add C++ flags for all targets
+ -add-ldflags=FLAGS   add LD flags for all targets
+ -def-type TYPE       default target type
+ -def-ver VER         default library version
+ -def-no-install      no-install for all targets
+ -def-objdir DIR      default object output directory
+ -def-lang c|c++      default compiler/linker type
+ -inst-bin ..         executables to be installed into bin directory
+ -inst-sbin ..        executables to be installed into sbin directory
+ -inst-lib ..         files and directories to be installed into lib directory
+ -inst-libexec ..     files and directories to be installed into libexec directory
+ -inst-inc ..         header files and directories to be installed into include dir
+ -inst-man[0-9] ..    man files and directories to be installed into man directory
+ -inst-doc ..         documentation files and directories to be installed into doc
+ -inst-share ..       files and directories to be installed into share directory
+ -inst-etc ..         files and directories to be installed into etc directory
+ -omk FILE            output Make script [$op_out_mkfile]
+ -skip-mkmf           do not read .mkmf files
+ -v                   print version
+
+Optional name prefix (*) in parameters specifies a unique id by which parameters are grouped for a selected target.
+For lib target it will create 2 directories, _static and _pic, for static and dynamic (PIC) objects. If -*objdir parameter is specified it will be appended with '_pic' suffix for dynamic objects.
+EOF
+}
+
+
+abs_path() {
+  _sub_orig_dir=`pwd`
+  if test $# = 0; then
+    abs_path_ret=
+    return
+  fi
+  if test $# = 2; then
+    _arg_orig_dir=$1
+    _arg=$2
+    if echo "$_arg" | grep "^/" > /dev/null; then
+      :
+    else
+      _arg=`echo "$_arg_orig_dir/$_arg" | sed 's!//*!/!g'`
+    fi
+  else
+    _arg=$1
+  fi
+  if test -e "$_arg"; then
+    if test -d $_arg; then
+      _file=
+    else
+      _file=`basename "$_arg"`
+      _arg=`dirname "$_arg"`
+    fi
+
+    cd $_cd_param $_arg
+    abs_path_ret=`pwd`
+    if test x"$_file" != "x"; then
+      abs_path_ret="$abs_path_ret/$_file"
+    fi
+
+    cd $_cd_param $_sub_orig_dir
+  else
+    if echo "$_arg" | grep "^/" > /dev/null; then
+      abs_path_ret="$_arg"
+    else
+      abs_path_ret="$_sub_orig_dir/$_arg"
+    fi
+    abs_path_ret=`echo "$abs_path_ret" | sed 's#//*#/#g'`
+    abs_path_ret=`echo "$abs_path_ret" | sed 's#/*$#/#'`
+    string_prev=
+    while test "x$abs_path_ret" != "x$string_prev" ; do
+      string_prev=$abs_path_ret
+      abs_path_ret=`echo "$abs_path_ret" | sed 's#/[^/][^/][^/][^/]*/\.\./#/#g' | sed 's#/[^/][^/.]/\.\./#/#g' | sed 's#/[^/.][^/]/\.\./#/#g' | sed 's#/[^/.]/\.\./#/#g'`
+      abs_path_ret=`echo "$abs_path_ret" | sed 's#^/\.\./#/#' | sed 's#^/\.\.$#/#'`
+      abs_path_ret=`echo "$abs_path_ret" | sed 's#/\./#/#g' | sed 's#/\.$#/#'`
+    done
+    abs_path_ret=`echo "$abs_path_ret" | sed 's#/$##' | sed 's#^$#/#'`
+  fi
+}
+
+current_opt=
+for param in "$@"; do
+  case "$param" in
+    -h|-help|--help)
+      print_help
+      exit 0
+      ;;
+    -d)
+      current_opt=d
+      ;;
+    -skip-mkmf)
+      op_skip_mkmf=1
+      current_opt=
+      ;;
+    *)
+      case "$current_opt" in
+        d)
+          if test -d "$param"; then
+            op_dir=$param
+          else
+            echo "$script_name: error: invalid source directory: $param" >&2
+            exit 1
+          fi
+          current_opt=
+          ;;
+      esac
+      ;;
+  esac
+done
+
+####################################################
+# PARSE .mkmf FILES
+add_mkmf_common_data() {
+  op_subdirs=$SUBDIRS
+  op_add_obj=$COMMON_OBJECTS
+  op_add_dobj=$COMMON_DOBJECTS
+  op_add_cflags=$COMMON_CFLAGS
+  op_add_cxxflags=$COMMON_CXXFLAGS
+  op_add_ldflags=$COMMON_LDFLAGS
+  op_def_ver=$DEFAULT_VERSION
+  op_def_objdir=$DEFAULT_OBJDIR
+
+  if test -n "$SRCROOT"; then
+    op_srcroot=`echo "$SRCROOT" | sed 's!//*!/!g'`
+    if test "$op_srcroot" != "/"; then
+      op_srcroot=`echo "$op_srcroot" | sed 's!/*$!!'`
+    fi
+  fi
+
+  if test -n "$COMMON_SOURCES"; then
+    op_add_src=$COMMON_SOURCES
+    all_sources="$all_sources $COMMON_SOURCES"
+    have_src=1
+    for src in $COMMON_SOURCES; do
+      case "$src" in
+        *.C|*.[Cc][Cc]|*.[Cc][Pp][Pp]|*.[Cc][Xx][Xx])
+          have_add_cxx=1
+          ;;
+        *.c)
+          have_add_c=1
+          ;;
+        *)
+          echo "$script_name: error: unknown source type $src" >&2
+          exit 1
+          ;;
+      esac
+    done
+  fi
+
+  if test -n "$DEFAULT_TYPE"; then
+    case "$DEFAULT_TYPE" in
+      obj)
+        ttype=tobj
+        ;;
+      prog|tobj|dobj|xobj)
+        ttype=$1
+        ;;
+      lib)
+        ttype=tlib
+        use_libro=1
+        ;;
+      tlib|dlib|xlib)
+        ttype=$1
+        use_libro=1
+        ;;
+      *)
+        echo "$script_name: error: invalid default type: $DEFAULT_TYPE" >&2
+        exit 1
+        ;;
+    esac
+    op_def_type=$ttype
+  fi
+
+  if test -n "$DEFAULT_NO_INSTALL"; then
+    op_def_no_install=1
+  fi
+  if test -n "$DEFAULT_LANG"; then
+    case "$DEFAULT_LANG" in
+      c|c++)
+        op_def_lang=$DEFAULT_LANG
+        ;;
+      *)
+        echo "$script_name: error: invalid language type $DEFAULT_LANG" >&2
+        exit 1
+        ;;
+    esac
+  fi
+  if test -n "$INSTALL_BIN"; then
+    have_custom_inst_stuff=1
+    op_inst_bin=$INSTALL_BIN
+  fi
+  if test -n "$INSTALL_SBIN"; then
+    have_custom_inst_stuff=1
+    op_inst_sbin=$INSTALL_SBIN
+  fi
+  if test -n "$INSTALL_LIB"; then
+    have_custom_inst_stuff=1
+    op_inst_lib=$INSTALL_LIB
+  fi
+  if test -n "$INSTALL_LIBEXEC"; then
+    have_custom_inst_stuff=1
+    op_inst_libexec=$INSTALL_LIBEXEC
+  fi
+  if test -n "$INSTALL_INC"; then
+    have_custom_inst_stuff=1
+    op_inst_inc=$INSTALL_INC
+  fi
+  for n in 0 1 2 3 4 5 6 7 8 9; do
+    var="INSTALL_MAN$n"
+    eval val=\$$var
+    if test -n "$val"; then
+      have_custom_inst_stuff=1
+      eval op_inst_man$n=\$val
+    fi
+  done
+  if test -n "$INSTALL_DOC"; then
+    have_custom_inst_stuff=1
+    op_inst_doc=$INSTALL_DOC
+  fi
+  if test -n "$INSTALL_SHARE"; then
+    have_custom_inst_stuff=1
+    op_inst_share=$INSTALL_SHARE
+  fi
+  if test -n "$INSTALL_ETC"; then
+    have_custom_inst_stuff=1
+    op_inst_etc=$INSTALL_ETC
+  fi
+}
+
+add_mkmf_data() {
+  if test -n "$MKMF_SOURCES"; then
+    prefix_list="$prefix_list $prefix"
+    eval target_${prefix}_src=\$MKMF_SOURCES
+    all_sources="$all_sources $MKMF_SOURCES"
+
+    eval target_${prefix}_have_c=
+    eval target_${prefix}_have_cxx=
+    have_src=1
+    for src in $MKMF_SOURCES; do
+      case "$src" in
+        *.C|*.[Cc][Cc]|*.[Cc][Pp][Pp]|*.[Cc][Xx][Xx])
+          eval target_${prefix}_have_cxx=1
+          ;;
+        *.c)
+          eval target_${prefix}_have_c=1
+          ;;
+        *)
+          echo "$script_name: error: bad source type $src" >&2
+          exit 1
+          ;;
+      esac
+    done
+  fi
+
+  if test -n "$MKMF_OBJECTS"; then
+    prefix_list="$prefix_list $prefix"
+    eval target_${prefix}_obj=\$MKMF_OBJECTS
+  fi
+  if test -n "$MKMF_DOBJECTS"; then
+    prefix_list="$prefix_list $prefix"
+    eval target_${prefix}_dobj=\$MKMF_DOBJECTS
+  fi
+
+  if test -n "$MKMF_TYPE"; then
+    prefix_list="$prefix_list $prefix"
+    case "$MKMF_TYPE" in
+      obj)
+        ttype=tobj
+        ;;
+      prog|tobj|dobj|xobj)
+        ttype=$MKMF_TYPE
+        ;;
+      lib)
+        ttype=tlib
+        use_libro=1
+        ;;
+      tlib|dlib|xlib)
+        ttype=$MKMF_TYPE
+        use_libro=1
+        ;;
+      *)
+        echo "$script_name: error: invalid target type: $MKMF_TYPE" >&2
+        exit 1
+        ;;
+    esac
+    eval target_${prefix}_type=\$ttype
+  fi
+
+  if test -n "$MKMF_NAME"; then
+    prefix_list="$prefix_list $prefix"
+    eval target_${prefix}_name=\$MKMF_NAME
+  fi
+
+  if test -n "$MKMF_VERSION"; then
+    prefix_list="$prefix_list $prefix"
+    eval target_${prefix}_ver=\$MKMF_VERSION
+  fi
+
+  if test -n "$MKMF_CFLAGS"; then
+    prefix_list="$prefix_list $prefix"
+    eval target_${prefix}_cflags=\$MKMF_CFLAGS
+  fi
+
+  if test -n "$MKMF_CXXFLAGS"; then
+    prefix_list="$prefix_list $prefix"
+    eval target_${prefix}_cxxflags=\$MKMF_CXXFLAGS
+  fi
+
+  if test -n "$MKMF_LDFLAGS"; then
+    prefix_list="$prefix_list $prefix"
+    eval target_${prefix}_ldflags=\$MKMF_LDFLAGS
+  fi
+
+  if test -n "$MKMF_NO_INSTALL"; then
+    prefix_list="$prefix_list $prefix"
+    eval target_${prefix}_no_install=1
+  fi
+
+  if test -n "$MKMF_IS_COMMON"; then
+    prefix_list="$prefix_list $prefix"
+    eval target_${prefix}_common=1
+  fi
+
+  if test -n "$MKMF_OBJDIR"; then
+    prefix_list="$prefix_list $prefix"
+    eval target_${prefix}_objdir=\$MKMF_OBJDIR
+  fi
+
+  if test -n "$MKMF_LANG"; then
+    prefix_list="$prefix_list $prefix"
+    case "$MKMF_LANG" in
+      c|c++)
+        eval target_${prefix}_lang=\$MKMF_LANG
+        ;;
+      *)
+        echo "$script_name: error: invalid language type $MKMF_LANG" >&2
+        exit 1
+        ;;
+    esac
+  fi
+}
+
+clean_vars() {
+  for var in $standard_vars; do
+    eval $var=
+  done
+}
+clean_common_vars() {
+  for var in $standard_common_vars; do
+    eval $var=
+  done
+}
+  
+  
+if test -z "$op_skip_mkmf"; then
+  cd $op_dir
+
+  mkmf_list=`ls *.mkmf 2>/dev/null`
+  mkmf_num=`ls *.mkmf 2>/dev/null | wc -l`
+  
+  if test $mkmf_num -eq 1; then
+    mkmf=`ls *.mkmf`
+    clean_common_vars
+    clean_vars
+    . ./mkmf
+    if test -z "$PREFIXES"; then
+      prefix='_'
+      for var in $standard_vars; do
+        eval MKMF_$var=\$$var
+      done
+      add_mkmf_data
+    else
+      PREFIXES=`echo "$PREFIXES" | tr ' ' '\n' | sort | uniq | tr '\n' ' '`
+      for prefix in $PREFIXES; do
+        for var in $standard_vars; do
+          eval MKMF_$var=\$$prefix$var
+        done
+        add_mkmf_data
+      done
+    fi
+  elif test $mkmf_num -gt 1; then
+    clean_common_vars
+    mkmf_index=0
+    for mkmf in `ls *.mkmf`; do
+      clean_vars
+      . ./mkmf
+      prefix=$mkmf_index
+      for var in $standard_vars; do
+        eval MKMF_$var=\$$var
+      done
+      add_mkmf_data
+      mkmf_index=`expr $mkmf_index + 1`
+    done
+  fi
+
+  if test $mkmf_num -ge 1; then
+    add_mkmf_common_data
+  fi
+
+  cd $orig_dir
+fi
+# END PARSING *.mkmf files
+####################################################
+
+
+prefix=
+current_opt=
+while test $# -gt 0; do
+  case "$1" in
+    -d)
+      current_opt=d
+      ;;
+    -srcroot)
+      current_opt=srcroot
+      ;;
+    -subdirs)
+      op_subdirs=
+      current_opt=subdirs
+      ;;
+    -add-src)
+      op_add_src=
+      current_opt=add-src
+      ;;
+    -add-obj)
+      op_add_obj=
+      current_opt=add-obj
+      ;;
+    -add-dobj)
+      op_add_dobj=
+      current_opt=add-dobj
+      ;;
+    -add-cflags=*)
+      op_add_cflags=`echo "$1" | sed 's/^[^=]*=//'`
+      current_opt=
+      ;;
+    -add-cxxflags=*)
+      op_add_cxxflags=`echo "$1" | sed 's/^[^=]*=//'`
+      current_opt=
+      ;;
+    -add-ldflags=*)
+      op_add_ldflags=`echo "$1" | sed 's/^[^=]*=//'`
+      current_opt=
+      ;;
+    -def-type)
+      current_opt="def-type"
+      ;;
+    -def-ver)
+      current_opt=def-ver
+      ;;
+    -def-no-install)
+      op_def_no_install=1
+      current_opt=
+      ;;
+    -def-objdir)
+      current_opt=def-objdir
+      ;;
+    -def-lang)
+      current_opt=def-lang
+      ;;
+    -*src)
+      prefix=`echo "$1" | sed 's/src$//' | sed 's/^-*//' | sed 's/-*$//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g'`
+      if test -z "$prefix"; then
+        prefix="_"
+      fi
+      prefix_list="$prefix_list $prefix"
+      eval target_${prefix}_src=
+      current_opt=target-src
+      ;;
+    -*dobj)
+      prefix=`echo "$1" | sed 's/dobj$//' | sed 's/^-*//' | sed 's/-*$//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g'`
+      if test -z "$prefix"; then
+        prefix="_"
+      fi
+      prefix_list="$prefix_list $prefix"
+      eval target_${prefix}_dobj=
+      current_opt=target-dobj
+      ;;
+    -*obj)
+      prefix=`echo "$1" | sed 's/obj$//' | sed 's/^-*//' | sed 's/-*$//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g'`
+      if test -z "$prefix"; then
+        prefix="_"
+      fi
+      prefix_list="$prefix_list $prefix"
+      eval target_${prefix}_obj=
+      current_opt=target-obj
+      ;;
+    -*type)
+      prefix=`echo "$1" | sed 's/type$//' | sed 's/^-*//' | sed 's/-*$//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g'`
+      if test -z "$prefix"; then
+        prefix="_"
+      fi
+      prefix_list="$prefix_list $prefix"
+      current_opt=target-type
+      ;;
+    -*name)
+      prefix=`echo "$1" | sed 's/name$//' | sed 's/^-*//' | sed 's/-*$//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g'`
+      if test -z "$prefix"; then
+        prefix="_"
+      fi
+      prefix_list="$prefix_list $prefix"
+      current_opt=target-name
+      ;;
+    -*cflags=*)
+      prefix=`echo "$1" | sed 's/cflags=.*//' | sed 's/^-*//' | sed 's/-*$//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g'`
+      if test -z "$prefix"; then
+        prefix="_"
+      fi
+      prefix_list="$prefix_list $prefix"
+      _cflags=`echo "$1" | sed 's/^[^=]*=//'`
+      eval target_${prefix}_cflags=\$_cflags
+      current_opt=
+      ;;
+    -*cxxflags=*)
+      prefix=`echo "$1" | sed 's/cxxflags=.*//' | sed 's/^-*//' | sed 's/-*$//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g'`
+      if test -z "$prefix"; then
+        prefix="_"
+      fi
+      prefix_list="$prefix_list $prefix"
+      _cxxflags=`echo "$1" | sed 's/^[^=]*=//'`
+      eval target_${prefix}_cxxflags=\$_cxxflags
+      current_opt=
+      ;;
+    -*ldflags=*)
+      prefix=`echo "$1" | sed 's/ldflags=.*//' | sed 's/^-*//' | sed 's/-*$//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g'`
+      if test -z "$prefix"; then
+        prefix="_"
+      fi
+      prefix_list="$prefix_list $prefix"
+      _ldflags=`echo "$1" | sed 's/^[^=]*=//'`
+      eval target_${prefix}_ldflags=\$_ldflags
+      current_opt=
+      ;;
+    -*no-install)
+      prefix=`echo "$1" | sed 's/no-install$//' | sed 's/^-*//' | sed 's/-*$//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g'`
+      if test -z "$prefix"; then
+        prefix="_"
+      fi
+      prefix_list="$prefix_list $prefix"
+      eval target_${prefix}_no_install=1
+      current_opt=
+      ;;
+    -*common)
+      prefix=`echo "$1" | sed 's/common$//' | sed 's/^-*//' | sed 's/-*$//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g'`
+      if test -z "$prefix"; then
+        prefix="_"
+      fi
+      prefix_list="$prefix_list $prefix"
+      eval target_${prefix}_common=1
+      current_opt=
+      ;;
+    -*ver)
+      prefix=`echo "$1" | sed 's/ver$//' | sed 's/^-*//' | sed 's/-*$//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g'`
+      if test -z "$prefix"; then
+        prefix="_"
+      fi
+      prefix_list="$prefix_list $prefix"
+      current_opt=target-ver
+      ;;
+    -*objdir)
+      prefix=`echo "$1" | sed 's/objdir$//' | sed 's/^-*//' | sed 's/-*$//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g'`
+      if test -z "$prefix"; then
+        prefix="_"
+      fi
+      prefix_list="$prefix_list $prefix"
+      current_opt=target-objdir
+      ;;
+    -*lang)
+      prefix=`echo "$1" | sed 's/lang$//' | sed 's/^-*//' | sed 's/-*$//' | tr '-' '_' | sed 's/[^a-zA-Z0-9_]//g'`
+      if test -z "$prefix"; then
+        prefix="_"
+      fi
+      prefix_list="$prefix_list $prefix"
+      current_opt=target-lang
+      ;;
+    -inst-bin)
+      op_inst_bin=
+      have_custom_inst_stuff=1
+      current_opt=inst-bin
+      ;;
+    -inst-sbin)
+      op_inst_sbin=
+      have_custom_inst_stuff=1
+      current_opt=inst-sbin
+      ;;
+    -inst-lib)
+      op_inst_lib=
+      have_custom_inst_stuff=1
+      current_opt=inst-lib
+      ;;
+    -inst-libexec)
+      op_inst_libexec=
+      have_custom_inst_stuff=1
+      current_opt=inst-libexec
+      ;;
+    -inst-inc)
+      op_inst_inc=
+      have_custom_inst_stuff=1
+      current_opt=inst-inc
+      ;;
+    -inst-man[0-9])
+      man_num=`echo "$1" | sed 's/^-inst-man//'`
+      eval op_inst_man$man_num=
+      have_custom_inst_stuff=1
+      current_opt=inst-man
+      ;;
+    -inst-doc)
+      op_inst_doc=
+      have_custom_inst_stuff=1
+      current_opt=inst-doc
+      ;;
+    -inst-share)
+      op_inst_share=
+      have_custom_inst_stuff=1
+      current_opt=inst-share
+      ;;
+    -inst-etc)
+      op_inst_etc=
+      have_custom_inst_stuff=1
+      current_opt=inst-etc
+      ;;
+    -omk)
+      current_opt=omk
+      ;;
+    -skip-mkmf)
+      current_opt=
+      ;;
+    -v)
+      echo "$version_string"
+      exit 0
+      ;;
+    *)
+      case "$current_opt" in
+        d)
+          current_opt=
+          ;;
+        srcroot)
+          op_srcroot=`echo "$1" | sed 's!//*!/!g'`
+          if test "$op_srcroot" != "/"; then
+            op_srcroot=`echo "$op_srcroot" | sed 's!/*$!!'`
+          fi
+          current_opt=
+          ;;
+        subdirs)
+          if echo "$1" | grep "^/" > /dev/null; then
+            echo "$script_name: error: parameter -subdirs: absolute path not allowed: $1" >&2
+            exit 1
+          fi
+          subdir=`echo "$1" | sed 's/\/*$//'`
+          op_subdirs="$op_subdirs $subdir"
+          ;;
+        add-src)
+          op_add_src="$op_add_src $1"
+          all_sources="$all_sources $1"
+          have_src=1
+          case "$1" in
+            *.C|*.[Cc][Cc]|*.[Cc][Pp][Pp]|*.[Cc][Xx][Xx])
+              have_add_cxx=1
+              ;;
+            *.c)
+              have_add_c=1
+              ;;
+            *)
+              echo "$script_name: error: bad source type $1" >&2
+              exit 1
+              ;;
+          esac
+          ;;
+        add-obj)
+          op_add_obj="$op_add_obj $1"
+          ;;
+        add-dobj)
+          op_add_dobj="$op_add_dobj $1"
+          ;;
+        def-type)
+          case "$1" in
+            obj)
+              ttype=tobj
+              ;;
+            prog|tobj|dobj|xobj)
+              ttype=$1
+              ;;
+            lib)
+              ttype=tlib
+              use_libro=1
+              ;;
+            tlib|dlib|xlib)
+              ttype=$1
+              use_libro=1
+              ;;
+            *)
+              echo "$script_name: error: invalid default type: $1" >&2
+              exit 1
+              ;;
+          esac
+          op_def_type=$ttype
+          current_opt=
+          ;;
+        def-ver)
+          op_def_ver=$1
+          current_opt=
+          ;;
+        def-objdir)
+          op_def_objdir=$1
+          current_opt=
+          ;;
+        def-lang)
+          case "$1" in
+            c|c++)
+              op_def_lang=$1
+              ;;
+            *)
+              echo "$script_name: error: invalid language type $1" >&2
+              exit 1
+              ;;
+          esac
+          current_opt=
+          ;;
+        target-src)
+          eval target_${prefix}_src=\"\$target_${prefix}_src \$1\"
+          all_sources="$all_sources $1"
+          have_src=1
+          case "$1" in
+            *.C|*.[Cc][Cc]|*.[Cc][Pp][Pp]|*.[Cc][Xx][Xx])
+              eval target_${prefix}_have_cxx=1
+              ;;
+            *.c)
+              eval target_${prefix}_have_c=1
+              ;;
+            *)
+              echo "$script_name: error: bad source type $1" >&2
+              exit 1
+              ;;
+          esac
+          ;;
+        target-obj)
+          eval target_${prefix}_obj=\"\$target_${prefix}_obj \$1\"
+          ;;
+        target-dobj)
+          eval target_${prefix}_dobj=\"\$target_${prefix}_dobj \$1\"
+          ;;
+        target-type)
+          case "$1" in
+            obj)
+              ttype=tobj
+              ;;
+            prog|tobj|dobj|xobj)
+              ttype=$1
+              ;;
+            lib)
+              ttype=tlib
+              use_libro=1
+              ;;
+            tlib|dlib|xlib)
+              ttype=$1
+              use_libro=1
+              ;;
+            *)
+              echo "$script_name: error: invalid target type: $1" >&2
+              exit 1
+              ;;
+          esac
+          eval target_${prefix}_type=\$ttype
+          current_opt=
+          ;;
+        target-name)
+          eval target_${prefix}_name=\$1
+          current_opt=
+          ;;
+        target-ver)
+          eval target_${prefix}_ver=\$1
+          current_opt=
+          ;;
+        target-objdir)
+          eval target_${prefix}_objdir=\$1
+          current_opt=
+          ;;
+        target-lang)
+          case "$1" in
+            c|c++)
+              eval target_${prefix}_lang=\$1
+              ;;
+            *)
+              echo "$script_name: error: invalid language type $1" >&2
+              exit 1
+              ;;
+          esac
+          current_opt=
+          ;;
+        inst-bin)
+          op_inst_bin="$op_inst_bin $1"
+          ;;
+        inst-sbin)
+          op_inst_sbin="$op_inst_sbin $1"
+          ;;
+        inst-lib)
+          op_inst_lib="$op_inst_lib $1"
+          ;;
+        inst-libexec)
+          op_inst_libexec="$op_inst_libexec $1"
+          ;;
+        inst-inc)
+          op_inst_inc="$op_inst_inc $1"
+          ;;
+        inst-man)
+          eval op_inst_man$man_num=\"\$op_inst_man$man_num $1\"
+          ;;
+        inst-doc)
+          op_inst_doc="$op_inst_doc $1"
+          ;;
+        inst-share)
+          op_inst_share="$op_inst_share $1"
+          ;;
+        inst-etc)
+          op_inst_etc="$op_inst_etc $1"
+          ;;
+        omk)
+          base=`basename "$1"`
+          if test "$base" != "$1" || test -d "$1"; then
+            echo "$script_name: error: invalid file name: $1" >&2
+            exit 1
+          fi
+          op_out_mkfile=$1
+          current_opt=
+          ;;
+        *)
+          echo "$script_name: error: bad option $1" >&2
+          exit 1
+          ;;
+      esac
+      ;;
+  esac
+  shift
+done
+
+prefix_list=`echo "$prefix_list" | tr ' ' '\n' | sort | uniq | tr '\n' ' ' | sed 's/^ *//'`
+
+if test x$have_custom_inst_stuff = x1; then
+  have_inst_stuff=1
+fi
+
+for prefix in $prefix_list; do
+  eval target_src=\$target_${prefix}_src
+  eval target_obj=\$target_${prefix}_obj
+  eval target_dobj=\$target_${prefix}_dobj
+  eval target_type=\$target_${prefix}_type
+  eval target_name=\$target_${prefix}_name
+  eval target_ldflags=\$target_${prefix}_ldflags
+  eval target_no_install=\$target_${prefix}_no_install
+  eval target_ver=\$target_${prefix}_ver
+  eval target_objdir=\$target_${prefix}_objdir
+  eval target_obj_common=\$target_${prefix}_common
+  eval target_lang=\$target_${prefix}_lang
+
+  target_src=`echo "$target_src" | sed 's/^ *//'`
+  eval target_${prefix}_src=\$target_src
+  target_obj=`echo "$target_obj" | sed 's/^ *//'`
+  eval target_${prefix}_obj=\$target_obj
+  target_dobj=`echo "$target_dobj" | sed 's/^ *//'`
+  eval target_${prefix}_dobj=\$target_dobj
+
+
+  if test -z "$target_type"; then
+    if test -n "$op_def_type"; then
+      target_type=$op_def_type
+    elif test x$target_obj_common = x1; then
+      target_type=tobj
+    elif test -n "$target_ver"; then
+      target_type=xlib
+    elif test -n "$target_name" || test -n "$target_ldflags"; then
+      target_type=prog
+    else
+      target_type=tobj
+    fi
+    eval target_${prefix}_type=\$target_type
+  fi
+
+  if test -z "$target_name"; then
+    if test $prefix != "_"; then
+      eval target_${prefix}_name=\$prefix
+    else
+      case $target_type in
+        tlib|dlib|xlib)
+          eval target_${prefix}_name="mod"
+          ;;
+        prog)
+          eval target_${prefix}_name="prog"
+          ;;
+      esac
+    fi
+  fi
+
+  if test -z "$target_ver"; then
+    if test -n "$op_def_ver"; then
+      eval target_${prefix}_ver=\$op_def_ver
+    else
+      eval target_${prefix}_ver=\"1.0.0\"
+    fi
+  fi
+
+  if test -n "$target_objdir"; then
+    target_objdir_pic="${target_objdir}_pic"
+    eval target_${prefix}_objdir_pic=\$target_objdir_pic
+  elif test -n "$op_def_objdir"; then
+    target_objdir="$op_def_objdir"
+    eval target_${prefix}_objdir=\$target_objdir
+    target_objdir_pic="${op_def_objdir}_pic"
+    eval target_${prefix}_objdir_pic=\$target_objdir_pic
+  else
+    case $target_type in
+      prog|tlib|xlib|tobj|xobj)
+        common_static_dir=$default_static_dir
+        ;;
+    esac
+    case $target_type in
+      dlib|xlib|dobj|xobj)
+        common_pic_dir=$default_pic_dir
+        ;;
+    esac
+  fi
+
+  if test x$op_def_no_install = x1; then
+    target_no_install=1
+    eval target_${prefix}_no_install=1
+  fi
+
+  if test -z "$target_no_install"; then
+    have_inst_stuff=1
+  fi
+
+  if test x$target_obj_common = x1; then
+    case $target_type in
+      tobj|dobj|xobj) : ;;
+      *)
+        echo "error: option -*common can be used only for types obj, tobj, dobj, xobj" >&2
+        exit 1
+        ;;
+    esac
+  fi
+
+  if test x$have_add_cxx = x1; then
+    eval target_${prefix}_have_cxx=1
+  fi
+
+  if test -z "$target_lang"; then
+    target_lang=$op_def_lang
+  fi
+
+  if test -n "$target_lang"; then
+    eval target_${prefix}_lang=\$target_lang
+    case $target_lang in
+      c)
+        eval target_${prefix}_have_cxx=
+        eval target_${prefix}_have_c=1
+        ;;
+      c++)
+        eval target_${prefix}_have_cxx=1
+        eval target_${prefix}_have_c=
+        ;;
+    esac
+  fi
+done
+
+
+formake_scripts="relpath mkrule"
+echo "using the following Formake scripts: $formake_scripts"
+
+cat <<TOP_EOF >$op_out_mkfile
+################################################################################
+# Generated by Formake mkmf
+TOP_EOF
+(date >/dev/null) 2>/dev/null
+if test $? -eq 0; then
+  date | sed 's/^/# /' >>$op_out_mkfile
+fi
+
+cd $op_dir
+
+BUILDROOT=$op_srcroot
+if test -n "$op_out_mkfile"; then
+  MAKEFILE=$op_out_mkfile
+else
+  MAKEFILE="Makefile"
+fi
+TOOLS=$formake_scripts
+SUBDIRS=$op_subdirs
+SCRIPT=`basename "$0"`
+cmdok -f $TOOLS || exit 1
+SRCDIR=`pwd`
+SRCROOT=`relpath ./ $op_srcroot`
+ABS_BUILDDIR=`pwd`
+SUBDIR=`relpath $BUILDROOT ./`
+
+
+################################################################################
+# INIT MAKEFILE
+mkrule init >$MAKEFILE
+mkrule distclean $MAKEFILE >>$MAKEFILE
+
+################################################################################
+# COMMON
+#
+COMMON_STATIC_DIR="$common_static_dir"
+COMMON_PIC_DIR="$common_pic_dir"
+
+ADD_CFLAGS="$op_add_cflags"
+ADD_CXXFLAGS="$op_add_cxxflags"
+ADD_LDFLAGS="$op_add_ldflags"
+ADD_SRC="$op_add_src"
+ADD_OBJ="$op_add_obj"
+ADD_DOBJ="$op_add_dobj"
+
+################################################################################
+# OBJECTS
+#
+# Compile C/C++ sources
+#
+common_static_objects=
+common_pic_objects=
+for prefix in $prefix_list; do
+  eval target_src=\$target_${prefix}_src
+  eval target_obj=\$target_${prefix}_obj
+  eval target_dobj=\$target_${prefix}_dobj
+  eval target_cflags=\$target_${prefix}_cflags
+  eval target_cxxflags=\$target_${prefix}_cxxflags
+  eval target_type=\$target_${prefix}_type
+  eval target_objdir=\$target_${prefix}_objdir
+  eval target_objdir_pic=\$target_${prefix}_objdir_pic
+  eval target_have_cxx=\$target_${prefix}_have_cxx
+  eval target_obj_common=\$target_${prefix}_common
+
+  if test x$target_have_cxx = x1; then
+    cxxflags="$ADD_CXXFLAGS $target_cxxflags"
+  else
+    cflags="$ADD_CFLAGS $target_cflags"
+  fi
+
+  case $target_type in
+    prog|tlib|xlib|tobj|xobj)
+      if test -z "$target_objdir"; then
+        target_objdir=$COMMON_STATIC_DIR
+      fi
+      ;;
+  esac
+  case $target_type in
+    dlib|xlib|dobj|xobj)
+      if test -z "$target_objdir_pic"; then
+        target_objdir_pic=$COMMON_PIC_DIR
+      fi
+      ;;
+  esac
+
+  target_src=`echo "$target_src" | sed 's/^ *//' | sed 's/ *$//' | sed 's/  */ /g'`
+  if test -n "$ADD_SRC"; then
+    sources="$ADD_SRC $target_src"
+  fi
+  case $target_type in
+    prog|tlib|xlib|tobj|xobj)
+      if test -n "$sources"; then
+        if test -z "$target_have_cxx"; then
+          mkrule obj -cflags="$cflags" -srcdir $SRCDIR -src $sources -d $target_objdir >>$MAKEFILE
+        else
+          mkrule obj -c++ -cflags="$cxxflags" -srcdir $SRCDIR -src $sources -d $target_objdir >>$MAKEFILE
+        fi
+        objects=`src2obj -o $target_objdir $sources`
+      fi
+      if test -n "$target_obj"; then
+        objects="$objects $target_obj"
+      fi
+      if test x$target_obj_common = x1; then
+        common_static_objects="$common_static_objects $objects"
+      fi
+      eval target_${prefix}_obj=\$objects
+      ;;
+  esac
+  case $target_type in
+    dlib|xlib|dobj|xobj)
+      if test -n "$sources"; then
+        if test -z "$target_have_cxx"; then
+          mkrule obj -pic -cflags="$cflags" -srcdir $SRCDIR -src $sources -d $target_objdir_pic >>$MAKEFILE
+        else
+          mkrule obj -c++ -pic -cflags="$cxxflags" -srcdir $SRCDIR -src $sources -d $target_objdir_pic >>$MAKEFILE
+        fi
+        pic_objects=`src2obj -o $target_objdir_pic $sources`
+      fi
+      if test -n "$target_dobj"; then
+        pic_objects="$pic_objects $target_dobj"
+      fi
+      if test x$target_obj_common = x1; then
+        common_pic_objects="$common_pic_objects $pic_objects"
+      fi
+      eval target_${prefix}_dobj=\$pic_objects
+      ;;
+  esac
+done
+
+common_static_objects=`echo "$common_static_objects" | sed 's/^ *//' | sed 's/ *$//'`
+common_pic_objects=`echo "$common_pic_objects" | sed 's/^ *//' | sed 's/ *$//'`
+
+COMMON_STATIC_OBJECTS="$common_static_objects"
+COMMON_PIC_OBJECTS="$common_pic_objects"
+
+
+################################################################################
+# PROGRAMS
+#
+# Link C/C++ programs
+#
+for prefix in $prefix_list; do
+  eval target_src=\$target_${prefix}_src
+  eval target_obj=\$target_${prefix}_obj
+  eval target_name=\$target_${prefix}_name
+  eval target_type=\$target_${prefix}_type
+  eval target_ldflags=\$target_${prefix}_ldflags
+  eval target_no_install=\$target_${prefix}_no_install
+  eval target_have_cxx=\$target_${prefix}_have_cxx
+  eval target_objdir_var=\$target_${prefix}_objdir_var
+
+  if test $target_type = prog; then
+    add_params="-all"
+    if test x$target_no_install = x; then
+      add_params="$add_params -install"
+    fi
+    if test x$target_have_cxx = x1; then
+      add_params="$add_params -c++"
+    fi
+
+    if test -n "$target_src$op_add_src$target_obj$op_add_obj$common_static_obj"; then
+      mkrule prog $add_params -ldflags="$ADD_LDFLAGS $target_ldflags" -n $target_name -obj $target_obj $COMMON_STATIC_OBJECTS $ADD_OBJ >>$MAKEFILE
+    fi
+  fi
+done
+
+################################################################################
+# LIBRARIES
+#
+# Link C/C++ libraries
+#
+for prefix in $prefix_list; do
+  eval target_src=\$target_${prefix}_src
+  eval target_obj=\$target_${prefix}_obj
+  eval target_dobj=\$target_${prefix}_dobj
+  eval target_name=\$target_${prefix}_name
+  eval target_type=\$target_${prefix}_type
+  eval target_ldflags=\$target_${prefix}_ldflags
+  eval target_no_install=\$target_${prefix}_no_install
+  eval target_have_cxx=\$target_${prefix}_have_cxx
+  eval target_version=\$target_${prefix}_ver
+  eval target_objdir_var=\$target_${prefix}_objdir_var
+  eval target_objdir_pic_var=\$target_${prefix}_objdir_pic_var
+
+  if test $target_type = tlib || test $target_type = dlib || test $target_type = xlib; then
+    add_params="-all"
+    if test x$target_no_install = x; then
+      add_params="$add_params -install"
+    fi
+    if test x$target_have_cxx = x1; then
+      add_params="$add_params -c++"
+    fi
+
+    if test -n "$target_src$op_add_src$target_obj$op_add_obj$common_static_obj"; then
+      if test $target_type = tlib || test $target_type = xlib; then
+        mkrule lib $add_params -static -ldflags="$ADD_LDFLAGS $target_ldflags" -n $target_name -ver $target_version -obj $target_obj $COMMON_STATIC_OBJECTS $ADD_OBJ >>$MAKEFILE
+      fi
+    fi
+
+    if test -n "$target_src$op_add_src$target_dobj$op_add_dobj$common_pic_obj"; then
+      if test $target_type = dlib || test $target_type = xlib; then
+        mkrule lib $add_params -shared -ldflags="$ADD_LDFLAGS $target_ldflags" -n $target_name -ver $target_version -obj $target_dobj $COMMON_PIC_OBJECTS $ADD_DOBJ >>$MAKEFILE
+      fi
+    fi
+  fi
+done
+
+################################################################################
+# INSTALLATION FILES
+#
+# Install files by 'make install'
+#
+if test x$have_custom_inst_stuff = x1; then
+  if test -n "$op_inst_bin"; then
+    mkrule install bin $op_inst_bin >>$MAKEFILE
+    dist_files="$dist_files $op_inst_bin"
+  fi
+  if test -n "$op_inst_sbin"; then
+    mkrule install sbin $op_inst_sbin >>$MAKEFILE
+    dist_files="$dist_files $op_inst_sbin"
+  fi
+  if test -n "$op_inst_lib"; then
+    mkrule install lib $op_inst_lib >>$MAKEFILE
+    dist_files="$dist_files $op_inst_lib"
+  fi
+  if test -n "$op_inst_libexec"; then
+    mkrule install libexec $op_inst_libexec >>$MAKEFILE
+    dist_files="$dist_files $op_inst_libexec"
+  fi
+  if test -n "$op_inst_inc"; then
+    mkrule install inc $op_inst_inc >>$MAKEFILE
+    dist_files="$dist_files $op_inst_inc"
+  fi
+  if test -n "$op_inst_man0"; then
+    mkrule install man0 $op_inst_man0 >>$MAKEFILE
+    dist_files="$dist_files $op_inst_man0"
+  fi
+  if test -n "$op_inst_man1"; then
+    mkrule install man1 $op_inst_man1 >>$MAKEFILE
+    dist_files="$dist_files $op_inst_man1"
+  fi
+  if test -n "$op_inst_man2"; then
+    mkrule install man2 $op_inst_man2 >>$MAKEFILE
+    dist_files="$dist_files $op_inst_man2"
+  fi
+  if test -n "$op_inst_man3"; then
+    mkrule install man3 $op_inst_man3 >>$MAKEFILE
+    dist_files="$dist_files $op_inst_man3"
+  fi
+  if test -n "$op_inst_man4"; then
+    mkrule install man4 $op_inst_man4 >>$MAKEFILE
+    dist_files="$dist_files $op_inst_man4"
+  fi
+  if test -n "$op_inst_man5"; then
+    mkrule install man5 $op_inst_man5 >>$MAKEFILE
+    dist_files="$dist_files $op_inst_man5"
+  fi
+  if test -n "$op_inst_man6"; then
+    mkrule install man6 $op_inst_man6 >>$MAKEFILE
+    dist_files="$dist_files $op_inst_man6"
+  fi
+  if test -n "$op_inst_man7"; then
+    mkrule install man7 $op_inst_man7 >>$MAKEFILE
+    dist_files="$dist_files $op_inst_man7"
+  fi
+  if test -n "$op_inst_man8"; then
+    mkrule install man8 $op_inst_man8 >>$MAKEFILE
+    dist_files="$dist_files $op_inst_man8"
+  fi
+  if test -n "$op_inst_man9"; then
+    mkrule install man9 $op_inst_man9 >>$MAKEFILE
+    dist_files="$dist_files $op_inst_man9"
+  fi
+  if test -n "$op_inst_doc"; then
+    mkrule install doc $op_inst_doc >>$MAKEFILE
+    dist_files="$dist_files $op_inst_doc"
+  fi
+  if test -n "$op_inst_share"; then
+    mkrule install data $op_inst_share >>$MAKEFILE
+    dist_files="$dist_files $op_inst_share"
+  fi
+  if test -n "$op_inst_etc"; then
+    mkrule install etc $op_inst_etc >>$MAKEFILE
+    dist_files="$dist_files $op_inst_etc"
+  fi
+fi
+
+################################################################################
+# DIST
+#
+# Create distribution tarball by 'make dist'
+src_dist_files=
+if test -n "$all_sources"; then
+  src_dist_files="$src_dist_files $all_sources"
+fi
+src_dist_files=`echo "$src_dist_files" | sed 's/^ *//' | tr ' ' '\n' | sort | uniq | tr '\n' ' ' | sed 's/ *$//'`
+dist_files="$dist_files $src_dist_files"
+
+if test "$op_srcroot" = "."; then
+  if test -d mk; then
+    opt_fscripts="abspath cstem cmdok ldlshell ldlwrap libro mkdep optool pofig src2obj"
+    formake_dist=
+    for script in $opt_fscripts; do
+      if test -f mk/$script; then
+        formake_dist="$formake_dist mk/$script"
+      fi
+    done
+    formake_dist=`echo "$formake_dist" | sed 's/^ *//'`
+    dist_files="$formake_dist $dist_files"
+  fi
+  dist_files="configure mk/relpath mk/mkrule $dist_files"
+fi
+
+DIST_FILES="$dist_files"
+
+if test "$op_srcroot" = "."; then
+  mkrule dist -n $CONFIG_NAME -ver $CONFIG_VERSION -buildroot $BUILDROOT -srcdir $SRCDIR -f $DIST_FILES >>$MAKEFILE || exit 1
+else
+  mkrule dist -buildroot $BUILDROOT -srcdir $SRCDIR -f $DIST_FILES >>$MAKEFILE || exit 1
+fi
+
+
+################################################################################
+# SUBDIRS
+#
+# Build subdirectories
+#
+if test -n "$op_subdirs"; then
+  mkrule subdir -all -install -clean -dist -distclean -d $SUBDIRS >>$MAKEFILE
+  for dir in $SUBDIRS; do
+    cd $ABS_BUILDDIR
+    test -d $dir || mkdir -p $dir
+    cd $dir; mkmf || exit 1
+  done
+fi
+
+cat <<"TOP_EOF" >>$op_out_file
+################################################################################
+# DONE
+echo "$SUBDIR: DONE"
+
+TOP_EOF
+

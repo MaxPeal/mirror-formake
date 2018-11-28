@@ -1,0 +1,29 @@
+
+OPTIONS="
+-g,--with-gtk        enable GTK UI            >> WITH_GTK
+-d,--doc             generate documentation   >> WITH_DOC
+-p,--pflags=FLAGS    perl flags               >> PFLAGS
+--ui[=TYPE]          enable UI: gtk, qt       >> WITH_UI
+"
+
+PROBE_CC=1
+PROBE_CXX=1
+
+#STAGE2
+
+if test -z "$WITH_DOC"; then
+  echo "no documentation will be generated"
+fi
+
+if test -n "$PREFIX"; then
+  echo "Prefix: $PREFIX"
+fi
+
+if test x$WITH_GTK = x1; then
+  echo "gtk UI enabled"
+fi
+
+if test -n "$WITH_UI"; then
+  echo "WITH_UI='$WITH_UI'"
+fi
+

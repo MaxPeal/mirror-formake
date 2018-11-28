@@ -1,134 +1,316 @@
 #!/bin/sh
+#
+# Formake configure
+#
+# Copyright (c) 2018, Oleksii Cherniavskyi
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ################################################################################
-# set base project variables
-PACKAGE_NAME="formake"
-PACKAGE_VERSION="0.15"
-CONFIG_OUT="build.conf"
+# JUMP TO MODERN SHELL IF POSSIBLE
+(test_exit_code_127_sdfjsdfksjdhfksjdhf  >/dev/null) 2>/dev/null
+if test $? -ne 127; then
+  if test -z "$CONFIGURE_BASH_REDIRECTED"; then
+    CONFIGURE_BASH_REDIRECTED=1
+    export CONFIGURE_BASH_REDIRECTED
+    if test -x /bin/bash; then
+      exec /bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/bin/bash; then
+      exec /usr/bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/local/bin/bash; then
+      exec /usr/local/bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/pkg/bin/bash; then
+      exec /usr/pkg/bin/bash "$0" ${1+"$@"}
+    else
+      (bash -c "pwd" >/dev/null) 2>/dev/null
+      if test $? -eq 0; then
+        exec bash "$0" ${1+"$@"}
+      fi
+    fi
+  fi
+fi
+CONFIGURE_BASH_REDIRECTED=
+export CONFIGURE_BASH_REDIRECTED
+################################################################################
+
+script_name=`basename "$0"`
+orig_dir=`pwd`
+cd `dirname "$0"`
+script_dir=`pwd`
+mk_path=$script_dir/mk
+CONFIGURE_STAGE=0
+
+print_version() {
+  cat <<EOF
+Formake configure 1.0
+Copyright (C) 2018 Oleksii Cherniavskyi
+EOF
+}
+
+################################################################################
+# print help if we received -h or --help parameter
+print_help() {
+  cat <<EOF
+Usage: configure [options]
+  --prefix=PREFIX               path to install architecture-independent files [/usr/local]
+  --exec-prefix=EPREFIX         path to install architecture-dependent files [PREFIX]
+  --bindir=DIR                  bin path [EPREFIX/bin]
+  --sbindir=DIR                 sbin path [EPREFIX/sbin]
+  --libexecdir=DIR              libexec path [EPREFIX/libexec]
+  --libdir=DIR                  lib path [EPREFIX/lib]
+  --incdir=DIR                  include path [PREFIX/include]
+  --etcdir=DIR                  etc path [PREFIX/etc]
+  --vardir=DIR                  var path [PREFIX/var]
+  --sharedir=DIR                share path [PREFIX/share]
+  --mandir=DIR                  man path [SHAREDIR/man]
+  --docdir=DIR                  doc path [SHAREDIR/doc]
+EOF
+
+  op_index=0
+  while test $op_index -lt $FMK_OPNUM; do
+    eval ops=\$FMK_OP${op_index}_ops
+    eval descr=\$FMK_OP${op_index}_descr
+    printf '  %-*s   %s\n' 27 "$ops" "$descr"
+    op_index=`expr $op_index + 1`
+  done
+
+
+  if test -n "$PROBE_CC"; then
+    cat <<EOF
+  CC=CMD                        C compiler command
+  CFLAGS=FLAGS                  C compiler flags
+EOF
+  fi
+  if test -n "$PROBE_CXX"; then
+    cat <<EOF
+  CXX=CMD                       C++ compiler command
+  CXXFLAGS=FLAGS                C++ compiler flags
+EOF
+  fi
+  if test -n "$PROBE_CC$PROBE_CXX"; then
+    echo "  LDFLAGS=FLAGS                 LD flags"
+  fi
+}
+
+if test -f ./configure.rc; then
+  sed -n "1,/^#STAGE[1-2]/p" configure.rc > _configure_stage.rc
+  . ./_configure_stage.rc
+  rm -f _configure_stage.rc
+
+  IFS_save=$IFS
+  IFS='
+'
+  FMK_OPNUM=0
+  for line in $OPTIONS; do
+    line=`echo "$line" | sed 's/^ *//'`
+    ops=`echo "$line" | sed 's/  .*//'`
+    descr=`echo "$line" | sed 's/  *>>.*//' | sed 's/.*   *//'`
+    outvar=`echo "$line" | sed 's/.* >> *//' | sed 's/ .*$//'`
+    if test -n "$outvar"; then
+      case "$ops" in
+        *\[=*\])
+          op_have_arg=1
+          ;;
+        *=*)
+          op_have_arg=2
+          ;;
+        *)
+          op_have_arg=0
+          ;;
+      esac
+      IFS_save2=$IFS
+      IFS=','
+      for op in $ops; do
+        op=`echo "$op" | sed 's/^ *//' | sed 's/[[ =].*$//'`
+        if test -n "$op"; then
+          op_var=`echo "FMK_OP_$op" | sed 's/[^a-zA-Z0-9_]/_/g'`
+          eval $op_var=\$outvar
+          eval ${op_var}_have_arg=\$op_have_arg
+        fi
+      done
+      eval FMK_OP${FMK_OPNUM}_ops=\$ops
+      eval FMK_OP${FMK_OPNUM}_descr=\$descr
+      FMK_OPNUM=`expr $FMK_OPNUM + 1`
+      IFS=$IFS_save2
+    fi
+  done
+  IFS=$IFS_save
+fi
+
+CONFIGURE_STAGE=1
 
 ################################################################################
 # parse options
 while test $# -gt 0; do
-  param=`echo "$1" | sed 's/^--/-/'`
-  case $param in
-    -h|-help)
-      op_help=1
+  case "$1" in
+    -h|--help)
+      print_help
+      exit 0
       ;;
-    -prefix=*)
-      PREFIX=`echo "$param" | sed 's/^[^=]*=//'`
+    -v|--version)
+      print_version
+      exit 0
       ;;
-    -exec-prefix=*)
-      EXEC_PREFIX=`echo "$param" | sed 's/^[^=]*=//'`
+    --prefix=*)
+      PREFIX=`echo "$1" | sed 's/^[^=]*=//'`
       ;;
-    -bindir=*)
-      BINDIR=`echo "$param" | sed 's/^[^=]*=//'`
+    --exec-prefix=*)
+      EXEC_PREFIX=`echo "$1" | sed 's/^[^=]*=//'`
       ;;
-    -sbindir=*)
-      SBINDIR=`echo "$param" | sed 's/^[^=]*=//'`
+    --bindir=*)
+      BINDIR=`echo "$1" | sed 's/^[^=]*=//'`
       ;;
-    -libexecdir=*)
-      LIBEXECDIR=`echo "$param" | sed 's/^[^=]*=//'`
+    --sbindir=*)
+      SBINDIR=`echo "$1" | sed 's/^[^=]*=//'`
       ;;
-    -libdir=*)
-      LIBDIR=`echo "$param" | sed 's/^[^=]*=//'`
+    --libexecdir=*)
+      LIBEXECDIR=`echo "$1" | sed 's/^[^=]*=//'`
       ;;
-    -incdir=*)
-      INCDIR=`echo "$param" | sed 's/^[^=]*=//'`
+    --libdir=*)
+      LIBDIR=`echo "$1" | sed 's/^[^=]*=//'`
       ;;
-    -etcdir=*)
-      ETCDIR=`echo "$param" | sed 's/^[^=]*=//'`
+    --incdir=*)
+      INCDIR=`echo "$1" | sed 's/^[^=]*=//'`
       ;;
-    -vardir=*)
-      VARDIR=`echo "$param" | sed 's/^[^=]*=//'`
+    --etcdir=*)
+      ETCDIR=`echo "$1" | sed 's/^[^=]*=//'`
       ;;
-    -sharedir=*)
-      SHAREDIR=`echo "$param" | sed 's/^[^=]*=//'`
+    --vardir=*)
+      VARDIR=`echo "$1" | sed 's/^[^=]*=//'`
       ;;
-    -mandir=*)
-      MANDIR=`echo "$param" | sed 's/^[^=]*=//'`
+    --sharedir=*)
+      SHAREDIR=`echo "$1" | sed 's/^[^=]*=//'`
       ;;
-    -docdir=*)
-      DOCDIR=`echo "$param" | sed 's/^[^=]*=//'`
+    --mandir=*)
+      MANDIR=`echo "$1" | sed 's/^[^=]*=//'`
       ;;
-    CC=*)
-      CC=`echo "$param" | sed 's/^[^=]*=//'`
-      ;;
-    CFLAGS=*)
-      CFLAGS=`echo "$param" | sed 's/^[^=]*=//'`
-      ;;
-    LDFLAGS=*)
-      LDFLAGS=`echo "$param" | sed 's/^[^=]*=//'`
+    --docdir=*)
+      DOCDIR=`echo "$1" | sed 's/^[^=]*=//'`
       ;;
     *)
-      echo "$0: invalid option: $1"
-      exit 1
+      op_found=
+      if test -n "$PROBE_CC"; then
+        case "$1" in
+          CC=*)
+            CC=`echo "$1" | sed 's/^[^=]*=//'`
+            op_found=1
+            ;;
+          CFLAGS=*)
+            CFLAGS=`echo "$1" | sed 's/^[^=]*=//'`
+            op_found=1
+            ;;
+          LDFLAGS=*)
+            LDFLAGS=`echo "$1" | sed 's/^[^=]*=//'`
+            op_found=1
+            ;;
+        esac
+      fi
+      if test x$op_found = x && test -n "$PROBE_CXX"; then
+        case "$1" in
+          CXX=*)
+            CXX=`echo "$1" | sed 's/^[^=]*=//'`
+            op_found=1
+            ;;
+          CXXFLAGS=*)
+            CXXFLAGS=`echo "$1" | sed 's/^[^=]*=//'`
+            op_found=1
+            ;;
+          LDFLAGS=*)
+            LDFLAGS=`echo "$1" | sed 's/^[^=]*=//'`
+            op_found=1
+            ;;
+        esac
+      fi
+      if test x$op_found = x; then
+        outvar=
+        op=`echo "$1" | sed 's/[ =].*$//'`
+        if test -n "$op"; then
+          op_var=`echo "FMK_OP_$op" | sed 's/[^a-zA-Z0-9_]/_/g'`
+          eval outvar=\$$op_var
+          eval op_have_arg=\$${op_var}_have_arg
+        fi
+        if test -z "$outvar"; then
+          echo "$0: invalid option: $1"
+          exit 1
+        fi
+
+        case "$1" in
+          *=*)
+            if test "$op_have_arg" -ge 1; then
+              arg=`echo "$1" | sed 's/^[^=]*=//'`
+              eval $outvar=\$arg
+            else
+              echo "$0: invalid option: $1"
+              exit 1
+            fi
+            ;;
+          *)
+            if test "$op_have_arg" -le 1; then
+              eval $outvar=1
+            else
+              echo "$0: invalid option: $1"
+              exit 1
+            fi
+            ;;
+        esac
+      fi
       ;;
   esac
   shift
 done
 
 ################################################################################
-# print help if we received -h or --help parameter
-if test x$op_help = x1; then
-  cat <<EOF
-Usage: configure [options]
-  --prefix=PREFIX         path to install architecture-independent files [/usr/local]
-  --exec-prefix=EPREFIX   path to install architecture-dependent files [PREFIX]
-  --bindir=DIR            bin path [EPREFIX/bin]
-  --sbindir=DIR           sbin path [EPREFIX/sbin]
-  --libexecdir=DIR        libexec path [EPREFIX/libexec]
-  --libdir=DIR            lib path [EPREFIX/lib]
-  --incdir=DIR            include path [PREFIX/include]
-  --etcdir=DIR            etc path [PREFIX/etc]
-  --vardir=DIR            var path [PREFIX/var]
-  --sharedir=DIR          share path [PREFIX/share]
-  --mandir=DIR            man path [SHAREDIR/man]
-  --docdir=DIR            doc path [SHAREDIR/doc]
-  CC=CMD                  C compiler command
-  CFLAGS=FLAGS            C compiler flags
-  LDFLAGS=FLAGS           LD flags
-EOF
-  exit 0
+# probe system parameters: OS, OS version, kernel version, distro, distro version, cpu
+if test -x $mk_path/pofig; then
+  OS=`$mk_path/pofig -o`
+  echo "OS                $OS"
+  OS_VERSION=`$mk_path/pofig -s`
+  echo "OS Version        $OS_VERSION"
+  KERNEL_VERSION=`$mk_path/pofig -k`
+  echo "Kernel version    $KERNEL_VERSION"
+  DISTRO=`$mk_path/pofig -d`
+  echo "Distro            $DISTRO"
+  DISTRO_VERSION=`$mk_path/pofig -r`
+  echo "Distro version    $DISTRO_VERSION"
+  ARCH=`$mk_path/pofig -a`
+  echo "Arch              $ARCH"
+  SYSID=`$mk_path/pofig -i`
+  echo "System id         ***"
 fi
 
 ################################################################################
-# go to package dir and set up PATH
-cd `dirname "$0"`
-PATH=`pwd`/mk:$PATH
+# Set base configuration variables
 
-################################################################################
-# check that PATH is correct and we have access to the package scripts
-cmdok cltest cppdef cprobe mkdep pofig || exit 1
-
-################################################################################
-# probe build host parameters: OS, OS version, kernel version, distro, distro version, cpu
-# run 'pofig -h' to get help on tool parameters
-HOST_OS=`pofig -o`
-HOST_OS_VERSION=`pofig -s`
-HOST_KERNEL_VERSION=`pofig -k`
-HOST_DISTRO=`pofig -d`
-HOST_DISTRO_VERSION=`pofig -r`
-HOST_ARCH=`pofig -a`
-
-################################################################################
-# check system tools: make install
-cmdok make install || exit 1
-
-################################################################################
-# check if we have valid C compiler and get compiler command
-cprobe $CC >/dev/null || exit 1
-CC=`cprobe $CC -c`
-
-################################################################################
-# check compiler, compiler flags, linker flags
-# run 'cltest -h' to get help on tool parameters
-cltest $CC || exit 1
-if test -n "$CFLAGS$LDFLAGS"; then
-  cltest $CC -cflags="$CFLAGS" -ldflags="$LDFLAGS" || exit 1
+if test -f ./configure.rc; then
+  sed -n "1,/^#STAGE2/p" configure.rc > _configure_stage.rc
+  . ./_configure_stage.rc
+  rm -f _configure_stage.rc
 fi
 
-################################################################################
-# Set up standard installation directories
+CONFIGURE_STAGE=2
+
+
+test -n "$PACKAGE_NAME" || PACKAGE_NAME=deadbeef
+
 test -n "$PREFIX"      || PREFIX=/usr/local
 test -n "$EXEC_PREFIX" || EXEC_PREFIX=$PREFIX
 test -n "$BINDIR"      || BINDIR=$EXEC_PREFIX/bin
@@ -145,46 +327,147 @@ test -n "$DOCDIR"      || DOCDIR=$SHAREDIR/doc
 DOCDIR=$DOCDIR/$PACKAGE_NAME
 DATADIR=$SHAREDIR/$PACKAGE_NAME
 
+
 ################################################################################
-# generate build config file
-cat <<EOF >$CONFIG_OUT
-PACKAGE_NAME="$PACKAGE_NAME"
-PACKAGE_VERSION="$PACKAGE_VERSION"
-PREFIX="$PREFIX"
-EXEC_PREFIX="$EXEC_PREFIX"
-BINDIR="$BINDIR"
-SBINDIR="$SBINDIR"
-LIBEXECDIR="$LIBEXECDIR"
-LIBDIR="$LIBDIR"
-INCDIR="$INCDIR"
-ETCDIR="$ETCDIR"
-VARDIR="$VARDIR"
-SHAREDIR="$SHAREDIR"
-MANDIR="$MANDIR"
-DOCDIR="$DOCDIR"
-DATADIR="$DATADIR"
+# Probe C compiler
+if test -n "$PROBE_CC"; then
+  if test ! -x $mk_path/cprobe; then
+    echo "error: mk/cprobe not found"
+    exit 1
+  fi
 
-HOST_OS="$HOST_OS"
-HOST_OS_VERSION="$HOST_OS_VERSION"
-HOST_KERNEL_VERSION="$HOST_KERNEL"
-HOST_DISTRO="$HOST_DISTRO"
-HOST_DISTRO_VERSION="$HOST_DISTRO_VERSION"
-HOST_ARCH="$HOST_ARCH"
+  if test ! -x $mk_path/cltest; then
+    echo "error: mk/cltest not found"
+    exit 1
+  fi
 
-CFLAGS="$CFLAGS"
-LDFLAGS="$LDFLAGS"
+  if test -z "$CC"; then
+    if `$mk_path/cprobe -c >/dev/null`; then
+      CC=`$mk_path/cprobe -c`
+    else
+      echo "error: C compiler not found"
+      exit 1
+    fi
+  else
+    if `$mk_path/cprobe $CC -c >/dev/null`; then
+      :
+    else
+      echo "error: invalid C compiler: $CC"
+      exit 1
+    fi
+  fi
+  echo "C compiler command ...                      $CC"
+
+  $mk_path/cltest $CC || exit 1
+
+  if test -n "$CFLAGS$LDFLAGS"; then
+    $mk_path/cltest $CC - $CFLAGS $LDFLAGS || exit 1
+  fi
+
+  $mk_path/cprobe $CC -1 - $CFLAGS > _formake_tmp_buf.conf
+  . ./_formake_tmp_buf.conf
+  rm -f _formake_tmp_buf.conf
+
+  cat <<EOF
+C compiler type ...                         $CC_TYPE
+C compiler version ...                      $CC_VERSION
+C compiler language standard ...            $CC_STD
+C compiler target OS ...                    $CC_OS
+C compiler target OS version ...            $CC_OS_VERSION
+C compiler target architecture ...          $CC_ARCH
+C compiler target bitness ...               $CC_BITNESS
+C compiler target endianess ...             $CC_ENDIANESS
+C compiler target data model ...            $CC_DATA_MODEL
+C compiler is cross-compiler ...            $CC_FLAG_CROSS
+C compiler POSIX support version ...        $CC_POSIX
+C compiler SUS support version ...          $CC_SUS
 EOF
+fi
 
 ################################################################################
-# probe compiler parameters and save to config file
-# run 'cprobe -h' to get help on tool parameters
-cprobe $CC -1 - $CFLAGS >>$CONFIG_OUT
+# Probe C++ compiler
+if test -n "$PROBE_CXX"; then
+  if test ! -x $mk_path/cprobe; then
+    echo "error: mk/cprobe not found"
+    exit 1
+  fi
+
+  if test ! -x $mk_path/cltest; then
+    echo "error: mk/cltest not found"
+    exit 1
+  fi
+
+  if test -z "$CXX"; then
+    if `$mk_path/cprobe -c >/dev/null`; then
+      CXX=`$mk_path/cprobe -c`
+    else
+      echo "error: C++ compiler not found"
+      exit 1
+    fi
+  else
+    if `$mk_path/cprobe $CXX -c >/dev/null`; then
+      :
+    else
+      echo "error: invalid C++ compiler: $CXX"
+      exit 1
+    fi
+  fi
+  echo "C++ compiler command ...                    $CXX"
+
+  $mk_path/cltest $CXX || exit 1
+
+  if test -n "$CXXFLAGS$LDFLAGS"; then
+    $mk_path/cltest $CXX - $CXXFLAGS $LDFLAGS || exit 1
+  fi
+
+  fmk_is_cxx=`$mk_path/cprobe $CXX -x - $CXXFLAGS`
+  if test x$fmk_is_cxx = xfalse; then
+    echo "error: not C++ compiler: $CXX"
+    exit 1
+  fi
+
+  $mk_path/cprobe $CXX -1 - $CXXFLAGS > _formake_tmp_buf.conf
+  . ./_formake_tmp_buf.conf
+  rm -f _formake_tmp_buf.conf
+
+  CXX_TYPE=$CC_TYPE
+  CXX_VERSION=$CC_VERSION
+  CXX_STD=$CC_CXX_STD
+  CXX_OS=$CC_OS
+  CXX_OS_VERSION=$CC_OS_VERSION
+  CXX_ARCH=$CC_ARCH
+  CXX_BITNESS=$CC_BITNESS
+  CXX_ENDIANNESS=$CC_ENDIANNESS
+  CXX_DATA_MODEL=$CC_DATA_MODEL
+  CXX_FLAG_CROSS=$CC_FLAG_CROSS
+  CXX_POSIX=$CC_POSIX
+  CXX_SUS=$CC_SUS
+
+  cat <<EOF
+C++ compiler type ...                       $CXX_TYPE
+C++ compiler version ...                    $CXX_VERSION
+C++ compiler language standard ...          $CXX_STD
+C++ compiler target OS ...                  $CXX_OS
+C++ compiler target OS version ...          $CXX_OS_VERSION
+C++ compiler target architecture ...        $CXX_ARCH
+C++ compiler target bitness ...             $CXX_BITNESS
+C++ compiler target endianess ...           $CXX_ENDIANNESS
+C++ compiler target data model ...          $CXX_DATA_MODEL
+C++ compiler is cross-compiler ...          $CXX_FLAG_CROSS
+C++ compiler POSIX support version ...      $CXX_POSIX
+C++ compiler SUS support version ...        $CXX_SUS
+EOF
+fi
+
 
 ################################################################################
-# generate makefiles
-./mkmf
 
-################################################################################
-# finish
-echo "configuring done."
+if test -f ./configure.rc; then
+  . ./configure.rc
+fi
+
+
+if test -x $mk_path/mkmf; then
+  $mk_path/mkmf `pwd`
+fi
 
