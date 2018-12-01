@@ -1,0 +1,187 @@
+#!/bin/sh
+#
+# Formake src2obj
+#
+# Copyright (c) 2015-2018, Oleksiy Chernyavskyy
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+################################################################################
+# SWITCH TO MODERN SHELL IF POSSIBLE
+(test_exit_code_127_sdfjsdfksjdhfksjdhf  >/dev/null) 2>/dev/null
+if test $? -ne 127; then
+  if test -z "$FORMAKE_BASH_REDIRECTED"; then
+    FORMAKE_BASH_REDIRECTED=1
+    export FORMAKE_BASH_REDIRECTED
+    if test -x /bin/bash; then
+      exec /bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/bin/bash; then
+      exec /usr/bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/local/bin/bash; then
+      exec /usr/local/bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/pkg/bin/bash; then
+      exec /usr/pkg/bin/bash "$0" ${1+"$@"}
+    else
+      (bash -c "pwd" >/dev/null) 2>/dev/null
+      if test $? -eq 0; then
+        exec bash "$0" ${1+"$@"}
+      fi
+    fi
+  fi
+fi
+FORMAKE_BASH_REDIRECTED=
+export FORMAKE_BASH_REDIRECTED
+################################################################################
+
+version="1.1"
+script_name=`basename "$0"`
+script_dir=`dirname "$0"`
+nl='
+'
+op_ext='o'
+
+################################################################################
+# LOAD CONFIG
+if test -f $script_dir/mk.conf; then
+  . $script_dir/mk.conf
+fi
+if test -f $script_dir/src2obj.conf; then
+  . $script_dir/src2obj.conf
+fi
+################################################################################
+
+print_help() {
+  cat <<EOF
+Convert source list to object list
+
+$script_name OPTIONS sources..
+$script_name OPTIONS -
+$script_name -v
+
+Options:
+  -o|-objdir DIR   object directory
+  -s|-srcdir DIR   source directory
+  -e|-ext EXT      object extension. 'o' by default
+  sources..        list of source files
+  -                read from standard input
+  -v               print version
+EOF
+}
+
+if test $# -eq 0; then
+  echo "$script_name: error. No options specified" >&2
+  exit 1
+fi
+
+current_opt=
+list=
+op_read_stdin=
+while test $# -gt 0; do
+  case "$1" in
+    -h|-help|--help)
+      print_help
+      exit 0
+      ;;
+    -v)
+      printf "$script_name ${version}\n"
+      exit 0
+      ;;
+    -o|-objdir)
+      current_opt=objdir
+      ;;
+    -s|-srcdir)
+      current_opt=srcdir
+      ;;
+    -e|-ext)
+      current_opt=ext
+      ;;
+    -)
+      op_read_stdin=1
+      shift
+      break
+      ;;
+    *)
+      case x$current_opt in
+        xobjdir)
+          op_objdir=`echo "$1" | sed 's#/*$#/#'`
+          current_opt=
+          ;;
+        xsrcdir)
+          op_srcdir=`echo "$1" | sed 's#/*$#/#'`
+          current_opt=
+          ;;
+        xext)
+          op_ext=`echo "$1" | sed 's/^\.*//'`
+          current_opt=
+          ;;
+        x)
+          list=$1
+          shift
+          break
+          ;;
+      esac
+      ;;
+  esac
+  shift
+done
+
+while test $# -gt 0; do
+  list="$list $1"
+  shift
+done
+
+if test x$op_read_stdin = x1; then
+  list=
+  IFS_save=$IFS
+  IFS=$nl
+  while read input; do
+    if test -z "$list"; then
+      list=$input
+    else
+      list="$list $input"
+    fi
+  done
+  IFS=$IFS_save
+fi
+
+if test -z "$list"; then
+  exit 0
+fi
+
+for file in $list; do
+  file=`echo "$file" | sed 's/\.[^./]*$//'`
+  file="${file}.$op_ext"
+  if test -n "$op_objdir"; then
+    file=`basename "$file"`
+    file="$op_objdir$file"
+  elif test -n "$op_srcdir"; then
+    case "$file" in
+      /*)
+        : ;;
+      *)
+        file="$op_srcdir$file"
+        ;;
+    esac
+  fi
+  echo "$file"
+done
+
