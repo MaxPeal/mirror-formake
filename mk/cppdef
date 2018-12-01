@@ -26,7 +26,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ################################################################################
-# JUMP TO MODERN SHELL IF POSSIBLE
+# SWITCH TO MODERN SHELL IF POSSIBLE
 (test_exit_code_127_sdfjsdfksjdhfksjdhf  >/dev/null) 2>/dev/null
 if test $? -ne 127; then
   if test -z "$CPPDEF_BASH_REDIRECTED"; then
