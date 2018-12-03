@@ -169,7 +169,7 @@ while test $# -gt 0; do
         IFS_save=$IFS
         IFS=:
         for dir in $PATH; do
-          if test -n "$dir" && test -f "$dir/$prog" && test -x "$dir/$prog" ; then
+          if test -f "$dir/$prog" && test -x "$dir/$prog" ; then
             found=1
             break
           fi
