@@ -83,7 +83,6 @@ LDFLAGS
 NO_INSTALL
 VERSION
 OBJDIR
-IS_COMMON
 LANG
 "
 
@@ -262,19 +261,7 @@ for param in "$@"; do
 done
 
 add_mkmf_common_data() {
-  op_subdirs=$SUBDIRS
-  op_add_obj=$COMMON_OBJECTS
-  op_add_dobj=$COMMON_DOBJECTS
-  op_add_cflags=$COMMON_CFLAGS
-  op_add_cxxflags=$COMMON_CXXFLAGS
-  op_add_ldflags=$COMMON_LDFLAGS
-  op_def_ver=$DEFAULT_VERSION
-  op_def_objdir=$DEFAULT_OBJDIR
-
   if test -n "$COMMON_SOURCES"; then
-    op_add_src=$COMMON_SOURCES
-    all_sources="$all_sources $COMMON_SOURCES"
-    have_src=1
     for src in $COMMON_SOURCES; do
       case "$src" in
         *.C|*.[Cc][Cc]|*.[Cc][Pp][Pp]|*.[Cc][Xx][Xx])
@@ -301,16 +288,12 @@ add_mkmf_common_data() {
         exit 1
         ;;
     esac
-    op_def_type=$DEFAULT_TYPE
   fi
 
-  if test -n "$DEFAULT_NO_INSTALL"; then
-    op_def_no_install=1
-  fi
   if test -n "$DEFAULT_LANG"; then
     case "$DEFAULT_LANG" in
       c|c++)
-        op_def_lang=$DEFAULT_LANG
+        :
         ;;
       *)
         echo "$script_name: error: invalid language type $DEFAULT_LANG" >&2
@@ -318,45 +301,14 @@ add_mkmf_common_data() {
         ;;
     esac
   fi
-  if test -n "$INSTALL_BIN"; then
-    have_custom_inst_stuff=1
-    op_inst_bin=$INSTALL_BIN
-  fi
-  if test -n "$INSTALL_SBIN"; then
-    have_custom_inst_stuff=1
-    op_inst_sbin=$INSTALL_SBIN
-  fi
-  if test -n "$INSTALL_LIB"; then
-    have_custom_inst_stuff=1
-    op_inst_lib=$INSTALL_LIB
-  fi
-  if test -n "$INSTALL_LIBEXEC"; then
-    have_custom_inst_stuff=1
-    op_inst_libexec=$INSTALL_LIBEXEC
-  fi
-  if test -n "$INSTALL_INC"; then
-    have_custom_inst_stuff=1
-    op_inst_inc=$INSTALL_INC
-  fi
+
   for n in 0 1 2 3 4 5 6 7 8 9; do
-    var="INSTALL_MAN$n"
-    eval val=\$$var
-    if test -n "$val"; then
-      have_custom_inst_stuff=1
-      eval op_inst_man$n=\$val
-    fi
+    eval val=\$INSTALL_MAN$n
+    install_mans="$install_mans$val"
   done
-  if test -n "$INSTALL_DOC"; then
+  install_files=`echo "$INSTALL_BIN $INSTALL_SBIN $INSTALL_LIB $INSTALL_LIBEXEC $INSTALL_INC $INSTALL_DOC $INSTALL_SHARE $INSTALL_ETC $install_mans" | sed 's/^ *//'`
+  if test -n "$install_files"; then
     have_custom_inst_stuff=1
-    op_inst_doc=$INSTALL_DOC
-  fi
-  if test -n "$INSTALL_SHARE"; then
-    have_custom_inst_stuff=1
-    op_inst_share=$INSTALL_SHARE
-  fi
-  if test -n "$INSTALL_ETC"; then
-    have_custom_inst_stuff=1
-    op_inst_etc=$INSTALL_ETC
   fi
 }
 
@@ -369,7 +321,6 @@ add_mkmf_data() {
 
     eval target_${prefix}_have_c=
     eval target_${prefix}_have_cxx=
-    have_src=1
     for src in $MKMF_SOURCES; do
       case "$src" in
         *.C|*.[Cc][Cc]|*.[Cc][Pp][Pp]|*.[Cc][Xx][Xx])
@@ -437,11 +388,6 @@ add_mkmf_data() {
   if test -n "$MKMF_NO_INSTALL"; then
     prefix_add=$prefix
     eval target_${prefix}_no_install=1
-  fi
-
-  if test -n "$MKMF_IS_COMMON"; then
-    prefix_add=$prefix
-    eval target_${prefix}_common=1
   fi
 
   if test -n "$MKMF_OBJDIR"; then
@@ -512,9 +458,9 @@ if test -z "$op_skip_mkmf" || test -n "$op_input_mkmf"; then
     add_mkmf_common_data
   fi
 fi
-#end
-##########################
 
+################################################################################
+#parse command-line parameters
 prefix_add=
 current_opt=
 while test $# -gt 0; do
@@ -529,7 +475,7 @@ while test $# -gt 0; do
       current_opt=srcroot
       ;;
     -subdirs)
-      op_subdirs=
+      SUBDIRS=
       current_opt=subdirs
       ;;
     -src)
@@ -572,40 +518,40 @@ while test $# -gt 0; do
       current_opt=target-lang
       ;;
     -inst-bin)
-      op_inst_bin=
+      INSTALL_BIN=
       current_opt=inst-bin
       ;;
     -inst-sbin)
-      op_inst_sbin=
+      INSTALL_SBIN=
       current_opt=inst-sbin
       ;;
     -inst-lib)
-      op_inst_lib=
+      INSTALL_LIB=
       current_opt=inst-lib
       ;;
     -inst-libexec)
-      op_inst_libexec=
+      INSTALL_LIBEXEC=
       current_opt=inst-libexec
       ;;
     -inst-inc)
-      op_inst_inc=
+      INSTALL_INC=
       current_opt=inst-inc
       ;;
     -inst-man[0-9])
       man_num=`echo "$1" | sed 's/^-inst-man//'`
-      eval op_inst_man$man_num=
+      eval INSTALL_MAN$man_num=
       current_opt=inst-man
       ;;
     -inst-doc)
-      op_inst_doc=
+      INSTALL_DOC=
       current_opt=inst-doc
       ;;
     -inst-share)
-      op_inst_share=
+      INSTALL_SHARE=
       current_opt=inst-share
       ;;
     -inst-etc)
-      op_inst_etc=
+      INSTALL_ETC=
       current_opt=inst-etc
       ;;
     -omk)
@@ -644,12 +590,11 @@ while test $# -gt 0; do
             exit 1
           fi
           subdir=`echo "$1" | sed 's/\/*$//'`
-          op_subdirs="$op_subdirs $subdir"
+          SUBDIRS="$SUBDIRS $subdir"
           ;;
         target-src)
           target___src="$target___src $1"
           all_sources="$all_sources $1"
-          have_src=1
           case "$1" in
             *.C|*.[Cc][Cc]|*.[Cc][Pp][Pp]|*.[Cc][Xx][Xx])
               target___have_cxx=1
@@ -702,47 +647,47 @@ while test $# -gt 0; do
           current_opt=
           ;;
         inst-bin)
-          op_inst_bin="$op_inst_bin $1"
+          INSTALL_BIN="$INSTALL_BIN $1"
           prefix_add='_'
           have_custom_inst_stuff=1
           ;;
         inst-sbin)
-          op_inst_sbin="$op_inst_sbin $1"
+          INSTALL_SBIN="$INSTALL_SBIN $1"
           prefix_add='_'
           have_custom_inst_stuff=1
           ;;
         inst-lib)
-          op_inst_lib="$op_inst_lib $1"
+          INSTALL_LIB="$INSTALL_LIB $1"
           prefix_add='_'
           have_custom_inst_stuff=1
           ;;
         inst-libexec)
-          op_inst_libexec="$op_inst_libexec $1"
+          INSTALL_LIBEXEC="$INSTALL_LIBEXEC $1"
           prefix_add='_'
           have_custom_inst_stuff=1
           ;;
         inst-inc)
-          op_inst_inc="$op_inst_inc $1"
+          INSTALL_INC="$INSTALL_INC $1"
           prefix_add='_'
           have_custom_inst_stuff=1
           ;;
         inst-man)
-          eval op_inst_man$man_num=\"\$op_inst_man$man_num $1\"
+          eval INSTALL_MAN$man_num=\"\$INSTALL_MAN$man_num $1\"
           prefix_add='_'
           have_custom_inst_stuff=1
           ;;
         inst-doc)
-          op_inst_doc="$op_inst_doc $1"
+          INSTALL_DOC="$INSTALL_DOC $1"
           prefix_add='_'
           have_custom_inst_stuff=1
           ;;
         inst-share)
-          op_inst_share="$op_inst_share $1"
+          INSTALL_SHARE="$INSTALL_SHARE $1"
           prefix_add='_'
           have_custom_inst_stuff=1
           ;;
         inst-etc)
-          op_inst_etc="$op_inst_etc $1"
+          INSTALL_ETC="$INSTALL_ETC $1"
           prefix_add='_'
           have_custom_inst_stuff=1
           ;;
@@ -769,7 +714,7 @@ done
 prefix_list="$prefix_list $prefix_add"
 
 ################################################################################
-# CONFIG_SRCROOT
+#CONFIG_SRCROOT
 if test -z "$CONFIG_SRCROOT"; then
   while test `pwd` != '/'; do
     if test -d mk && test -x mk/$script_name; then
@@ -796,7 +741,7 @@ fi
 
 
 ################################################################################
-# CONFIG_MK_PATH
+#CONFIG_MK_PATH
 if test -z "$CONFIG_MK_PATH"; then
   cd $cd_param `dirname "$0"`
   if test -x $script_name; then
@@ -827,14 +772,15 @@ if test -z "$CONFIG_MK_PATH"; then
   export PATH
   cd $cd_param $op_srcdir
 fi
-################################################################################
 
+
+################################################################################
 if test x$op_print = x1; then
   rm -f $tmp_file
   op_out_mkfile=$tmp_file
 fi
 
-if test x$op_def_no_install = x1; then
+if test x$DEFAULT_NO_INSTALL = x1; then
   for prefix in $prefix_list; do
     eval target_${prefix}_no_install=1
   done
@@ -846,7 +792,7 @@ srcdir_rel=`relpath $CONFIG_SRCROOT ./`
 
 
 ################################################################################
-# INIT Makefile
+#init makefile
 if test -z "$op_append"; then
   cat <<TOP_EOF >$op_out_mkfile
 ################################################################################
@@ -862,12 +808,8 @@ fi
 
 
 ################################################################################
-# OBJECTS
-#
-# Compile C/C++ sources
-#
-common_static_objects=
-common_pic_objects=
+#TARGETS
+#process target data
 for prefix in $prefix_list; do
   eval target_src=\$target_${prefix}_src
   eval target_obj=\$target_${prefix}_obj
@@ -877,117 +819,96 @@ for prefix in $prefix_list; do
   eval target_type=\$target_${prefix}_type
   eval target_objdir=\$target_${prefix}_objdir
   eval target_have_cxx=\$target_${prefix}_have_cxx
-  eval target_obj_common=\$target_${prefix}_common
   eval target_lang=\$target_${prefix}_lang
-
-  sources=`echo "$op_add_src $target_src" | sed 's/^ *//' | sed 's/ *$//' | sed 's/  */ /g'`
-
-  if test -n "$sources"; then
-    if test -z "$target_type"; then
-      target_type=prog
-      eval target_${prefix}_type=\$target_type
-    fi
-
-    case "$target_type" in
-      prog|tlib|dlib|lib|tobj|dobj|obj)
-        if test -n "$target_objdir"; then
-          target_objdir_pic="${target_objdir}_pic"
-        elif test -n "$op_def_objdir"; then
-          target_objdir=$op_def_objdir
-          target_objdir_pic="${target_objdir}_pic"
-          eval target_${prefix}_objdir=\$target_objdir
-        else
-          target_objdir=$default_static_dir
-          target_objdir_pic=$default_pic_dir
-          eval target_${prefix}_objdir=\$target_objdir
-        fi
-        eval target_${prefix}_objdir_pic=\$target_objdir_pic
-
-        if test x$have_add_cxx = x1; then
-          target_have_cxx=1
-          eval target_${prefix}_have_cxx=1
-        fi
-
-        if test -z "$target_lang"; then
-          if test -n "$op_def_lang"; then
-            target_lang=$op_def_lang
-          elif test x$target_have_cxx = x1; then
-            target_lang="c++"
-          else
-            target_lang="c"
-          fi
-          eval target_${prefix}_lang=\$target_lang
-        fi
-
-        case $target_lang in
-          c)
-            cflags="$op_add_cflags $target_cflags"
-            eval target_${prefix}_have_cxx=
-            eval target_${prefix}_have_c=1
-            add_params="-cflags=\"$cflags\""
-            ;;
-          c++)
-            cxxflags="$op_add_cxxflags $target_cxxflags"
-            eval target_${prefix}_have_cxx=1
-            eval target_${prefix}_have_c=
-            add_params="-c++ -cflags=\"$cxxflags\""
-            ;;
-        esac
-        ;;
-    esac
-
-    case $target_type in
-      prog|tlib|lib|tobj|obj)
-        mkrule obj $add_params -src $sources -d $target_objdir >>$op_out_mkfile
-        objects=`src2obj -o $target_objdir $sources`
-
-        if test -n "$target_obj"; then
-          objects="$objects $target_obj"
-        fi
-        if test x$target_obj_common = x1; then
-          common_static_objects="$common_static_objects $objects"
-        fi
-        eval target_${prefix}_obj=\$objects
-        ;;
-    esac
-    case $target_type in
-      dlib|lib|dobj|obj)
-        mkrule obj $add_params -pic -src $sources -d $target_objdir_pic >>$op_out_mkfile
-        pic_objects=`src2obj -o $target_objdir_pic $sources`
-
-        if test -n "$target_dobj"; then
-          pic_objects="$pic_objects $target_dobj"
-        fi
-        if test x$target_obj_common = x1; then
-          common_pic_objects="$common_pic_objects $pic_objects"
-        fi
-        eval target_${prefix}_dobj=\$pic_objects
-        ;;
-    esac
-  fi
-done
-
-common_static_objects=`echo "$common_static_objects" | sed 's/^ *//' | sed 's/ *$//'`
-common_pic_objects=`echo "$common_pic_objects" | sed 's/^ *//' | sed 's/ *$//'`
-
-################################################################################
-# PROGRAMS
-#
-# Link C/C++ programs
-#
-for prefix in $prefix_list; do
-  eval target_obj=\$target_${prefix}_obj
   eval target_name=\$target_${prefix}_name
-  eval target_type=\$target_${prefix}_type
   eval target_ldflags=\$target_${prefix}_ldflags
   eval target_no_install=\$target_${prefix}_no_install
-  eval target_lang=\$target_${prefix}_lang
+  eval target_version=\$target_${prefix}_ver
 
-  if test -z "$target_type" && test -n "$target_obj$target_dobj"; then
-    target_type=prog
+  if test -z "$target_type"; then
+    if test -n "$DEFAULT_TYPE"; then
+      target_type=$DEFAULT_TYPE
+    elif test -n "$COMMON_SOURCES$target_src$target_obj"
+      target_type=prog
+    else
+      target_type=unknown
+    fi
     eval target_${prefix}_type=\$target_type
   fi
 
+  case "$target_type" in
+    prog|tlib|dlib|lib|tobj|dobj|obj)
+      if test -n "$target_objdir"; then
+        target_objdir_pic="${target_objdir}_pic"
+      elif test -n "$DEFAULT_OBJDIR"; then
+        target_objdir=$DEFAULT_OBJDIR
+        target_objdir_pic="${target_objdir}_pic"
+        eval target_${prefix}_objdir=\$target_objdir
+      else
+        target_objdir=$default_static_dir
+        target_objdir_pic=$default_pic_dir
+        eval target_${prefix}_objdir=\$target_objdir
+      fi
+      eval target_${prefix}_objdir_pic=\$target_objdir_pic
+
+      if test x$have_add_cxx = x1; then
+        target_have_cxx=1
+        eval target_${prefix}_have_cxx=1
+      fi
+
+      if test -z "$target_lang"; then
+        if test -n "$DEFAULT_LANG"; then
+          target_lang=$DEFAULT_LANG
+        elif test x$target_have_cxx = x1; then
+          target_lang="c++"
+        else
+          target_lang="c"
+        fi
+        eval target_${prefix}_lang=\$target_lang
+      fi
+
+      case $target_lang in
+        c)
+          cflags="$COMMON_CFLAGS $target_cflags"
+          add_params="-cflags=\"$cflags\""
+          ;;
+        c++)
+          cxxflags="$COMMON_CXXFLAGS $target_cxxflags"
+          add_params="-c++ -cflags=\"$cxxflags\""
+          ;;
+      esac
+
+      sources=`echo "$COMMON_SOURCES $target_src" | sed 's/^ *//' | sed 's/ *$//' | sed 's/  */ /g'`
+      ;;
+  esac
+
+########
+#objects
+  case $target_type in
+    prog|tlib|lib|tobj|obj)
+      if test -n "$sources"; then
+        mkrule obj $add_params -src $sources -d $target_objdir >>$op_out_mkfile
+        objects=`src2obj -o $target_objdir $sources`
+
+        target_obj="$objects $target_obj"
+        eval target_${prefix}_obj=\$target_obj
+      fi
+      ;;
+  esac
+  case $target_type in
+    dlib|lib|dobj|obj)
+      if test -n "$sources"; then
+        mkrule obj $add_params -pic -src $sources -d $target_objdir_pic >>$op_out_mkfile
+        pic_objects=`src2obj -o $target_objdir_pic $sources`
+
+        target_dobj="$pic_objects $target_dobj"
+        eval target_${prefix}_dobj=\$target_dobj
+      fi
+      ;;
+  esac
+
+#########
+#programs
   if test $target_type = prog; then
     if test -z "$target_name"; then
       target_name="prog$prefix"
@@ -1002,27 +923,13 @@ for prefix in $prefix_list; do
       add_params="$add_params -c++"
     fi
 
-    if test -n "$target_obj$op_add_obj$common_static_objects"; then
-      mkrule prog $add_params -ldflags="$op_add_ldflags $target_ldflags" -n $target_name -obj $target_obj $common_static_objects $op_add_obj >>$op_out_mkfile
+    if test -n "$target_obj$COMMON_OBJECTS"; then
+      mkrule prog $add_params -ldflags="$COMMON_LDFLAGS $target_ldflags" -n $target_name -obj $target_obj $COMMON_OBJECTS >>$op_out_mkfile
     fi
   fi
-done
 
-################################################################################
-# LIBRARIES
-#
-# Link C/C++ libraries
-#
-for prefix in $prefix_list; do
-  eval target_obj=\$target_${prefix}_obj
-  eval target_dobj=\$target_${prefix}_dobj
-  eval target_name=\$target_${prefix}_name
-  eval target_type=\$target_${prefix}_type
-  eval target_ldflags=\$target_${prefix}_ldflags
-  eval target_no_install=\$target_${prefix}_no_install
-  eval target_version=\$target_${prefix}_ver
-  eval target_lang=\$target_${prefix}_lang
-
+##########
+#libraries
   if test $target_type = tlib || test $target_type = dlib || test $target_type = lib; then
     if test -z "$target_name"; then
       target_name="foo$prefix"
@@ -1030,8 +937,8 @@ for prefix in $prefix_list; do
     fi
 
     if test -z "$target_version"; then
-      if test -n "$op_def_ver"; then
-        target_version=$op_def_ver
+      if test -n "$DEFAULT_VERSION"; then
+        target_version=$DEFAULT_VERSION
       else
         target_version="1.0.0"
       fi
@@ -1046,110 +953,107 @@ for prefix in $prefix_list; do
       add_params="$add_params -c++"
     fi
 
-    if test -n "$target_obj$op_add_obj$common_static_objects"; then
+    if test -n "$target_obj$COMMON_OBJECTS"; then
       if test $target_type = tlib || test $target_type = lib; then
-        mkrule lib $add_params -static -ldflags="$op_add_ldflags $target_ldflags" -n $target_name -ver $target_version -obj $target_obj $common_static_objects $op_add_obj >>$op_out_mkfile
+        mkrule lib $add_params -static -ldflags="$COMMON_LDFLAGS $target_ldflags" -n $target_name -ver $target_version -obj $target_obj $COMMON_OBJECTS >>$op_out_mkfile
       fi
     fi
 
-    if test -n "$target_dobj$op_add_dobj$common_pic_objects"; then
+    if test -n "$target_dobj$COMMON_DOBJECTS"; then
       if test $target_type = dlib || test $target_type = lib; then
-        mkrule lib $add_params -shared -ldflags="$op_add_ldflags $target_ldflags" -n $target_name -ver $target_version -obj $target_dobj $common_pic_objects $op_add_dobj >>$op_out_mkfile
+        mkrule lib $add_params -shared -ldflags="$COMMON_LDFLAGS $target_ldflags" -n $target_name -ver $target_version -obj $target_dobj $COMMON_DOBJECTS >>$op_out_mkfile
       fi
     fi
   fi
 done
 
 ################################################################################
-# INSTALLATION FILES
-#
-# Install files by 'make install'
-#
+#INSTALLATION FILES
+#install files by 'make install'
 dist_files=
 if test x$have_custom_inst_stuff = x1; then
-  if test -n "$op_inst_bin"; then
-    mkrule install bin $op_inst_bin >>$op_out_mkfile
-    dist_files="$dist_files $op_inst_bin"
+  if test -n "$INSTALL_BIN"; then
+    mkrule install bin $INSTALL_BIN >>$op_out_mkfile
+    dist_files="$dist_files $INSTALL_BIN"
   fi
-  if test -n "$op_inst_sbin"; then
-    mkrule install sbin $op_inst_sbin >>$op_out_mkfile
-    dist_files="$dist_files $op_inst_sbin"
+  if test -n "$INSTALL_SBIN"; then
+    mkrule install sbin $INSTALL_SBIN >>$op_out_mkfile
+    dist_files="$dist_files $INSTALL_SBIN"
   fi
-  if test -n "$op_inst_lib"; then
-    mkrule install lib $op_inst_lib >>$op_out_mkfile
-    dist_files="$dist_files $op_inst_lib"
+  if test -n "$INSTALL_LIB"; then
+    mkrule install lib $INSTALL_LIB >>$op_out_mkfile
+    dist_files="$dist_files $INSTALL_LIB"
   fi
-  if test -n "$op_inst_libexec"; then
-    mkrule install libexec $op_inst_libexec >>$op_out_mkfile
-    dist_files="$dist_files $op_inst_libexec"
+  if test -n "$INSTALL_LIBEXEC"; then
+    mkrule install libexec $INSTALL_LIBEXEC >>$op_out_mkfile
+    dist_files="$dist_files $INSTALL_LIBEXEC"
   fi
-  if test -n "$op_inst_inc"; then
-    mkrule install inc $op_inst_inc >>$op_out_mkfile
-    dist_files="$dist_files $op_inst_inc"
+  if test -n "$INSTALL_INC"; then
+    mkrule install inc $INSTALL_INC >>$op_out_mkfile
+    dist_files="$dist_files $INSTALL_INC"
   fi
-  if test -n "$op_inst_man0"; then
-    mkrule install man0 $op_inst_man0 >>$op_out_mkfile
-    dist_files="$dist_files $op_inst_man0"
+  if test -n "$INSTALL_MAN0"; then
+    mkrule install man0 $INSTALL_MAN0 >>$op_out_mkfile
+    dist_files="$dist_files $INSTALL_MAN0"
   fi
-  if test -n "$op_inst_man1"; then
-    mkrule install man1 $op_inst_man1 >>$op_out_mkfile
-    dist_files="$dist_files $op_inst_man1"
+  if test -n "$INSTALL_MAN1"; then
+    mkrule install man1 $INSTALL_MAN1 >>$op_out_mkfile
+    dist_files="$dist_files $INSTALL_MAN1"
   fi
-  if test -n "$op_inst_man2"; then
-    mkrule install man2 $op_inst_man2 >>$op_out_mkfile
-    dist_files="$dist_files $op_inst_man2"
+  if test -n "$INSTALL_MAN2"; then
+    mkrule install man2 $INSTALL_MAN2 >>$op_out_mkfile
+    dist_files="$dist_files $INSTALL_MAN2"
   fi
-  if test -n "$op_inst_man3"; then
-    mkrule install man3 $op_inst_man3 >>$op_out_mkfile
-    dist_files="$dist_files $op_inst_man3"
+  if test -n "$INSTALL_MAN3"; then
+    mkrule install man3 $INSTALL_MAN3 >>$op_out_mkfile
+    dist_files="$dist_files $INSTALL_MAN3"
   fi
-  if test -n "$op_inst_man4"; then
-    mkrule install man4 $op_inst_man4 >>$op_out_mkfile
-    dist_files="$dist_files $op_inst_man4"
+  if test -n "$INSTALL_MAN4"; then
+    mkrule install man4 $INSTALL_MAN4 >>$op_out_mkfile
+    dist_files="$dist_files $INSTALL_MAN4"
   fi
-  if test -n "$op_inst_man5"; then
-    mkrule install man5 $op_inst_man5 >>$op_out_mkfile
-    dist_files="$dist_files $op_inst_man5"
+  if test -n "$INSTALL_MAN5"; then
+    mkrule install man5 $INSTALL_MAN5 >>$op_out_mkfile
+    dist_files="$dist_files $INSTALL_MAN5"
   fi
-  if test -n "$op_inst_man6"; then
-    mkrule install man6 $op_inst_man6 >>$op_out_mkfile
-    dist_files="$dist_files $op_inst_man6"
+  if test -n "$INSTALL_MAN6"; then
+    mkrule install man6 $INSTALL_MAN6 >>$op_out_mkfile
+    dist_files="$dist_files $INSTALL_MAN6"
   fi
-  if test -n "$op_inst_man7"; then
-    mkrule install man7 $op_inst_man7 >>$op_out_mkfile
-    dist_files="$dist_files $op_inst_man7"
+  if test -n "$INSTALL_MAN7"; then
+    mkrule install man7 $INSTALL_MAN7 >>$op_out_mkfile
+    dist_files="$dist_files $INSTALL_MAN7"
   fi
-  if test -n "$op_inst_man8"; then
-    mkrule install man8 $op_inst_man8 >>$op_out_mkfile
-    dist_files="$dist_files $op_inst_man8"
+  if test -n "$INSTALL_MAN8"; then
+    mkrule install man8 $INSTALL_MAN8 >>$op_out_mkfile
+    dist_files="$dist_files $INSTALL_MAN8"
   fi
-  if test -n "$op_inst_man9"; then
-    mkrule install man9 $op_inst_man9 >>$op_out_mkfile
-    dist_files="$dist_files $op_inst_man9"
+  if test -n "$INSTALL_MAN9"; then
+    mkrule install man9 $INSTALL_MAN9 >>$op_out_mkfile
+    dist_files="$dist_files $INSTALL_MAN9"
   fi
-  if test -n "$op_inst_doc"; then
-    mkrule install doc $op_inst_doc >>$op_out_mkfile
-    dist_files="$dist_files $op_inst_doc"
+  if test -n "$INSTALL_DOC"; then
+    mkrule install doc $INSTALL_DOC >>$op_out_mkfile
+    dist_files="$dist_files $INSTALL_DOC"
   fi
-  if test -n "$op_inst_share"; then
-    mkrule install data $op_inst_share >>$op_out_mkfile
-    dist_files="$dist_files $op_inst_share"
+  if test -n "$INSTALL_SHARE"; then
+    mkrule install data $INSTALL_SHARE >>$op_out_mkfile
+    dist_files="$dist_files $INSTALL_SHARE"
   fi
-  if test -n "$op_inst_etc"; then
-    mkrule install etc $op_inst_etc >>$op_out_mkfile
-    dist_files="$dist_files $op_inst_etc"
+  if test -n "$INSTALL_ETC"; then
+    mkrule install etc $INSTALL_ETC >>$op_out_mkfile
+    dist_files="$dist_files $INSTALL_ETC"
   fi
 fi
 
 ################################################################################
-# DIST
-#
-# Create distribution tarball by 'make dist'
+#DIST
+#create distribution tarball by 'make dist'
 dist_files="$DISTFILES $dist_files"
 
 src_dist_files=
 if test -n "$all_sources"; then
-  src_dist_files="$src_dist_files $all_sources"
+  src_dist_files="$src_dist_files $all_sources $COMMON_SOURCES"
 fi
 src_dist_files=`echo "$src_dist_files" | sed 's/^ *//' | tr ' ' '\n' | sort | uniq | tr '\n' ' ' | sed 's/ *$//'`
 dist_files="$dist_files $src_dist_files"
@@ -1174,13 +1078,11 @@ mkrule dist $add_params >>$op_out_mkfile || exit 1
 
 
 ################################################################################
-# SUBDIRS
-#
-# Build subdirectories
-#
-if test -z "$op_append" && test -z "$op_skip_mkmf" && test -n "$op_subdirs"; then
-  mkrule subdir -all -install -clean -dist -distclean -d $op_subdirs >>$op_out_mkfile
-  for dir in $op_subdirs; do
+#SUBDIRS
+#build subdirectories
+if test -z "$op_append" && test -z "$op_skip_mkmf" && test -n "$SUBDIRS"; then
+  mkrule subdir -all -install -clean -dist -distclean -d $SUBDIRS >>$op_out_mkfile
+  for dir in $SUBDIRS; do
     cd $cd_param $op_srcdir
     if test -d $dir; then
       cd $cd_param $dir
@@ -1193,7 +1095,7 @@ if test -z "$op_append" && test -z "$op_skip_mkmf" && test -n "$op_subdirs"; the
 fi
 
 ################################################################################
-# DONE
+#done
 if test x$op_print = x1; then
   cat $op_out_mkfile
   rm -f $op_out_mkfile
