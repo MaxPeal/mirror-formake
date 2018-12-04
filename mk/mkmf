@@ -489,21 +489,18 @@ while test $# -gt 0; do
       current_opt=target-name
       ;;
     -cflags=*)
-      _cflags=`echo "$1" | sed 's/^[^=]*=//'`
-      target___cflags=$_cflags
-      prefix_add='_'
+      CONFIG_CFLAGS=`echo "$1" | sed 's/^[^=]*=//'`
+      export CONFIG_CFLAGS
       current_opt=
       ;;
     -cxxflags=*)
-      _cxxflags=`echo "$1" | sed 's/^[^=]*=//'`
-      target___cxxflags=$_cxxflags
-      prefix_add='_'
+      CONFIG_CXXFLAGS=`echo "$1" | sed 's/^[^=]*=//'`
+      export CONFIG_CXXFLAGS
       current_opt=
       ;;
     -ldflags=*)
-      _ldflags=`echo "$1" | sed 's/^[^=]*=//'`
-      target___ldflags=$_ldflags
-      prefix_add='_'
+      CONFIG_LDFLAGS=`echo "$1" | sed 's/^[^=]*=//'`
+      export CONFIG_LDFLAGS
       current_opt=
       ;;
     -no-install)
@@ -869,11 +866,11 @@ for prefix in $prefix_list; do
 
       case $target_lang in
         c)
-          cflags="$COMMON_CFLAGS $target_cflags"
+          cflags="$CONFIG_CFLAGS $COMMON_CFLAGS $target_cflags"
           add_params="-cflags=\"$cflags\""
           ;;
         c++)
-          cxxflags="$COMMON_CXXFLAGS $target_cxxflags"
+          cxxflags="$CONFIG_CXXFLAGS $COMMON_CXXFLAGS $target_cxxflags"
           add_params="-c++ -cflags=\"$cxxflags\""
           ;;
       esac
@@ -924,7 +921,7 @@ for prefix in $prefix_list; do
     fi
 
     if test -n "$target_obj$COMMON_OBJECTS"; then
-      mkrule prog $add_params -ldflags="$COMMON_LDFLAGS $target_ldflags" -n $target_name -obj $target_obj $COMMON_OBJECTS >>$op_out_mkfile
+      mkrule prog $add_params -ldflags="$CONFIG_LDFLAGS $COMMON_LDFLAGS $target_ldflags" -n $target_name -obj $target_obj $COMMON_OBJECTS >>$op_out_mkfile
     fi
   fi
 
@@ -955,13 +952,13 @@ for prefix in $prefix_list; do
 
     if test -n "$target_obj$COMMON_OBJECTS"; then
       if test $target_type = tlib || test $target_type = lib; then
-        mkrule lib $add_params -static -ldflags="$COMMON_LDFLAGS $target_ldflags" -n $target_name -ver $target_version -obj $target_obj $COMMON_OBJECTS >>$op_out_mkfile
+        mkrule lib $add_params -static -ldflags="$CONFIG_LDFLAGS $COMMON_LDFLAGS $target_ldflags" -n $target_name -ver $target_version -obj $target_obj $COMMON_OBJECTS >>$op_out_mkfile
       fi
     fi
 
     if test -n "$target_dobj$COMMON_DOBJECTS"; then
       if test $target_type = dlib || test $target_type = lib; then
-        mkrule lib $add_params -shared -ldflags="$COMMON_LDFLAGS $target_ldflags" -n $target_name -ver $target_version -obj $target_dobj $COMMON_DOBJECTS >>$op_out_mkfile
+        mkrule lib $add_params -shared -ldflags="$CONFIG_LDFLAGS $COMMON_LDFLAGS $target_ldflags" -n $target_name -ver $target_version -obj $target_dobj $COMMON_DOBJECTS >>$op_out_mkfile
       fi
     fi
   fi
@@ -1058,7 +1055,6 @@ fi
 src_dist_files=`echo "$src_dist_files" | sed 's/^ *//' | tr ' ' '\n' | sort | uniq | tr '\n' ' ' | sed 's/ *$//'`
 dist_files="$dist_files $src_dist_files"
 
-add_params="-buildroot $CONFIG_SRCROOT -f $dist_files"
 if test -z "$op_append" && test "$CONFIG_SRCROOT" = "$op_srcdir"; then
   opt_fscripts="cmdok cppdef cprobe cstem libro mkdep mkmf mkrule pofig relpath src2obj"
   formake_dist=
@@ -1074,7 +1070,7 @@ if test -z "$op_append" && test "$CONFIG_SRCROOT" = "$op_srcdir"; then
   fi
 fi
 
-mkrule dist $add_params >>$op_out_mkfile || exit 1
+mkrule dist -buildroot $CONFIG_SRCROOT -f $dist_files >>$op_out_mkfile || exit 1
 
 
 ################################################################################
