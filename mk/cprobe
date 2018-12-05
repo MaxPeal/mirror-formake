@@ -29,9 +29,9 @@
 # SWITCH TO MODERN SHELL IF POSSIBLE
 (test_exit_code_127_sdfjsdfksjdhfksjdhf  >/dev/null) 2>/dev/null
 if test $? -ne 127; then
-  if test -z "$CPROBE_BASH_REDIRECTED"; then
-    CPROBE_BASH_REDIRECTED=1
-    export CPROBE_BASH_REDIRECTED
+  if test -z "$FORMAKE_BASH_REDIRECTED"; then
+    FORMAKE_BASH_REDIRECTED=1
+    export FORMAKE_BASH_REDIRECTED
     if test -x /bin/bash; then
       exec /bin/bash "$0" ${1+"$@"}
     elif test -x /usr/bin/bash; then
@@ -48,8 +48,8 @@ if test $? -ne 127; then
     fi
   fi
 fi
-CPROBE_BASH_REDIRECTED=
-export CPROBE_BASH_REDIRECTED
+FORMAKE_BASH_REDIRECTED=
+export FORMAKE_BASH_REDIRECTED
 ################################################################################
 
 abs_path() {
@@ -115,8 +115,7 @@ test_dir=/tmp/cprobe_$$
 cc_is_cross=0
 headers=$test_dir/cprobe_inc_headers
 cc_macros_loaded=
-CC=
-CFLAGS=
+CC=$CONFIG_CC
 
 print_help() {
 cat <<EOF
@@ -459,19 +458,19 @@ load_cc_macros() {
   fi
   cat $script_abs | sed -n -e '/\* COMPILER DEFINES \*/,$p' | grep -v "^EOF" >> $probe_h
   if test $cmd_type = ticc; then
-    $prop_cmd $CFLAGS $CPP_FLAG $probe_h 2>/dev/null
+    $prop_cmd $CONFIG_CFLAGS $CPP_FLAG $probe_h 2>/dev/null
     cat $probe_pp > $probe_h_out
     if test x$check_cxx_ok = x1; then
       rm -f $probe_pp
       cat $probe_h > $probe_hxx
-      $prop_cmd $CFLAGS $CPP_FLAG $probe_hxx 2>/dev/null
+      $prop_cmd $CONFIG_CFLAGS $CPP_FLAG $probe_hxx 2>/dev/null
       cat $probe_pp >> $probe_h_out
     fi
   else
-    $prop_cmd $CFLAGS $CPP_FLAG $probe_h 2>/dev/null > $probe_h_out
+    $prop_cmd $CONFIG_CFLAGS $CPP_FLAG $probe_h 2>/dev/null > $probe_h_out
     if test x$check_cxx_ok = x1; then
       cat $probe_h > $probe_hxx
-      $prop_cmd $CFLAGS $CPP_FLAG $probe_hxx 2>/dev/null >> $probe_h_out
+      $prop_cmd $CONFIG_CFLAGS $CPP_FLAG $probe_hxx 2>/dev/null >> $probe_h_out
     fi
   fi
   cat $probe_h_out | grep "^D[SV][EA][TL]" | sed 's/= */=/' | sed 's/ *$//' | sed 's/=\(.*\)$/="\1"/' | sed 's/""*/"/g' | sed 's/ *= */=/' | sed 's/="*$/=/' | sed 's///' > $probe_sh
@@ -986,7 +985,7 @@ int main(int argc, char *argv[])
 }
 
 EOF
-    $prop_cmd $CFLAGS $o_exe_flag $dm_exe $dm_src 2>/dev/null 1>&2
+    $prop_cmd $CONFIG_CFLAGS $o_exe_flag $dm_exe $dm_src 2>/dev/null 1>&2
     prop_data_model=`./$dm_exe`
     rm -f $dm_src $dm_exe
   fi
@@ -1129,7 +1128,7 @@ int main(int argc, char *argv[])
 }
 
 EOF
-    $prop_cmd $CFLAGS $o_exe_flag $border_exe $border_src 2>/dev/null 1>&2
+    $prop_cmd $CONFIG_CFLAGS $o_exe_flag $border_exe $border_src 2>/dev/null 1>&2
     prop_endianness=`./$border_exe`
     rm -f $border_src $border_exe
   fi
@@ -1287,8 +1286,8 @@ probe_base() {
   fi
   probe_cc_ok=1
 
-  if test -n "$CFLAGS"; then
-    prop_cflags=$CFLAGS
+  if test -n "$CONFIG_CFLAGS"; then
+    prop_cflags=$CONFIG_CFLAGS
     check_cc
     if test x$check_cc_ok != x1; then
       return
@@ -1325,7 +1324,7 @@ probe_ext() {
         printf "%s\n" "${script_name}: compiler not found: $cc_list" >&2
       fi
     elif test x$probe_cflags_ok != x1; then
-      printf "%s\n" "${script_name}: invalid compiler flags: $CFLAGS" >&2
+      printf "%s\n" "${script_name}: invalid compiler flags: $CONFIG_CFLAGS" >&2
     fi
     return
   fi
@@ -1345,6 +1344,7 @@ clean_exit() {
 
 param1=1
 pass_over=
+op_cflags=
 while test $# -gt 0; do
   if test -z "$pass_over"; then
     case "$1" in
@@ -1412,22 +1412,25 @@ while test $# -gt 0; do
         out_format=`echo "$1" | sed 's/-//'`
         ;;
       -*)
-        CFLAGS="$CFLAGS $1"
+        op_cflags="$op_cflags $1"
         ;;
       *)
         if test x$param1 = x1; then
           CC=`echo "$1" | sed "s#^\(\.\.*\)/#$orig_dir/\1/#"`
         else
-          CFLAGS="$CFLAGS $1"
+          op_cflags="$op_cflags $1"
         fi
         ;;
     esac
   else
-    CFLAGS="$CFLAGS $1"
+    op_cflags="$op_cflags $1"
   fi
   shift
   param1=
 done
+if test -n "$op_cflags"; then
+  CONFIG_CFLAGS=$op_cflags
+fi
 
 rm -rf $test_dir 2>/dev/null
 (mkdir $test_dir >/dev/null) 2>/dev/null
