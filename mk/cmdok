@@ -29,9 +29,9 @@
 # SWITCH TO MODERN SHELL IF POSSIBLE
 (test_exit_code_127_sdfjsdfksjdhfksjdhf  >/dev/null) 2>/dev/null
 if test $? -ne 127; then
-  if test -z "$CMDOK_BASH_REDIRECTED"; then
-    CMDOK_BASH_REDIRECTED=1
-    export CMDOK_BASH_REDIRECTED
+  if test -z "$FORMAKE_BASH_REDIRECTED"; then
+    FORMAKE_BASH_REDIRECTED=1
+    export FORMAKE_BASH_REDIRECTED
     if test -x /bin/bash; then
       exec /bin/bash "$0" ${1+"$@"}
     elif test -x /usr/bin/bash; then
@@ -48,8 +48,8 @@ if test $? -ne 127; then
     fi
   fi
 fi
-CMDOK_BASH_REDIRECTED=
-export CMDOK_BASH_REDIRECTED
+FORMAKE_BASH_REDIRECTED=
+export FORMAKE_BASH_REDIRECTED
 ################################################################################
 
 script_name=`basename "$0"`
