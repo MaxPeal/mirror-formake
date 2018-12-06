@@ -115,7 +115,6 @@ test_dir=/tmp/cprobe_$$
 cc_is_cross=0
 headers=$test_dir/cprobe_inc_headers
 cc_macros_loaded=
-CC=$CONFIG_CC
 
 print_help() {
 cat <<EOF
@@ -125,6 +124,7 @@ Usage: $script_name [cmd] [options]
 
 Options:
  cmd           optional 1st parameter specifies compiler command
+ -c++          C++ mode
  -t, -type     get compiler type
  -r, -ver      get compiler version
  -c, -cmd      get compiler command
@@ -259,8 +259,8 @@ EOF
 
 print_version() {
   cat <<EOF
-cprobe 1.4
-Copyright (C) 2015-2017 Oleksii Cherniavskyi
+cprobe 1.5
+Copyright (C) 2015-2018 Oleksii Cherniavskyi
 EOF
 }
 
@@ -458,19 +458,19 @@ load_cc_macros() {
   fi
   cat $script_abs | sed -n -e '/\* COMPILER DEFINES \*/,$p' | grep -v "^EOF" >> $probe_h
   if test $cmd_type = ticc; then
-    $prop_cmd $CONFIG_CFLAGS $CPP_FLAG $probe_h 2>/dev/null
+    $prop_cmd $CPROBE_CFLAGS $CPP_FLAG $probe_h 2>/dev/null
     cat $probe_pp > $probe_h_out
     if test x$check_cxx_ok = x1; then
       rm -f $probe_pp
       cat $probe_h > $probe_hxx
-      $prop_cmd $CONFIG_CFLAGS $CPP_FLAG $probe_hxx 2>/dev/null
+      $prop_cmd $CPROBE_CFLAGS $CPP_FLAG $probe_hxx 2>/dev/null
       cat $probe_pp >> $probe_h_out
     fi
   else
-    $prop_cmd $CONFIG_CFLAGS $CPP_FLAG $probe_h 2>/dev/null > $probe_h_out
+    $prop_cmd $CPROBE_CFLAGS $CPP_FLAG $probe_h 2>/dev/null > $probe_h_out
     if test x$check_cxx_ok = x1; then
       cat $probe_h > $probe_hxx
-      $prop_cmd $CONFIG_CFLAGS $CPP_FLAG $probe_hxx 2>/dev/null >> $probe_h_out
+      $prop_cmd $CPROBE_CFLAGS $CPP_FLAG $probe_hxx 2>/dev/null >> $probe_h_out
     fi
   fi
   cat $probe_h_out | grep "^D[SV][EA][TL]" | sed 's/= */=/' | sed 's/ *$//' | sed 's/=\(.*\)$/="\1"/' | sed 's/""*/"/g' | sed 's/ *= */=/' | sed 's/="*$/=/' | sed 's///' > $probe_sh
@@ -985,7 +985,7 @@ int main(int argc, char *argv[])
 }
 
 EOF
-    $prop_cmd $CONFIG_CFLAGS $o_exe_flag $dm_exe $dm_src 2>/dev/null 1>&2
+    $prop_cmd $CPROBE_CFLAGS $o_exe_flag $dm_exe $dm_src 2>/dev/null 1>&2
     prop_data_model=`./$dm_exe`
     rm -f $dm_src $dm_exe
   fi
@@ -1128,7 +1128,7 @@ int main(int argc, char *argv[])
 }
 
 EOF
-    $prop_cmd $CONFIG_CFLAGS $o_exe_flag $border_exe $border_src 2>/dev/null 1>&2
+    $prop_cmd $CPROBE_CFLAGS $o_exe_flag $border_exe $border_src 2>/dev/null 1>&2
     prop_endianness=`./$border_exe`
     rm -f $border_src $border_exe
   fi
@@ -1244,16 +1244,32 @@ get_cc_list() {
 
   case "x$config_os" in
     xmacos)
-      cc_list="clang gcc c99 cc c89 clang++ g++ c++ CC"
+      if test x$CPROBE_LANG = "xc++"; then
+        cc_list="clang++ g++ c++ CC"
+      else
+        cc_list="clang gcc c99 cc c89 clang++ g++ c++ CC"
+      fi
       ;;
     xaix)
-      cc_list="xlc gcc clang c99 cc c89 xlc++ xlC g++ clang++ c++ CC"
+      if test x$CPROBE_LANG = "xc++"; then
+        cc_list="xlc++ xlC g++ clang++ c++ CC"
+      else
+        cc_list="xlc gcc clang c99 cc c89 xlc++ xlC g++ clang++ c++ CC"
+      fi
       ;;
     xcygwin | xmsys | xmks)
-      cc_list="gcc clang cl.exe c99 cc c89 g++ clang++ c++ CC"
+      if test x$CPROBE_LANG = "xc++"; then
+        cc_list="cl.exe g++ clang++ c++ CC"
+      else
+        cc_list="gcc clang cl.exe c99 cc c89 g++ clang++ c++ CC"
+      fi
       ;;
     *)
-      cc_list="gcc clang c99 cc c89 g++ clang++ c++ CC"
+      if test x$CPROBE_LANG = "xc++"; then
+        cc_list="g++ clang++ c++ CC"
+      else
+        cc_list="gcc clang c99 cc c89 g++ clang++ c++ CC"
+      fi
       ;;
   esac
 }
@@ -1264,7 +1280,7 @@ probe_base() {
   prop_cflags=
   probe_cc_ok=
   probe_cflags_ok=
-  if test -z "$CC"; then
+  if test -z "$CPROBE_CC"; then
     get_cc_list
 
     for prop_cmd in $cc_list; do
@@ -1277,7 +1293,7 @@ probe_base() {
       prop_cmd=
     fi
   else
-    prop_cmd=$CC
+    prop_cmd=$CPROBE_CC
     check_cc
   fi
 
@@ -1286,8 +1302,8 @@ probe_base() {
   fi
   probe_cc_ok=1
 
-  if test -n "$CONFIG_CFLAGS"; then
-    prop_cflags=$CONFIG_CFLAGS
+  if test -n "$CPROBE_CFLAGS"; then
+    prop_cflags=$CPROBE_CFLAGS
     check_cc
     if test x$check_cc_ok != x1; then
       return
@@ -1317,14 +1333,14 @@ probe_ext() {
 
   if test x$probe_base_ok != x1; then
     if test x$probe_cc_ok != x1; then
-      if test -n "$CC" && test x$check_cc_found = x1; then
-        printf "%s\n" "${script_name}: invalid compiler: $CC" >&2
+      if test -n "$CPROBE_CC" && test x$check_cc_found = x1; then
+        printf "%s\n" "${script_name}: invalid compiler: $CPROBE_CC" >&2
       else
-        test -n "$CC" && cc_list=$CC
+        test -n "$CPROBE_CC" && cc_list=$CPROBE_CC
         printf "%s\n" "${script_name}: compiler not found: $cc_list" >&2
       fi
     elif test x$probe_cflags_ok != x1; then
-      printf "%s\n" "${script_name}: invalid compiler flags: $CONFIG_CFLAGS" >&2
+      printf "%s\n" "${script_name}: invalid compiler flags: $CPROBE_CFLAGS" >&2
     fi
     return
   fi
@@ -1362,6 +1378,9 @@ while test $# -gt 0; do
       -v|--version)
         print_version
         exit 0
+        ;;
+      -c++)
+        CPROBE_LANG="c++"
         ;;
       -t|-type)
         print_string="$print_string type"
@@ -1416,7 +1435,7 @@ while test $# -gt 0; do
         ;;
       *)
         if test x$param1 = x1; then
-          CC=`echo "$1" | sed "s#^\(\.\.*\)/#$orig_dir/\1/#"`
+          op_cc=`echo "$1" | sed "s#^\(\.\.*\)/#$orig_dir/\1/#"`
         else
           op_cflags="$op_cflags $1"
         fi
@@ -1428,9 +1447,36 @@ while test $# -gt 0; do
   shift
   param1=
 done
-if test -n "$op_cflags"; then
-  CONFIG_CFLAGS=$op_cflags
+
+#################
+if test -n "$op_cc"; then
+  if test "$CPROBE_LANG" = "c++"; then
+    CONFIG_CXX=$op_cc
+    export CONFIG_CXX
+  else
+    CONFIG_CC=$op_cc
+    export CONFIG_CC
+  fi
 fi
+
+if test -n "$op_cflags"; then 
+  if test "$CPROBE_LANG" = "c++"; then
+    CONFIG_CXXFLAGS=$op_cflags
+    export CONFIG_CXXFLAGS
+  else
+    CONFIG_CFLAGS=$op_cflags
+    export CONFIG_CFLAGS
+  fi
+fi
+
+if test "$CPROBE_LANG" = "c++"; then
+  CPROBE_CC=$CONFIG_CXX
+  CPROBE_CFLAGS=$CONFIG_CXXFLAGS
+else
+  CPROBE_CC=$CONFIG_CC
+  CPROBE_CFLAGS=$CONFIG_CFLAGS
+fi
+#################
 
 rm -rf $test_dir 2>/dev/null
 (mkdir $test_dir >/dev/null) 2>/dev/null

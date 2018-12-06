@@ -62,6 +62,8 @@ default_static_dir="_static"
 default_pic_dir="_pic"
 tmp_file=_mkmf_out_buffer_093471848
 all_sources=
+have_c=
+have_cxx=
 
 cd_param=
 (cd -P / >/dev/null) 2>/dev/null
@@ -325,9 +327,11 @@ add_mkmf_data() {
       case "$src" in
         *.C|*.[Cc][Cc]|*.[Cc][Pp][Pp]|*.[Cc][Xx][Xx])
           eval target_${prefix}_have_cxx=1
+          have_cxx=1
           ;;
         *.c)
           eval target_${prefix}_have_c=1
+          have_c=1
           ;;
         *)
           echo "$script_name: error: unknown source file type: $src" >&2
@@ -595,9 +599,11 @@ while test $# -gt 0; do
           case "$1" in
             *.C|*.[Cc][Cc]|*.[Cc][Pp][Pp]|*.[Cc][Xx][Xx])
               target___have_cxx=1
+              have_cxx=1
               ;;
             *.c)
               target___have_c=1
+              have_c=1
               ;;
             *)
               echo "$script_name: error: bad source type $1" >&2
@@ -711,33 +717,6 @@ done
 prefix_list="$prefix_list $prefix_add"
 
 ################################################################################
-#CONFIG_SRCROOT
-if test -z "$CONFIG_SRCROOT"; then
-  while test `pwd` != '/'; do
-    if test -d mk && test -x mk/$script_name; then
-      CONFIG_SRCROOT=`pwd`
-      break
-    fi
-    cd $cd_param ..
-  done
-  cd $cd_param $op_srcdir
-
-  if test -z "$CONFIG_SRCROOT"; then
-    CONFIG_SRCROOT=`pwd`
-    mkmf_num=`ls *.mkmf 2>/dev/null | wc -l`
-    while test $mkmf_num -ge 1; do
-      CONFIG_SRCROOT=`pwd`
-      test `pwd` = '/' && break
-      cd $cd_param ..
-      mkmf_num=`ls *.mkmf 2>/dev/null | wc -l`
-    done
-    cd $cd_param $op_srcdir
-  fi
-  export CONFIG_SRCROOT
-fi
-
-
-################################################################################
 #CONFIG_MK_PATH
 if test -z "$CONFIG_MK_PATH"; then
   cd $cd_param `dirname "$0"`
@@ -760,7 +739,7 @@ if test -z "$CONFIG_MK_PATH"; then
   fi
 
   if test -z "$CONFIG_MK_PATH"; then
-    echo "$script_name: error: Formake modules not found"
+    echo "$script_name: Formake modules not found" >&2
     exit 1
   fi
 
@@ -769,9 +748,26 @@ if test -z "$CONFIG_MK_PATH"; then
   export PATH
   cd $cd_param $op_srcdir
 fi
-
-
 ################################################################################
+
+if test -f $CONFIG_MK_PATH/subscript; then
+  . $CONFIG_MK_PATH/subscript
+else
+  echo "$script_name: module not found: subscript" >&2
+  exit 1
+fi
+
+formake_config_srcroot
+
+if test x$have_c = x1; then
+  formake_cprobe
+fi
+if test x$have_cxx = x1; then
+  formake_cxxprobe
+fi
+
+#####################
+
 if test x$op_print = x1; then
   rm -f $tmp_file
   op_out_mkfile=$tmp_file

@@ -73,6 +73,7 @@ Usage: $script_name [options] <defines>...
 
 Options:
  -cc=<cmd>          specify compiler command
+ -c++               C++ mode
  *.h|*.H|*.hpp      header files. Other file extensions are recognized
  -inc=<list>        header files
  -cflags=<flags>    compiler flags
@@ -98,6 +99,7 @@ clean_exit() {
 }
 
 op_inc=
+op_cc=
 op_cflags=
 op_def=
 while test $# -gt 0; do
@@ -113,9 +115,11 @@ while test $# -gt 0; do
     -cc=*)
       arg=`echo "$1" | sed 's/^-cc=//'`
       if test -n "$arg"; then
-        CONFIG_CC=`echo "$arg" | sed "s#^\(\.\.*\)/#$orig_dir/\1/#"`
-        export CONFIG_CC
+        op_cc=`echo "$arg" | sed "s#^\(\.\.*\)/#$orig_dir/\1/#"`
       fi
+      ;;
+    -c++)
+      CPPDEF_LANG="c++"
       ;;
     -inc=*)
       arg=`echo "$1" | sed 's/^-inc=//'`
@@ -137,11 +141,6 @@ while test $# -gt 0; do
   esac
   shift
 done
-
-if test -n "$op_cflags"; then 
-  CONFIG_CFLAGS=$op_cflags
-  export CONFIG_CFLAGS
-fi
 
 test -z "$op_def" && exit 0
 
@@ -186,15 +185,42 @@ else
   exit 1
 fi
 
-formake_cprobe
-
-if test -z "$CONFIG_CC"; then
-  echo "$script_name: compiler not found" >&2
-  exit 1
+############
+if test -n "$op_cc"; then
+  if test "$CPPDEF_LANG" = "c++"; then
+    CONFIG_CXX=$op_cc
+    export CONFIG_CXX
+  else
+    CONFIG_CC=$op_cc
+    export CONFIG_CC
+  fi
 fi
 
+if test -n "$op_cflags"; then 
+  if test "$CPPDEF_LANG" = "c++"; then
+    CONFIG_CXXFLAGS=$op_cflags
+    export CONFIG_CXXFLAGS
+  else
+    CONFIG_CFLAGS=$op_cflags
+    export CONFIG_CFLAGS
+  fi
+fi
+
+if test "$CPPDEF_LANG" = "c++"; then
+  formake_cxxprobe_exifer
+  CPPDEF_CC=$CONFIG_CXX
+  CPPDEF_CFLAGS=$CONFIG_CXXFLAGS
+  CPPDEF_CC_TYPE=$CONFIG_CXX_TYPE
+else
+  formake_cprobe_exifer
+  CPPDEF_CC=$CONFIG_CC
+  CPPDEF_CFLAGS=$CONFIG_CFLAGS
+  CPPDEF_CC_TYPE=$CONFIG_CC_TYPE
+fi
+############
+
 cpp_flag=-E
-case "$CONFIG_CC_TYPE" in
+case "$CPPDEF_CC_TYPE" in
   ticc)
     cpp_flag=-ppl
     ;;
@@ -236,7 +262,7 @@ CPPDEF_DEFVAL=$def
 #endif
 EOF
   if test "$op_cctype" = ticc; then
-    $CONFIG_CC $CONFIG_CFLAGS $cpp_flag $test_src 2>/dev/null
+    $CPPDEF_CC $CPPDEF_CFLAGS $cpp_flag $test_src 2>/dev/null
     if test $? != 0; then
       echo "$script_name: CPP error" >&2
       clean_exit 1
@@ -244,7 +270,7 @@ EOF
     cat $test_pp > test_c.out
     rm -f $test_pp
   else
-    $CONFIG_CC $CONFIG_CFLAGS $cpp_flag $test_src 2>/dev/null > test_c.out
+    $CPPDEF_CC $CPPDEF_CFLAGS $cpp_flag $test_src 2>/dev/null > test_c.out
     if test $? != 0; then
       echo "$script_name: CPP error" >&2
       clean_exit 1

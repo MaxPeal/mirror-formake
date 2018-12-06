@@ -62,7 +62,6 @@ formake_config_mk_path() {
   fi
 }
 
-
 formake_cprobe() {
   if test x$FORMAKE_CPROBE_RUN = x1; then
     return
@@ -112,6 +111,83 @@ formake_cprobe() {
     export CONFIG_CC_SUS
   else
     echo "$formake_script_name: subscript: cprobe not found" >&2
+    exit 1
+  fi
+}
+
+formake_cprobe_exifer() {
+  formake_cprobe
+  if test -z "$CONFIG_CC"; then
+    echo "$formake_script_name: compiler not found" >&2
+    exit 1
+  fi
+  if test -z "$CONFIG_CC_TYPE"; then
+    echo "$formake_script_name: unsupported compiler type: $CONFIG_CC" >&2
+    exit 1
+  fi
+}
+
+formake_cxxprobe() {
+  if test x$FORMAKE_CXXPROBE_RUN = x1; then
+    return
+  fi
+  FORMAKE_CXXPROBE_RUN=1
+  export FORMAKE_CXXPROBE_RUN
+  
+  formake_config_mk_path
+
+  if cmdok -f cprobe; then
+    formake_out_buf=/tmp/formake_out_buf_$$
+    CPROBE_LANG="c++" cprobe -1 > $formake_out_buf
+    . $formake_out_buf
+    rm -f $formake_out_buf
+    
+    
+    CONFIG_CXX=$CC_CMD
+    CONFIG_CXX_TYPE=$CC_TYPE
+    CONFIG_CXX_VERSION=$CC_VERSION
+    CONFIG_CXX_STD=$CC_CXX_STD
+    CONFIG_CXX_CC_STD=$CC_STD
+    CONFIG_CXX_OS=$CC_OS
+    CONFIG_CXX_OS_VERSION=$CC_OS_VERSION
+    CONFIG_CXX_ARCH=$CC_ARCH
+    CONFIG_CXX_BITNESS=$CC_BITNESS
+    CONFIG_CXX_ENDIANNESS=$CC_ENDIANNESS
+    CONFIG_CXX_DATA_MODEL=$CC_DATA_MODEL
+    CONFIG_CXX_FLAG_CROSS=$CC_FLAG_CROSS
+    CONFIG_CXX_FLAG_CXX=$CC_FLAG_CXX
+    CONFIG_CXX_POSIX=$CC_POSIX
+    CONFIG_CXX_SUS=$CC_SUS
+  
+    export CONFIG_CXX
+    export CONFIG_CXX_TYPE
+    export CONFIG_CXX_VERSION
+    export CONFIG_CXX_STD
+    export CONFIG_CXX_CC_STD
+    export CONFIG_CXX_OS
+    export CONFIG_CXX_OS_VERSION
+    export CONFIG_CXX_ARCH
+    export CONFIG_CXX_BITNESS
+    export CONFIG_CXX_ENDIANNESS
+    export CONFIG_CXX_DATA_MODEL
+    export CONFIG_CXX_FLAG_CROSS
+    export CONFIG_CXX_FLAG_CXX
+    export CONFIG_CXX_POSIX
+    export CONFIG_CXX_SUS
+  else
+    echo "$formake_script_name: subscript: cprobe not found" >&2
+    exit 1
+  fi
+}
+
+formake_cxxprobe_exifer() {
+  formake_cxxprobe
+  if test -z "$CONFIG_CXX"; then
+    echo "$formake_script_name: compiler not found" >&2
+    exit 1
+  fi
+  if test -z "$CONFIG_CXX_TYPE"; then
+    echo "$formake_script_name: unsupported compiler type: $CONFIG_CXX" >&2
     exit 1
   fi
 }
