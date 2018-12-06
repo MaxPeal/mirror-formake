@@ -64,6 +64,10 @@ tmp_file=_mkmf_out_buffer_093471848
 all_sources=
 have_c=
 have_cxx=
+MAKEFILE=mkmf_user_code
+export MAKEFILE
+rm -f $MAKEFILE
+user_mkfile=$MAKEFILE
 
 cd_param=
 (cd -P / >/dev/null) 2>/dev/null
@@ -261,6 +265,8 @@ for param in "$@"; do
       ;;
   esac
 done
+
+cd $cd_param $op_srcdir
 
 add_mkmf_common_data() {
   if test -n "$COMMON_SOURCES"; then
@@ -1084,6 +1090,13 @@ if test -z "$op_append" && test -z "$op_skip_mkmf" && test -n "$SUBDIRS"; then
       fi
     fi
   done
+fi
+
+################################################################################
+#add user code
+if test -f "$user_mkfile"; then
+  cat $user_mkfile >> $op_out_mkfile
+  rm -f $user_mkfile
 fi
 
 ################################################################################
