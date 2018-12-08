@@ -192,3 +192,34 @@ formake_cxxprobe_exifer() {
   fi
 }
 
+formake_pofig() {
+  if test x$FORMAKE_POFIG_RUN = x1; then
+    return
+  fi
+  FORMAKE_POFIG_RUN=1
+  export FORMAKE_POFIG_RUN
+  
+  formake_config_mk_path
+
+  if cmdok -f pofig; then
+    CONFIG_OS=`pofig -o`
+    CONFIG_OS_VERSION=`pofig -s`
+    CONFIG_KERNEL_VERSION=`pofig -k`
+    CONFIG_DISTRO=`pofig -d`
+    CONFIG_DISTRO_VERSION=`pofig -r`
+    CONFIG_ARCH=`pofig -a`
+    CONFIG_SYSTEM_ID=`pofig -i`
+
+    export CONFIG_OS
+    export CONFIG_OS_VERSION
+    export CONFIG_KERNEL_VERSION
+    export CONFIG_DISTRO
+    export CONFIG_DISTRO_VERSION
+    export CONFIG_ARCH
+    export CONFIG_SYSTEM_ID
+  else
+    echo "$formake_script_name: subscript: pofig not found" >&2
+    exit 1
+  fi
+}
+
