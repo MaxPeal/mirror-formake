@@ -219,7 +219,6 @@ else
 fi
 ############
 
-cpp_flag=-E
 case "$CPPDEF_CC_TYPE" in
   ticc)
     cpp_flag=-ppl
@@ -227,7 +226,15 @@ case "$CPPDEF_CC_TYPE" in
   msc)
     cpp_flag="/E"
     ;;
+  gcc|clang|hpacc|hpansic|intel|mipspro|sunpro|tinyc|xlc)
+    cpp_flag=-E
+    ;;
+  *)
+    echo "$script_name: unsupported compiler: $CPPDEF_CC_TYPE" >&2
+    exit 0
+    ;;
 esac
+
 
 rm -rf $test_dir 2>/dev/null
 (mkdir $test_dir >/dev/null) 2>/dev/null

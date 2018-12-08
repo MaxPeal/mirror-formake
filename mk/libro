@@ -194,25 +194,6 @@ mkstatic() {
 }
 
 mkshared() {
-  if test x$cxx_mode = x; then
-    if test -z "$CONFIG_CC"; then
-      formake_cprobe_exifer
-    else
-      formake_cprobe
-    fi
-    LIBRO_CC=$CONFIG_CC
-    LIBRO_CC_TYPE=CONFIG_CC_TYPE
-  else
-    if test -z "$CONFIG_CXX"; then
-      formake_cxxprobe_exifer
-    else
-      formake_cxxprobe
-    fi
-    LIBRO_CC=$CONFIG_CXX
-    LIBRO_CC_TYPE=CONFIG_CXX_TYPE
-  fi
-
-  
   if test -n "$op_dir"; then
     out_dir="$op_dir/"
   else
@@ -403,6 +384,36 @@ else
   exit 1
 fi
 ################################################################################
+
+if test x$cxx_mode = x; then
+  if test -z "$CONFIG_CC"; then
+    formake_cprobe_exifer
+  else
+    formake_cprobe
+  fi
+  LIBRO_CC=$CONFIG_CC
+  LIBRO_CC_TYPE=CONFIG_CC_TYPE
+  LIBRO_CC_OS=$CONFIG_CC_OS
+else
+  if test -z "$CONFIG_CXX"; then
+    formake_cxxprobe_exifer
+  else
+    formake_cxxprobe
+  fi
+  LIBRO_CC=$CONFIG_CXX
+  LIBRO_CC_TYPE=CONFIG_CXX_TYPE
+  LIBRO_CC_OS=$CONFIG_CXX_OS
+fi
+
+case "$LIBRO_CC_OS" in
+  gnulinux|freebsd|macos|android|solaris|aix|dragonfly|gnuhurd|openbsd|netbsd|qnx|hpux|irix|minix|sco)
+    : ;;
+  *)
+    echo "$script_name: unsuported target OS: $LIBRO_CC_OS"
+    exit 1
+    ;;
+esac
+
 
 if test -z "$op_name"; then
   op_name=foo
