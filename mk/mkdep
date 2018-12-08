@@ -2,7 +2,7 @@
 #
 # mkdep
 #
-# Copyright (c) 2015-2017, Oleksii Cherniavskyi
+# Copyright (c) 2015-2018, Oleksii Cherniavskyi
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -55,6 +55,14 @@ export FORMAKE_BASH_REDIRECTED
 script_name=`basename "$0"`
 orig_dir=`pwd`
 
+cd_param=
+(cd -P / >/dev/null) 2>/dev/null
+if test $? -eq 0; then
+  cd_param="-P"
+fi
+cd $cd_param $orig_dir
+
+
 print_help() {
   cat <<EOF
 Generate Make dependency rules for C/C++ sources
@@ -66,60 +74,13 @@ EOF
 
 print_version() {
   cat <<EOF
-mkdep 1.0
-Copyright (C) 2015-2017 Oleksii Cherniavskyi
+mkdep 1.1
+Copyright (C) 2015-2018 Oleksii Cherniavskyi
 EOF
 }
 
-probe_cc() {
-  check_cc_found=
-  ($op_cmd >/dev/null) 2>/dev/null
-  if test $? -ge 126; then
-    return
-  fi
-  check_cc_found=1
-
-  probe_out=/tmp/cc_probe_$$.txt
-  rm -f $probe_out
-  cc_cmd0=`echo "$op_cmd" | sed 's# [^/]*$##'`
-  ($cc_cmd0 -version >>$probe_out) 2>>$probe_out
-  ($cc_cmd0 --version >>$probe_out) 2>>$probe_out
-  ($cc_cmd0 -V >>$probe_out) 2>>$probe_out
-  ($cc_cmd0 -qversion >>$probe_out) 2>>$probe_out
-  ($cc_cmd0 -h >>$probe_out) 2>>$probe_out
-  ($cc_cmd0 --help >>$probe_out) 2>>$probe_out
-  ($cc_cmd0 >>$probe_out) 2>>$probe_out
-
-  if grep "Texas Instruments" $probe_out | grep "Tools Copyright" >/dev/null; then
-    op_cctype=ticc
-  elif grep -i mingw $probe_out >/dev/null; then
-    op_cctype=mingw
-  elif grep -i gcc $probe_out >/dev/null && grep -i "free software foundation" $probe_out >/dev/null; then
-    op_cctype=gcc
-  elif grep -i "clang version" $probe_out >/dev/null; then
-    op_cctype=clang
-  elif grep "tcc version" $probe_out >/dev/null; then
-    op_cctype=tinyc
-  elif grep -i "Sun C" $probe_out >/dev/null; then
-    op_cctype=sunpro
-  elif grep -i "IBM XL C" $probe_out >/dev/null; then
-    op_cctype=xlc
-  elif grep -i "MIPSpro Compilers" $probe_out >/dev/null; then
-    op_cctype=mipspro
-  elif grep -i microsoft $probe_out >/dev/null; then
-    op_cctype=msc
-  elif grep -i "PGI Compilers and Tools" $probe_out >/dev/null; then
-    op_cctype=pgi
-  elif grep "SDCC" $probe_out >/dev/null; then
-    op_cctype=sdcc
-  else
-    op_cctype=cc
-  fi
-  rm -f $probe_out
-}
-
 if test $# -eq 0; then
-  echo "$script_name: error: no parameters specified" >&2
+  echo "$script_name: no parameters specified" >&2
   exit 1
 fi
 
@@ -128,10 +89,10 @@ op_cmd=
 op_src=
 op_cflags=
 op_ofile=
-src_multi=1
+src_multi=
 op_compile=
 out_obj=
-lang_mode=c
+MKDEP_LANG=c
 while test $# -gt 0; do
   case "$1" in
     -h|-help|--help)
@@ -170,7 +131,7 @@ while test $# -gt 0; do
     *.C|*.[Cc][Cc]|*.[Cc][Pp][Pp]|*.[Cc][Xx][Xx]|*.[Cc]++)
       test -n "$op_src" && src_multi=1
       op_src="$op_src $1"
-      lang_mode=c++
+      MKDEP_LANG=c++
       ;;
     *.h)
       test -n "$op_src" && src_multi=1
@@ -179,7 +140,7 @@ while test $# -gt 0; do
     *.H|*.[Hh]++|*.[Hh][Hh]|*.[Hh][Xx][Xx]|*.[Hh][Pp][Pp])
       test -n "$op_src" && src_multi=1
       op_src="$op_src $1"
-      lang_mode=c++
+      MKDEP_LANG=c++
       ;;
     *)
       if test x$first_param = x1; then
@@ -200,26 +161,86 @@ if test -n "$op_ofile" && test x$op_compile = x1 && test x$src_multi = x; then
   out_obj=$op_ofile
 fi
 
-if test -z "$op_cmd"; then
-  if test $lang_mode = "c++"; then
-    op_cmd="g++"
+################################################################################
+#CONFIG_MK_PATH
+if test -z "$CONFIG_MK_PATH"; then
+  cd $cd_param `dirname "$0"`
+  if test -x $script_name; then
+    CONFIG_MK_PATH=`pwd`
+  elif test -d $CONFIG_SRCROOT/mk && test -x $CONFIG_SRCROOT/mk/$script_name; then
+    cd $cd_param $CONFIG_SRCROOT/mk
+    CONFIG_MK_PATH=`pwd`
   else
-    op_cmd=gcc
+    IFS_save=$IFS
+    IFS=:
+    for dir in $PATH; do
+      if test -f "$dir/$script_name" && test -x "$dir/$script_name" ; then
+        abs_path "$dir"
+        CONFIG_MK_PATH=$abs_path_ret
+        break
+      fi
+    done
+    IFS=$IFS_save
   fi
-fi
 
-probe_cc
-if test x$check_cc_found = x; then
-  echo "$script_name: compiler not found: $op_cmd" >&2
+  if test -z "$CONFIG_MK_PATH"; then
+    echo "$script_name: Formake modules not found" >&2
+    exit 1
+  fi
+
+  export CONFIG_MK_PATH
+  PATH="$CONFIG_MK_PATH:$PATH"
+  export PATH
+  cd $cd_param $orig_dir
+fi
+################################################################################
+
+if test -f $CONFIG_MK_PATH/subscript; then
+  . $CONFIG_MK_PATH/subscript
+else
+  echo "$script_name: module not found: subscript" >&2
   exit 1
 fi
 
-cpp_flag=-E
-obj_ext="o"
-case "$op_cctype" in
-  mingw)
-    obj_ext="obj"
-    ;;
+############
+if test -n "$op_cmd"; then
+  if test "$MKDEP_LANG" = "c++"; then
+    CONFIG_CXX=$op_cmd
+    export CONFIG_CXX
+  else
+    CONFIG_CC=$op_cmd
+    export CONFIG_CC
+  fi
+fi
+
+if test -n "$op_cflags"; then 
+  if test "$MKDEP_LANG" = "c++"; then
+    CONFIG_CXXFLAGS=$op_cflags
+    export CONFIG_CXXFLAGS
+  else
+    CONFIG_CFLAGS=$op_cflags
+    export CONFIG_CFLAGS
+  fi
+fi
+
+if test "$MKDEP_LANG" = "c++"; then
+  formake_cxxprobe_exifer
+  MKDEP_CC=$CONFIG_CXX
+  MKDEP_CFLAGS=$CONFIG_CXXFLAGS
+  MKDEP_CC_TYPE=$CONFIG_CXX_TYPE
+  MKDEP_CC_OS=$CONFIG_CXX_OS
+else
+  formake_cprobe_exifer
+  MKDEP_CC=$CONFIG_CC
+  MKDEP_CFLAGS=$CONFIG_CFLAGS
+  MKDEP_CC_TYPE=$CONFIG_CC_TYPE
+  MKDEP_CC_OS=$CONFIG_CC_OS
+fi
+
+formake_pofig
+############
+
+case "$MKDEP_CC_TYPE" in
   ticc)
     cpp_flag=-ppl
     ;;
@@ -227,18 +248,39 @@ case "$op_cctype" in
     cpp_flag="/E"
     obj_ext="obj"
     ;;
+  gcc|clang|hpacc|hpansic|intel|mipspro|sunpro|tinyc|xlc)
+    cpp_flag=-E
+    obj_ext="o"
+    ;;
+  *)
+    echo "$script_name: unsupported compiler: $MKDEP_CC_TYPE" >&2
+    exit 0
+    ;;
+esac
+
+case "$CONFIG_OS" in
+  cygwin)
+    obj_ext="obj"
+    ;;
+esac
+
+case "$MKDEP_CC_OS" in
+  cygwin|windows)
+    obj_ext="obj"
+    ;;
 esac
 
 work_dir=/tmp/mkdep$$
 (mkdir $work_dir) 2>/dev/null
 rm -f $work_dir/*
-tmp_file1=dep$$.t
+tmp_file0=dep$$.t0
+tmp_file1=dep$$.t1
 tmp_file2=dep$$.t2
 
 for file in $op_src; do
   cd $orig_dir
   if test ! -f $file; then
-    echo "$script_name: error: file not found $file"
+    echo "$script_name: file not found $file"
     exit 1
   fi
   cp $file $work_dir
@@ -253,24 +295,24 @@ for file in $op_src; do
     object="${base_name}.$obj_ext"
   fi
 
-  if test "$op_cctype" = ticc; then
+  if test "$MKDEP_CC_TYPE" = ticc; then
     src_pp="${base_name}.pp"
     rm -f $src_pp
-    $op_cmd $cpp_flag $op_cflags $file
+    $MKDEP_CC $cpp_flag $MKDEP_CFLAGS $file
     if test -f $src_pp; then
-      cat $src_pp | sed -n 's!^# *[0-9][0-9]* *"\([^<][^"]*\)".*!\1!p' | sort | uniq >$tmp_file1
+      cat $src_pp >$tmp_file0
     fi
-    echo "" >>$tmp_file1
+    echo "" >>$tmp_file0
   else
-    $op_cmd $cpp_flag $op_cflags $file | sed -n 's!^# *[0-9][0-9]* *"\([^<][^"]*\)".*!\1!p' | sort | uniq >$tmp_file1
+    $MKDEP_CC $cpp_flag $MKDEP_CFLAGS $file >$tmp_file0
   fi
+  cat $tmp_file0 | sed -n 's!^# *[0-9][0-9]* *"\([^<][^"]*\)".*!\1!p' | sort | uniq >$tmp_file1
 
   cat $tmp_file1 | sed "s/^/$object: /" >>$tmp_file2
   cat $tmp_file1 | sed 's/ *$/:/' >>$tmp_file2
 done
 
 cat $tmp_file2 | sort | uniq
-cd $orig_dir
 rm -rf $work_dir
 
 exit 0
