@@ -227,7 +227,7 @@ mkshared() {
 
   orig_dir=`pwd`
   case "$LIBRO_CC_TYPE" in
-    gcc|*)
+    gcc)
       lib_so="lib${op_name}.so"
       lib_so_c="${lib_so}.${op_current}"
       lib_so_cra="${lib_so_c}.${op_revision}$age_pref"
@@ -245,7 +245,11 @@ mkshared() {
   	  run_command $LIBRO_CC -shared -fPIC -Wl,-soname,$lib_so_c -o $out_dir$lib_so_cra $op_obj $CONFIG_LDFLAGS
   	  run_command ln -s $lib_so_cra $out_dir$lib_so_c
   	  run_command ln -s $lib_so_cra $out_dir$lib_so
-    ;;
+      ;;
+    *)
+      echo "$script_name: unsupported compiler: $LIBRO_CC_TYPE"
+      exit 1
+      ;;
   esac
 }
 
