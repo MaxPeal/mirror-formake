@@ -53,32 +53,90 @@ export FORMAKE_BASH_REDIRECTED
 ################################################################################
 
 
-version_string="libro 0.2"
+version_string="libro 0.3"
 script_name=`basename "$0"`
-script_dir=`dirname "$0"`
+orig_dir=`pwd`
+sh_cmd=
+sh_targets=
+sh_lib_a=
+sh_regular_files=
+sh_lib_so=
+sh_lib_so_c=
+sh_lib_so_cra=
+sh_symlinks=
 
-################################################################################
-# LOAD CONFIG
-AR=
-AR_FLAGS=
-if test -f $script_dir/mk.conf; then
-  . $script_dir/mk.conf
+if test -z "$CONFIG_AR"; then
+  CONFIG_AR=ar
+  export CONFIG_AR
 fi
-if test -f $script_dir/libro.conf; then
-  . $script_dir/libro.conf
+
+AR_FLAGS=rcs
+
+cd_param=
+(cd -P / >/dev/null) 2>/dev/null
+if test $? -eq 0; then
+  cd_param="-P"
 fi
-test -n "$PROG_AR" && AR=$PROG_AR
-test -n "$AR" || AR=ar
-test -n "$AR_FLAGS" || AR_FLAGS=rcs
-################################################################################
+cd $cd_param $orig_dir
+
+
+abs_path() {
+  _sub_orig_dir=`pwd`
+  if test $# = 0; then
+    abs_path_ret=
+    return
+  fi
+  if test $# = 2; then
+    _arg_orig_dir=$1
+    _arg=$2
+    if echo "$_arg" | grep "^/" > /dev/null; then
+      :
+    else
+      _arg=`echo "$_arg_orig_dir/$_arg" | sed 's!//*!/!g'`
+    fi
+  else
+    _arg=$1
+  fi
+  if test -e "$_arg"; then
+    if test -d $_arg; then
+      _file=
+    else
+      _file=`basename "$_arg"`
+      _arg=`dirname "$_arg"`
+    fi
+
+    cd $cd_param $_arg
+    abs_path_ret=`pwd`
+    if test x"$_file" != "x"; then
+      abs_path_ret="$abs_path_ret/$_file"
+    fi
+
+    cd $cd_param $_sub_orig_dir
+  else
+    if echo "$_arg" | grep "^/" > /dev/null; then
+      abs_path_ret="$_arg"
+    else
+      abs_path_ret="$_sub_orig_dir/$_arg"
+    fi
+    abs_path_ret=`echo "$abs_path_ret" | sed 's#//*#/#g'`
+    abs_path_ret=`echo "$abs_path_ret" | sed 's#/*$#/#'`
+    string_prev=
+    while test "x$abs_path_ret" != "x$string_prev" ; do
+      string_prev=$abs_path_ret
+      abs_path_ret=`echo "$abs_path_ret" | sed 's#/[^/][^/][^/][^/]*/\.\./#/#g' | sed 's#/[^/][^/.]/\.\./#/#g' | sed 's#/[^/.][^/]/\.\./#/#g' | sed 's#/[^/.]/\.\./#/#g'`
+      abs_path_ret=`echo "$abs_path_ret" | sed 's#^/\.\./#/#' | sed 's#^/\.\.$#/#'`
+      abs_path_ret=`echo "$abs_path_ret" | sed 's#/\./#/#g' | sed 's#/\.$#/#'`
+    done
+    abs_path_ret=`echo "$abs_path_ret" | sed 's#/$##' | sed 's#^$#/#'`
+  fi
+}
+
 
 print_help() {
   cat <<EOF
 Build static and dynamic libraries
 
-$script_name [static] -name NAME [-ver VERSION] -obj OBJECTS [-o dir] [-p] [-s]
-$script_name shared [-ldflags=FLAGS] -name NAME [-ver VERSION] [-c++] -obj OBJECTS [-o DIR] [-p] [-s]
-$script_name -v
+$script_name [static|shared] [-c++] -name NAME [-ver VERSION] -obj OBJECTS [-o DIR] [-ldflags=FLAGS] [-p] [-s]
  static           create static library (default)
  shared           create shared library
  -name NAME       library name 
@@ -88,7 +146,8 @@ $script_name -v
  -c++             use C++ linker
  -o DIR           output directory
  -p               only print commands that would be run
- -s               do not print commands
+ -sh              generate Shell script in format VAR="VALUE"
+ -s               silent mode
  -v               print version
 EOF
 }
@@ -103,22 +162,19 @@ run_command() {
 $@
 EOF
   fi
-  if test x$op_print = x; then
+  if test x$op_print_only = x; then
 "$@"
   fi
-  if test x$op_print4mk = x1; then
-    echo "CMD $@"
+  if test x$op_shrc = x1; then
+    sh_cmd="$sh_cmd
+$@"
   fi
 }
 
 
 mkstatic() {
-  if test x$op_print = x; then
-    ($AR -h >dev/null) 2>/dev/null
-    if test $? -ge 126; then
-      echo "$script_name: $AR not found" >&2
-      exit 1
-    fi
+  if test x$op_print_only = x; then
+    cmdok -f $CONFIG_AR || exit 1
   fi
 
   lib_static="lib${op_name}.a"
@@ -126,43 +182,36 @@ mkstatic() {
     lib_static="$op_dir/$lib_static"
   fi
 
-  if test x$op_print4mk = x1; then
-    echo "TARGETS $lib_static"
-    echo "LIB_A $lib_static"
-    echo "REGULAR_FILES $lib_static"
+  if test x$op_shrc = x1; then
+    sh_targets="$sh_targets $lib_static"
+    sh_lib_a="$sh_lib_a $lib_static"
+    sh_regular_files="$sh_regular_files $lib_static"
   fi
 
   run_command rm -f $lib_static
-  run_command $AR $AR_FLAGS $lib_static $op_obj
+  run_command $CONFIG_AR $AR_FLAGS $lib_static $op_obj
   run_command ranlib $lib_static
 }
 
 mkshared() {
   if test x$cxx_mode = x; then
-    xstem=cstem
-  else
-    xstem="cstem c++"
-  fi
-  
-  ($xstem -h >/dev/null) 2>/dev/null
-  if test $? -eq 0; then
-    CSTEM=$xstem
-  else
-    ($script_dir/$xstem -h >/dev/null) 2>/dev/null
-    if test $? -eq 0; then
-      CSTEM=$script_dir/$xstem
+    if test -z "$CONFIG_CC"; then
+      formake_cprobe_exifer
     else
-      echo "$script_name: error: $xstem not found" >&2
-      exit 1
+      formake_cprobe
     fi
+    LIBRO_CC=$CONFIG_CC
+    LIBRO_CC_TYPE=CONFIG_CC_TYPE
+  else
+    if test -z "$CONFIG_CXX"; then
+      formake_cxxprobe_exifer
+    else
+      formake_cxxprobe
+    fi
+    LIBRO_CC=$CONFIG_CXX
+    LIBRO_CC_TYPE=CONFIG_CXX_TYPE
   fi
-  
-  cc_cmd=`$CSTEM -cmd`
-  if test -z "$cc_cmd"; then
-    echo "$script_name: compiler not found" >&2
-    exit 1
-  fi
-  cc_id=`$CSTEM -id`
+
   
   if test -n "$op_dir"; then
     out_dir="$op_dir/"
@@ -177,43 +226,30 @@ mkshared() {
   fi
 
   orig_dir=`pwd`
-  case "$cc_id" in
+  case "$LIBRO_CC_TYPE" in
     gcc|*)
       lib_so="lib${op_name}.so"
       lib_so_c="${lib_so}.${op_current}"
       lib_so_cra="${lib_so_c}.${op_revision}$age_pref"
 
-      if test x$op_print4mk = x1; then
-        echo "TARGETS $out_dir$lib_so $out_dir$lib_so_c $out_dir$lib_so_cra"
-        echo "LIB_SO $out_dir$lib_so"
-        echo "LIB_SO_C $out_dir$lib_so_c"
-        echo "LIB_SO_CRA $out_dir$lib_so_cra"
-        echo "REGULAR_FILES $out_dir$lib_so_cra"
-        echo "SYMLINKS $out_dir$lib_so $out_dir$lib_so_c"
+      if test x$op_shrc = x1; then
+        sh_targets="$sh_targets $out_dir$lib_so $out_dir$lib_so_c $out_dir$lib_so_cra"
+        sh_lib_so="$sh_lib_so $out_dir$lib_so"
+        sh_lib_so_c="$sh_lib_so_c $out_dir$lib_so_c"
+        sh_lib_so_cra="$sh_lib_so_cra $out_dir$lib_so_cra"
+        sh_regular_files="$sh_regular_files $out_dir$lib_so_cra"
+        sh_symlinks="$sh_symlinks $out_dir$lib_so $out_dir$lib_so_c"
       fi
 
       run_command rm -f $out_dir$lib_so $out_dir$lib_so_c $out_dir$lib_so_cra
-  	  run_command $cc_cmd -shared -fPIC -Wl,-soname,$lib_so_c -o $out_dir$lib_so_cra $op_obj $op_ldflags
+  	  run_command $LIBRO_CC -shared -fPIC -Wl,-soname,$lib_so_c -o $out_dir$lib_so_cra $op_obj $CONFIG_LDFLAGS
   	  run_command ln -s $lib_so_cra $out_dir$lib_so_c
   	  run_command ln -s $lib_so_cra $out_dir$lib_so
     ;;
   esac
 }
 
-if test $# -eq 0; then
-  echo "$script_name: error: no parameters passed" >&2
-  exit 1
-fi
-
 case "$1" in
-  -h|-help|--help)
-    print_help
-    exit 0
-    ;;
-  -v)
-    print_version
-    exit 0
-    ;;
   static)
     lib_type=static
     shift
@@ -228,13 +264,21 @@ case "$1" in
 esac
 
 if test $# -eq 0; then
-  echo "$script_name: error: additional parameters missing" >&2
+  echo "$script_name: additional parameters are missing" >&2
   exit 1
 fi
 
 current_opt=
 while test $# -gt 0; do
   case "$1" in
+    -h|-help|--help)
+      print_help
+      exit 0
+      ;;
+    -v)
+      print_version
+      exit 0
+      ;;
     -name)
       op_name=
       current_opt=name
@@ -248,7 +292,8 @@ while test $# -gt 0; do
       current_opt=obj
       ;;
     -ldflags=*)
-      op_ldflags=`echo "$1" | sed 's/^[^=]*=//'`
+      CONFIG_LDFLAGS=`echo "$1" | sed 's/^[^=]*=//'`
+      export CONFIG_LDFLAGS
       current_opt=
       ;;
     -c++)
@@ -260,16 +305,16 @@ while test $# -gt 0; do
       current_opt=o
       ;;
     -p)
-      op_print=1
+      op_print_only=1
       current_opt=
       ;;
     -s)
       op_silent=1
       current_opt=
       ;;
-    -print4mk)
-      op_print4mk=1
-      op_print=1
+    -sh)
+      op_shrc=1
+      op_print_only=1
       op_silent=1
       current_opt=
       ;;
@@ -299,7 +344,7 @@ while test $# -gt 0; do
           op_obj="$op_obj $1"
           ;;
         *)
-          echo "$script_name: error: invalid parameter $1" >&2
+          echo "$script_name: invalid parameter $1" >&2
           exit 1
           ;;
       esac
@@ -309,12 +354,54 @@ while test $# -gt 0; do
 done
 
 if test -z "$op_obj"; then
-  echo "$script_name: error: objects not specified" >&2
+  echo "$script_name: objects not specified" >&2
   exit 1
 fi
 
+################################################################################
+#CONFIG_MK_PATH
+if test -z "$CONFIG_MK_PATH"; then
+  cd $cd_param `dirname "$0"`
+  if test -x $script_name; then
+    CONFIG_MK_PATH=`pwd`
+  elif test -d $CONFIG_SRCROOT/mk && test -x $CONFIG_SRCROOT/mk/$script_name; then
+    cd $cd_param $CONFIG_SRCROOT/mk
+    CONFIG_MK_PATH=`pwd`
+  else
+    IFS_save=$IFS
+    IFS=:
+    for dir in $PATH; do
+      if test -f "$dir/$script_name" && test -x "$dir/$script_name" ; then
+        abs_path "$dir"
+        CONFIG_MK_PATH=$abs_path_ret
+        break
+      fi
+    done
+    IFS=$IFS_save
+  fi
+
+  if test -z "$CONFIG_MK_PATH"; then
+    echo "$script_name: Formake modules not found" >&2
+    exit 1
+  fi
+
+  export CONFIG_MK_PATH
+  PATH="$CONFIG_MK_PATH:$PATH"
+  export PATH
+  cd $cd_param $orig_dir
+fi
+################################################################################
+
+if test -f $CONFIG_MK_PATH/subscript; then
+  . $CONFIG_MK_PATH/subscript
+else
+  echo "$script_name: module not found: subscript" >&2
+  exit 1
+fi
+################################################################################
+
 if test -z "$op_name"; then
-  op_name=nn
+  op_name=foo
 fi
 
 if test -z "$op_ver"; then
@@ -326,23 +413,44 @@ elif test -z "$op_revision"; then
   op_revision=0
 fi
 
-if test -n "$op_dir" && test -z "$op_print"; then
-  test ! -d $op_dir && mkdir -p $op_dir
+if test -n "$op_dir" && test -z "$op_print_only"; then
+  test -d "$op_dir" || mkdir -p $op_dir
   if test ! -d $op_dir; then
-    echo "$script_name: error: could not create output directory $op_dir" >&2
+    echo "$script_name: cannot create output directory $op_dir" >&2
     exit 1
   fi
-  _orig_dir=`pwd`
   cd $op_dir
   op_dir=`pwd`
-  cd $_orig_dir
-elif test -n "$op_dir" && test x$op_print4mk = x1; then
-  echo "CMD test -d $op_dir || mkdir -p $op_dir"
+  cd $orig_dir
+elif test -n "$op_dir" && test x$op_shrc = x1; then
+  sh_cmd="$sh_cmd
+test -d $op_dir || mkdir -p $op_dir"
 fi
 
 if test $lib_type = static; then
   mkstatic
 else
   mkshared
+fi
+
+if test x$op_shrc = x1; then
+  sh_cmd=`echo "$sh_cmd" | sed '/^ *$/d'`
+  sh_targets=`echo "$sh_targets" | sed 's/^ *//'`
+  sh_lib_a=`echo "$sh_lib_a" | sed 's/^ *//'`
+  sh_regular_files=`echo "$sh_regular_files" | sed 's/^ *//'`
+  sh_lib_so=`echo "$sh_lib_so" | sed 's/^ *//'`
+  sh_lib_so_c=`echo "$sh_lib_so_c" | sed 's/^ *//'`
+  sh_lib_so_cra=`echo "$sh_lib_so_cra" | sed 's/^ *//'`
+  sh_symlinks=`echo "$sh_symlinks" | sed 's/^ *//'`
+  cat <<EOF
+SH_CMD="$sh_cmd"
+SH_TARGETS="$sh_targets"
+SH_LIB_A="$sh_lib_a"
+SH_REGULAR_FILES="$sh_regular_files"
+SH_LIB_SO="$sh_lib_so"
+SH_LIB_SO_C="$sh_lib_so_c"
+SH_LIB_SO_CRA="$sh_lib_so_cra"
+SH_SYMLINKS="$sh_symlinks"
+EOF
 fi
 
