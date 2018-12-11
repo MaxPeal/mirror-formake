@@ -75,7 +75,6 @@ if test $? -eq 0; then
 fi
 cd $cd_param $orig_dir
 
-
 target_vars="
 SOURCES
 OBJECTS
@@ -262,7 +261,7 @@ add_mkmf_common_data() {
           have_add_c=1
           ;;
         *)
-          echo "$script_name: error: unknown source file type: $src" >&2
+          echo "$script_name: unknown source file type: $src" >&2
           exit 1
           ;;
       esac
@@ -275,7 +274,7 @@ add_mkmf_common_data() {
         :
         ;;
       *)
-        echo "$script_name: error: invalid default type: $DEFAULT_TYPE" >&2
+        echo "$script_name: invalid default type: $DEFAULT_TYPE" >&2
         exit 1
         ;;
     esac
@@ -287,7 +286,7 @@ add_mkmf_common_data() {
         :
         ;;
       *)
-        echo "$script_name: error: invalid language type $DEFAULT_LANG" >&2
+        echo "$script_name: invalid language type $DEFAULT_LANG" >&2
         exit 1
         ;;
     esac
@@ -323,7 +322,7 @@ add_mkmf_data() {
           have_c=1
           ;;
         *)
-          echo "$script_name: error: unknown source file type: $src" >&2
+          echo "$script_name: unknown source file type: $src" >&2
           exit 1
           ;;
       esac
@@ -346,7 +345,7 @@ add_mkmf_data() {
         :
         ;;
       *)
-        echo "$script_name: error: invalid target type: $MKMF_TYPE" >&2
+        echo "$script_name: invalid target type: $MKMF_TYPE" >&2
         exit 1
         ;;
     esac
@@ -395,7 +394,7 @@ add_mkmf_data() {
         eval target_${prefix}_lang=\$MKMF_LANG
         ;;
       *)
-        echo "$script_name: error: invalid language type $MKMF_LANG" >&2
+        echo "$script_name: invalid language type $MKMF_LANG" >&2
         exit 1
         ;;
     esac
@@ -416,6 +415,7 @@ clean_common_vars() {
   done
 }
   
+mkmf_list=
 if test -z "$op_skip_mkmf" || test -n "$op_input_mkmf"; then
   if test -n "$op_input_mkmf"; then
     mkmf_list=$op_input_mkmf
@@ -570,7 +570,7 @@ while test $# -gt 0; do
           ;;
         subdirs)
           if echo "$1" | grep "^/" > /dev/null; then
-            echo "$script_name: error: parameter -subdirs: absolute path not allowed: $1" >&2
+            echo "$script_name: parameter -subdirs: absolute path not allowed: $1" >&2
             exit 1
           fi
           subdir=`echo "$1" | sed 's/\/*$//'`
@@ -589,7 +589,7 @@ while test $# -gt 0; do
               have_c=1
               ;;
             *)
-              echo "$script_name: error: bad source type $1" >&2
+              echo "$script_name: bad source type $1" >&2
               exit 1
               ;;
           esac
@@ -601,7 +601,7 @@ while test $# -gt 0; do
               :
               ;;
             *)
-              echo "$script_name: error: invalid target type: $1" >&2
+              echo "$script_name: invalid target type: $1" >&2
               exit 1
               ;;
           esac
@@ -625,7 +625,7 @@ while test $# -gt 0; do
               target___lang=$1
               ;;
             *)
-              echo "$script_name: error: invalid language type $1" >&2
+              echo "$script_name: invalid language type $1" >&2
               exit 1
               ;;
           esac
@@ -680,7 +680,7 @@ while test $# -gt 0; do
         omk)
           base=`basename "$1"`
           if test "$base" != "$1" || test -d "$1"; then
-            echo "$script_name: error: invalid file name: $1" >&2
+            echo "$script_name: invalid file name: $1" >&2
             exit 1
           fi
           op_out_mkfile=$1
@@ -688,7 +688,7 @@ while test $# -gt 0; do
           current_opt=
           ;;
         *)
-          echo "$script_name: error: bad option $1" >&2
+          echo "$script_name: bad option $1" >&2
           exit 1
           ;;
       esac
@@ -763,7 +763,7 @@ if test x$DEFAULT_NO_INSTALL = x1; then
 fi
 
 formake_scripts="relpath mkrule src2obj"
-cmdok -f $formake_scripts || exit 1
+eval cmdok -f $formake_scripts || exit 1
 srcdir_rel=`relpath $CONFIG_SRCROOT ./`
 
 
@@ -778,8 +778,11 @@ TOP_EOF
   if test $? -eq 0; then
     date | sed 's/^/# /' >>$op_out_mkfile
   fi
-  mkrule init >>$op_out_mkfile
-  mkrule distclean $op_out_mkfile >>$op_out_mkfile
+  eval mkrule init >>$op_out_mkfile
+  eval mkrule distclean -f $op_out_mkfile >>$op_out_mkfile
+fi
+if test -z "$op_append" && test "$CONFIG_SRCROOT" = "$orig_dir"; then
+  eval mkrule distclean -f $CONFIG_CACHE >>$op_out_mkfile
 fi
 
 
@@ -804,7 +807,7 @@ for prefix in $prefix_list; do
   if test -z "$target_type"; then
     if test -n "$DEFAULT_TYPE"; then
       target_type=$DEFAULT_TYPE
-    elif test -n "$COMMON_SOURCES$target_src$target_obj"
+    elif test -n "$COMMON_SOURCES$target_src$target_obj"; then
       target_type=prog
     else
       target_type=unknown
@@ -863,7 +866,7 @@ for prefix in $prefix_list; do
   case $target_type in
     prog|tlib|lib|tobj|obj)
       if test -n "$sources"; then
-        mkrule obj $add_params -src $sources -d $target_objdir >>$op_out_mkfile
+        eval mkrule obj $add_params -src $sources -d $target_objdir >>$op_out_mkfile
         objects=`src2obj -o $target_objdir $sources`
 
         target_obj="$objects $target_obj"
@@ -874,7 +877,7 @@ for prefix in $prefix_list; do
   case $target_type in
     dlib|lib|dobj|obj)
       if test -n "$sources"; then
-        mkrule obj $add_params -pic -src $sources -d $target_objdir_pic >>$op_out_mkfile
+        eval mkrule obj $add_params -pic -src $sources -d $target_objdir_pic >>$op_out_mkfile
         pic_objects=`src2obj -o $target_objdir_pic $sources`
 
         target_dobj="$pic_objects $target_dobj"
@@ -900,7 +903,7 @@ for prefix in $prefix_list; do
     fi
 
     if test -n "$target_obj$COMMON_OBJECTS"; then
-      mkrule prog $add_params -ldflags="$CONFIG_LDFLAGS $COMMON_LDFLAGS $target_ldflags" -n $target_name -obj $target_obj $COMMON_OBJECTS >>$op_out_mkfile
+      eval mkrule prog $add_params -ldflags="$CONFIG_LDFLAGS $COMMON_LDFLAGS $target_ldflags" -n $target_name -obj $target_obj $COMMON_OBJECTS >>$op_out_mkfile
     fi
   fi
 
@@ -931,13 +934,13 @@ for prefix in $prefix_list; do
 
     if test -n "$target_obj$COMMON_OBJECTS"; then
       if test $target_type = tlib || test $target_type = lib; then
-        mkrule lib $add_params -static -ldflags="$CONFIG_LDFLAGS $COMMON_LDFLAGS $target_ldflags" -n $target_name -ver $target_version -obj $target_obj $COMMON_OBJECTS >>$op_out_mkfile
+        eval mkrule lib $add_params -static -ldflags="$CONFIG_LDFLAGS $COMMON_LDFLAGS $target_ldflags" -n $target_name -ver $target_version -obj $target_obj $COMMON_OBJECTS >>$op_out_mkfile
       fi
     fi
 
     if test -n "$target_dobj$COMMON_DOBJECTS"; then
       if test $target_type = dlib || test $target_type = lib; then
-        mkrule lib $add_params -shared -ldflags="$CONFIG_LDFLAGS $COMMON_LDFLAGS $target_ldflags" -n $target_name -ver $target_version -obj $target_dobj $COMMON_DOBJECTS >>$op_out_mkfile
+        eval mkrule lib $add_params -shared -ldflags="$CONFIG_LDFLAGS $COMMON_LDFLAGS $target_ldflags" -n $target_name -ver $target_version -obj $target_dobj $COMMON_DOBJECTS >>$op_out_mkfile
       fi
     fi
   fi
@@ -949,75 +952,75 @@ done
 dist_files=
 if test x$have_custom_inst_stuff = x1; then
   if test -n "$INSTALL_BIN"; then
-    mkrule install bin $INSTALL_BIN >>$op_out_mkfile
+    eval mkrule install -it bin -f $INSTALL_BIN >>$op_out_mkfile
     dist_files="$dist_files $INSTALL_BIN"
   fi
   if test -n "$INSTALL_SBIN"; then
-    mkrule install sbin $INSTALL_SBIN >>$op_out_mkfile
+    eval mkrule install -it sbin -f $INSTALL_SBIN >>$op_out_mkfile
     dist_files="$dist_files $INSTALL_SBIN"
   fi
   if test -n "$INSTALL_LIB"; then
-    mkrule install lib $INSTALL_LIB >>$op_out_mkfile
+    eval mkrule install -it lib -f $INSTALL_LIB >>$op_out_mkfile
     dist_files="$dist_files $INSTALL_LIB"
   fi
   if test -n "$INSTALL_LIBEXEC"; then
-    mkrule install libexec $INSTALL_LIBEXEC >>$op_out_mkfile
+    eval mkrule install -it libexec -f $INSTALL_LIBEXEC >>$op_out_mkfile
     dist_files="$dist_files $INSTALL_LIBEXEC"
   fi
   if test -n "$INSTALL_INC"; then
-    mkrule install inc $INSTALL_INC >>$op_out_mkfile
+    eval mkrule install -it inc -f $INSTALL_INC >>$op_out_mkfile
     dist_files="$dist_files $INSTALL_INC"
   fi
   if test -n "$INSTALL_MAN0"; then
-    mkrule install man0 $INSTALL_MAN0 >>$op_out_mkfile
+    eval mkrule install -it man0 -f $INSTALL_MAN0 >>$op_out_mkfile
     dist_files="$dist_files $INSTALL_MAN0"
   fi
   if test -n "$INSTALL_MAN1"; then
-    mkrule install man1 $INSTALL_MAN1 >>$op_out_mkfile
+    eval mkrule install -it man1 -f $INSTALL_MAN1 >>$op_out_mkfile
     dist_files="$dist_files $INSTALL_MAN1"
   fi
   if test -n "$INSTALL_MAN2"; then
-    mkrule install man2 $INSTALL_MAN2 >>$op_out_mkfile
+    eval mkrule install -it man2 -f $INSTALL_MAN2 >>$op_out_mkfile
     dist_files="$dist_files $INSTALL_MAN2"
   fi
   if test -n "$INSTALL_MAN3"; then
-    mkrule install man3 $INSTALL_MAN3 >>$op_out_mkfile
+    eval mkrule install -it man3 -f $INSTALL_MAN3 >>$op_out_mkfile
     dist_files="$dist_files $INSTALL_MAN3"
   fi
   if test -n "$INSTALL_MAN4"; then
-    mkrule install man4 $INSTALL_MAN4 >>$op_out_mkfile
+    eval mkrule install -it man4 -f $INSTALL_MAN4 >>$op_out_mkfile
     dist_files="$dist_files $INSTALL_MAN4"
   fi
   if test -n "$INSTALL_MAN5"; then
-    mkrule install man5 $INSTALL_MAN5 >>$op_out_mkfile
+    eval mkrule install -it man5 -f $INSTALL_MAN5 >>$op_out_mkfile
     dist_files="$dist_files $INSTALL_MAN5"
   fi
   if test -n "$INSTALL_MAN6"; then
-    mkrule install man6 $INSTALL_MAN6 >>$op_out_mkfile
+    eval mkrule install -it man6 -f $INSTALL_MAN6 >>$op_out_mkfile
     dist_files="$dist_files $INSTALL_MAN6"
   fi
   if test -n "$INSTALL_MAN7"; then
-    mkrule install man7 $INSTALL_MAN7 >>$op_out_mkfile
+    eval mkrule install -it man7 -f $INSTALL_MAN7 >>$op_out_mkfile
     dist_files="$dist_files $INSTALL_MAN7"
   fi
   if test -n "$INSTALL_MAN8"; then
-    mkrule install man8 $INSTALL_MAN8 >>$op_out_mkfile
+    eval mkrule install -it man8 -f $INSTALL_MAN8 >>$op_out_mkfile
     dist_files="$dist_files $INSTALL_MAN8"
   fi
   if test -n "$INSTALL_MAN9"; then
-    mkrule install man9 $INSTALL_MAN9 >>$op_out_mkfile
+    eval mkrule install -it man9 -f $INSTALL_MAN9 >>$op_out_mkfile
     dist_files="$dist_files $INSTALL_MAN9"
   fi
   if test -n "$INSTALL_DOC"; then
-    mkrule install doc $INSTALL_DOC >>$op_out_mkfile
+    eval mkrule install -it doc -f $INSTALL_DOC >>$op_out_mkfile
     dist_files="$dist_files $INSTALL_DOC"
   fi
   if test -n "$INSTALL_SHARE"; then
-    mkrule install data $INSTALL_SHARE >>$op_out_mkfile
+    eval mkrule install -it data -f $INSTALL_SHARE >>$op_out_mkfile
     dist_files="$dist_files $INSTALL_SHARE"
   fi
   if test -n "$INSTALL_ETC"; then
-    mkrule install etc $INSTALL_ETC >>$op_out_mkfile
+    eval mkrule install -it etc -f $INSTALL_ETC >>$op_out_mkfile
     dist_files="$dist_files $INSTALL_ETC"
   fi
 fi
@@ -1025,7 +1028,7 @@ fi
 ################################################################################
 #DIST
 #create distribution tarball by 'make dist'
-dist_files="$DISTFILES $dist_files"
+dist_files="$DISTFILES $dist_files $mkmf_list"
 
 src_dist_files=
 if test -n "$all_sources"; then
@@ -1049,14 +1052,14 @@ if test -z "$op_append" && test "$CONFIG_SRCROOT" = "$orig_dir"; then
   fi
 fi
 
-mkrule dist -buildroot $CONFIG_SRCROOT -f $dist_files >>$op_out_mkfile || exit 1
+eval mkrule dist -buildroot $CONFIG_SRCROOT -f $dist_files >>$op_out_mkfile || exit 1
 
 
 ################################################################################
 #SUBDIRS
 #build subdirectories
 if test -z "$op_append" && test -z "$op_skip_mkmf" && test -n "$SUBDIRS"; then
-  mkrule subdir -all -install -clean -dist -distclean -d $SUBDIRS >>$op_out_mkfile
+  eval mkrule subdir -all -sd $SUBDIRS >>$op_out_mkfile
   for dir in $SUBDIRS; do
     cd $cd_param $orig_dir
     if test -d $dir; then
@@ -1082,6 +1085,10 @@ if test x$op_print = x1; then
   cat $op_out_mkfile
   rm -f $op_out_mkfile
 else
-  echo "$srcdir_rel: DONE"
+  if test "$srcdir_rel" != "."; then
+    echo "$srcdir_rel ... DONE"
+  else
+    echo "DONE"
+  fi
 fi
 
