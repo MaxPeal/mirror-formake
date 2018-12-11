@@ -57,6 +57,7 @@ orig_dir=`pwd`
 cd `dirname "$0"`
 CONFIG_SRCROOT=`pwd`
 CONFIG_MK_PATH=$CONFIG_SRCROOT/mk
+CONFIG_CACHE=$CONFIG_SRCROOT/configure.cache
 
 if test ! -d "$CONFIG_MK_PATH"; then
   echo "$script_name: Formake modules dir not found: $CONFIG_MK_PATH" >&2
@@ -67,10 +68,14 @@ CONFIGURE_STAGE=0
 
 export CONFIG_SRCROOT
 export CONFIG_MK_PATH
+export CONFIG_CACHE
+
+PATH="$CONFIG_MK_PATH:$PATH"
+export PATH
 
 print_version() {
   cat <<EOF
-Formake configure 1.1
+Formake configure 1.2
 Copyright (C) 2018 Oleksii Cherniavskyi
 EOF
 }
@@ -287,6 +292,13 @@ while test $# -gt 0; do
   shift
 done
 
+rm -f $CONFIG_CACHE
+cat <<EOF >$CONFIG_CACHE
+CONFIG_CACHE_LOADED=1
+CONFIG_SRCROOT="$CONFIG_SRCROOT"
+CONFIG_MK_PATH="$CONFIG_MK_PATH"
+EOF
+
 if test -f $CONFIG_MK_PATH/subscript; then
   . $CONFIG_MK_PATH/subscript
 else
@@ -298,6 +310,25 @@ fi
 ################################################################################
 # probe system parameters: OS, OS version, kernel version, distro, distro version, cpu
 formake_pofig
+
+cat <<EOF >>$CONFIG_CACHE
+FORMAKE_POFIG_RUN=1
+CONFIG_OS="$CONFIG_OS"
+CONFIG_OS_VERSION="$CONFIG_OS_VERSION"
+CONFIG_KERNEL_VERSION="$CONFIG_KERNEL_VERSION"
+CONFIG_DISTRO="$CONFIG_DISTRO"
+CONFIG_DISTRO_VERSION="$CONFIG_DISTRO_VERSION"
+CONFIG_ARCH="$CONFIG_ARCH"
+CONFIG_SYSTEM_ID="$CONFIG_SYSTEM_ID"
+export CONFIG_OS
+export CONFIG_OS_VERSION
+export CONFIG_KERNEL_VERSION
+export CONFIG_DISTRO
+export CONFIG_DISTRO_VERSION
+export CONFIG_ARCH
+export CONFIG_SYSTEM_ID
+EOF
+
 cat <<EOF
 OS                $CONFIG_OS
 OS Version        $CONFIG_OS_VERSION
@@ -349,6 +380,40 @@ if test -n "$PROBE_CC"; then
     exit 1
   fi
 
+  cat <<EOF >>$CONFIG_CACHE
+FORMAKE_CPROBE_RUN=1
+CONFIG_CC="$CONFIG_CC"
+CONFIG_CC_TYPE="$CONFIG_CC_TYPE"
+CONFIG_CC_VERSION="$CONFIG_CC_VERSION"
+CONFIG_CC_STD="$CONFIG_CC_STD"
+CONFIG_CC_CXX_STD="$CONFIG_CC_CXX_STD"
+CONFIG_CC_OS="$CONFIG_CC_OS"
+CONFIG_CC_OS_VERSION="$CONFIG_CC_OS_VERSION"
+CONFIG_CC_ARCH="$CONFIG_CC_ARCH"
+CONFIG_CC_BITNESS="$CONFIG_CC_BITNESS"
+CONFIG_CC_ENDIANNESS="$CONFIG_CC_ENDIANNESS"
+CONFIG_CC_DATA_MODEL="$CONFIG_CC_DATA_MODEL"
+CONFIG_CC_FLAG_CROSS="$CONFIG_CC_FLAG_CROSS"
+CONFIG_CC_FLAG_CXX="$CONFIG_CC_FLAG_CXX"
+CONFIG_CC_POSIX="$CONFIG_CC_POSIX"
+CONFIG_CC_SUS="$CONFIG_CC_SUS"
+export CONFIG_CC
+export CONFIG_CC_TYPE
+export CONFIG_CC_VERSION
+export CONFIG_CC_STD
+export CONFIG_CC_CXX_STD
+export CONFIG_CC_OS
+export CONFIG_CC_OS_VERSION
+export CONFIG_CC_ARCH
+export CONFIG_CC_BITNESS
+export CONFIG_CC_ENDIANNESS
+export CONFIG_CC_DATA_MODEL
+export CONFIG_CC_FLAG_CROSS
+export CONFIG_CC_FLAG_CXX
+export CONFIG_CC_POSIX
+export CONFIG_CC_SUS
+EOF
+
   cat <<EOF
 C compiler command ...                  $CONFIG_CC
 C compiler type ...                     $CONFIG_CC_TYPE
@@ -367,15 +432,15 @@ C compiler target POSIX version ...     $CONFIG_CC_POSIX
 C compiler target SUS version ...       $CONFIG_CC_SUS
 EOF
 
-  if test ! -x $CONFIG_MK_PATH/cltest; then
-    echo "error: mk/cltest not found" >&2
+  if test ! -x $CONFIG_MK_PATH/cstem; then
+    echo "error: mk/cstem not found" >&2
     exit 1
   fi
 
-  $CONFIG_MK_PATH/cltest $CONFIG_CC || exit 1
+  $CONFIG_MK_PATH/cstem $CONFIG_CC || exit 1
 
   if test -n "$CONFIG_CFLAGS$CONFIG_LDFLAGS"; then
-    $CONFIG_MK_PATH/cltest $CONFIG_CC - $CONFIG_CFLAGS $CONFIG_LDFLAGS || exit 1
+    $CONFIG_MK_PATH/cstem $CONFIG_CC - $CONFIG_CFLAGS $CONFIG_LDFLAGS || exit 1
   fi
 fi
 
@@ -388,6 +453,40 @@ if test -n "$PROBE_CXX"; then
     echo "error: C++ compiler not found" >&2
     exit 1
   fi
+
+  cat <<EOF >>$CONFIG_CACHE
+FORMAKE_CXXPROBE_RUN=1
+CONFIG_CXX="$CONFIG_CXX"
+CONFIG_CXX_TYPE="$CONFIG_CXX_TYPE"
+CONFIG_CXX_VERSION="$CONFIG_CXX_VERSION"
+CONFIG_CXX_STD="$CONFIG_CXX_STD"
+CONFIG_CXX_CC_STD="$CONFIG_CXX_CC_STD"
+CONFIG_CXX_OS="$CONFIG_CXX_OS"
+CONFIG_CXX_OS_VERSION="$CONFIG_CXX_OS_VERSION"
+CONFIG_CXX_ARCH="$CONFIG_CXX_ARCH"
+CONFIG_CXX_BITNESS="$CONFIG_CXX_BITNESS"
+CONFIG_CXX_ENDIANNESS="$CONFIG_CXX_ENDIANNESS"
+CONFIG_CXX_DATA_MODEL="$CONFIG_CXX_DATA_MODEL"
+CONFIG_CXX_FLAG_CROSS="$CONFIG_CXX_FLAG_CROSS"
+CONFIG_CXX_FLAG_CXX="$CONFIG_CXX_FLAG_CXX"
+CONFIG_CXX_POSIX="$CONFIG_CXX_POSIX"
+CONFIG_CXX_SUS="$CONFIG_CXX_SUS"
+export CONFIG_CXX
+export CONFIG_CXX_TYPE
+export CONFIG_CXX_VERSION
+export CONFIG_CXX_STD
+export CONFIG_CXX_CC_STD
+export CONFIG_CXX_OS
+export CONFIG_CXX_OS_VERSION
+export CONFIG_CXX_ARCH
+export CONFIG_CXX_BITNESS
+export CONFIG_CXX_ENDIANNESS
+export CONFIG_CXX_DATA_MODEL
+export CONFIG_CXX_FLAG_CROSS
+export CONFIG_CXX_FLAG_CXX
+export CONFIG_CXX_POSIX
+export CONFIG_CXX_SUS
+EOF
 
   cat <<EOF
 C++ compiler command ...                  $CONFIG_CXX
@@ -407,15 +506,15 @@ C++ compiler target POSIX version ...     $CONFIG_CXX_POSIX
 C++ compiler target SUS version ...       $CONFIG_CXX_SUS
 EOF
 
-  if test ! -x $CONFIG_MK_PATH/cltest; then
-    echo "error: mk/cltest not found" >&2
+  if test ! -x $CONFIG_MK_PATH/cstem; then
+    echo "error: mk/cstem not found" >&2
     exit 1
   fi
 
-  $CONFIG_MK_PATH/cltest $CONFIG_CXX || exit 1
+  $CONFIG_MK_PATH/cstem $CONFIG_CXX || exit 1
 
   if test -n "$CONFIG_CXXFLAGS$CONFIG_LDFLAGS"; then
-    $CONFIG_MK_PATH/cltest $CONFIG_CXX - $CONFIG_CXXFLAGS $CONFIG_LDFLAGS || exit 1
+    $CONFIG_MK_PATH/cstem $CONFIG_CXX - $CONFIG_CXXFLAGS $CONFIG_LDFLAGS || exit 1
   fi
 
   fmk_is_cxx=`$CONFIG_MK_PATH/cprobe $CONFIG_CXX -x - $CONFIG_CXXFLAGS`
@@ -433,7 +532,9 @@ if test -f ./configure.rc; then
 fi
 
 
+cd $CONFIG_SRCROOT
+
 if test -x $CONFIG_MK_PATH/mkmf; then
-  $CONFIG_MK_PATH/mkmf `pwd`
+  $CONFIG_MK_PATH/mkmf
 fi
 
