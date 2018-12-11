@@ -90,13 +90,13 @@ abs_path() {
       _arg=`dirname "$_arg"`
     fi
 
-    cd $_cd_param $_arg
+    cd $cd_param $_arg
     abs_path_ret=`pwd`
     if test x"$_file" != "x"; then
       abs_path_ret="$abs_path_ret/$_file"
     fi
 
-    cd $_cd_param $_sub_orig_dir
+    cd $cd_param $_sub_orig_dir
   else
     if echo "$_arg" | grep "^/" > /dev/null; then
       abs_path_ret="$_arg"
