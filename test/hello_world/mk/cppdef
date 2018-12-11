@@ -1,0 +1,293 @@
+#!/bin/sh
+#
+# cppdef
+#
+# Copyright (c) 2015-2017, Oleksii Cherniavskyi
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+################################################################################
+# SWITCH TO MODERN SHELL IF POSSIBLE
+(test_exit_code_127_sdfjsdfksjdhfksjdhf  >/dev/null) 2>/dev/null
+if test $? -ne 127; then
+  if test -z "$FORMAKE_BASH_REDIRECTED"; then
+    FORMAKE_BASH_REDIRECTED=1
+    export FORMAKE_BASH_REDIRECTED
+    if test -x /bin/bash; then
+      exec /bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/bin/bash; then
+      exec /usr/bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/local/bin/bash; then
+      exec /usr/local/bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/pkg/bin/bash; then
+      exec /usr/pkg/bin/bash "$0" ${1+"$@"}
+    else
+      (bash -c "pwd" >/dev/null) 2>/dev/null
+      if test $? -eq 0; then
+        exec bash "$0" ${1+"$@"}
+      fi
+    fi
+  fi
+fi
+FORMAKE_BASH_REDIRECTED=
+export FORMAKE_BASH_REDIRECTED
+################################################################################
+
+script_name=`basename "$0"`
+test_dir=/tmp/cppdef_$$
+c_ext="c"
+orig_dir=`pwd`
+
+cd_param=
+(cd -P / >/dev/null) 2>/dev/null
+if test $? -eq 0; then
+  cd_param="-P"
+fi
+cd $cd_param $orig_dir
+
+
+print_help() {
+cat <<EOF
+Read CPP defines
+
+Usage: $script_name [options] <defines>...
+
+Options:
+ -cc=<cmd>          specify compiler command
+ -c++               C++ mode
+ *.h|*.H|*.hpp      header files. Other file extensions are recognized
+ -inc=<list>        header files
+ -cflags=<flags>    compiler flags
+ -*                 compiler flags
+ -v                 display version information and exit
+ -h|-help           print help
+ <defines>..        preprocessor defines to read
+EOF
+}
+
+print_version() {
+  cat <<EOF
+cppdef 1.2
+Copyright (C) 2015-2018 Oleksii Cherniavskyi
+EOF
+}
+
+clean_exit() {
+  ecode=$1
+  cd /tmp
+  rm -rf $test_dir
+  exit $ecode
+}
+
+op_inc=
+op_cc=
+op_cflags=
+op_def=
+while test $# -gt 0; do
+  case "$1" in
+    -h|-help)
+      print_help
+      exit 0
+      ;;
+    -v|--version)
+      print_version
+      exit 0
+      ;;
+    -cc=*)
+      arg=`echo "$1" | sed 's/^-cc=//'`
+      if test -n "$arg"; then
+        op_cc=`echo "$arg" | sed "s#^\(\.\.*\)/#$orig_dir/\1/#"`
+      fi
+      ;;
+    -c++)
+      CPPDEF_LANG="c++"
+      ;;
+    -inc=*)
+      arg=`echo "$1" | sed 's/^-inc=//'`
+      test -n "$arg" && op_inc="$op_inc $arg"
+      ;;
+    -cflags=*)
+      arg=`echo "$1" | sed 's/^-cflags=//'`
+      test -n "$arg" && op_cflags="$op_cflags $arg"
+      ;;
+    -*)
+      op_cflags="$op_cflags $1"
+      ;;
+    *.h|*.H|*.[Hh]++|*.[Hh][Hh]|*.[Hh][Xx][Xx]|*.[Hh][Pp][Pp])
+      op_inc="$op_inc $1"
+      ;;
+    *)
+      op_def="$op_def $1"
+      ;;
+  esac
+  shift
+done
+
+test -z "$op_def" && exit 0
+
+################################################################################
+#CONFIG_MK_PATH
+if test -z "$CONFIG_MK_PATH"; then
+  cd $cd_param `dirname "$0"`
+  if test -x $script_name; then
+    CONFIG_MK_PATH=`pwd`
+  elif test -d $CONFIG_SRCROOT/mk && test -x $CONFIG_SRCROOT/mk/$script_name; then
+    cd $cd_param $CONFIG_SRCROOT/mk
+    CONFIG_MK_PATH=`pwd`
+  else
+    IFS_save=$IFS
+    IFS=:
+    for dir in $PATH; do
+      if test -f "$dir/$script_name" && test -x "$dir/$script_name" ; then
+        abs_path "$dir"
+        CONFIG_MK_PATH=$abs_path_ret
+        break
+      fi
+    done
+    IFS=$IFS_save
+  fi
+
+  if test -z "$CONFIG_MK_PATH"; then
+    echo "$script_name: Formake modules not found" >&2
+    exit 1
+  fi
+
+  export CONFIG_MK_PATH
+  PATH="$CONFIG_MK_PATH:$PATH"
+  export PATH
+  cd $cd_param $orig_dir
+fi
+################################################################################
+
+if test -f $CONFIG_MK_PATH/subscript; then
+  . $CONFIG_MK_PATH/subscript
+else
+  echo "$script_name: module not found: subscript" >&2
+  exit 1
+fi
+
+############
+if test -n "$op_cc"; then
+  if test "$CPPDEF_LANG" = "c++"; then
+    CONFIG_CXX=$op_cc
+    export CONFIG_CXX
+  else
+    CONFIG_CC=$op_cc
+    export CONFIG_CC
+  fi
+fi
+
+if test -n "$op_cflags"; then 
+  if test "$CPPDEF_LANG" = "c++"; then
+    CONFIG_CXXFLAGS=$op_cflags
+    export CONFIG_CXXFLAGS
+  else
+    CONFIG_CFLAGS=$op_cflags
+    export CONFIG_CFLAGS
+  fi
+fi
+
+if test "$CPPDEF_LANG" = "c++"; then
+  formake_cxxprobe_exifer
+  CPPDEF_CC=$CONFIG_CXX
+  CPPDEF_CFLAGS=$CONFIG_CXXFLAGS
+  CPPDEF_CC_TYPE=$CONFIG_CXX_TYPE
+else
+  formake_cprobe_exifer
+  CPPDEF_CC=$CONFIG_CC
+  CPPDEF_CFLAGS=$CONFIG_CFLAGS
+  CPPDEF_CC_TYPE=$CONFIG_CC_TYPE
+fi
+############
+
+case "$CPPDEF_CC_TYPE" in
+  ticc)
+    cpp_flag=-ppl
+    ;;
+  msc)
+    cpp_flag="/E"
+    ;;
+  gcc|clang|hpacc|hpansic|intel|mipspro|sunpro|tinyc|xlc)
+    cpp_flag=-E
+    ;;
+  *)
+    echo "$script_name: unsupported compiler: $CPPDEF_CC_TYPE" >&2
+    exit 0
+    ;;
+esac
+
+
+rm -rf $test_dir 2>/dev/null
+(mkdir $test_dir >/dev/null) 2>/dev/null
+if test ! -d $test_dir; then
+  echo "$script_name: could not create temporary directory $test_dir" >&2
+  exit 1
+fi
+cd $test_dir
+
+################################################################################
+# SET UP TEST DIR
+test_src_base=test_src_base.$c_ext
+
+echo "" >$test_src_base
+for inc in $op_inc; do
+  inc=`echo "$inc" | sed 's/[<]//' | sed 's/[>]//'`
+  echo "#include <$inc>" >> $test_src_base
+done
+
+test_src=test_src.$c_ext
+test_pp=test_src.pp
+
+################################################################################
+# READ DEFINES
+defvals=
+for def in $op_def; do
+  cat $test_src_base > $test_src
+
+  cat <<EOF >>$test_src
+#ifdef $def
+CPPDEF_DEFVAL=$def
+#endif
+EOF
+  if test "$op_cctype" = ticc; then
+    $CPPDEF_CC $CPPDEF_CFLAGS $cpp_flag $test_src 2>/dev/null
+    if test $? != 0; then
+      echo "$script_name: CPP error" >&2
+      clean_exit 1
+    fi
+    cat $test_pp > test_c.out
+    rm -f $test_pp
+  else
+    $CPPDEF_CC $CPPDEF_CFLAGS $cpp_flag $test_src 2>/dev/null > test_c.out
+    if test $? != 0; then
+      echo "$script_name: CPP error" >&2
+      clean_exit 1
+    fi
+  fi
+
+  defval=`cat test_c.out | grep "^ *CPPDEF_DEFVAL" | sed 's/^ *CPPDEF_DEFVAL=//' | sed 's/ *$//' | sed 's/"$//' |  sed 's/^"//' | tr -d '\n'`
+  defvals="$defvals $defval"
+done
+
+echo "$defvals" | sed 's/^ *//'
+clean_exit 0
+

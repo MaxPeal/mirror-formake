@@ -1,0 +1,225 @@
+
+formake_script_name=$script_name
+if test -z "$formake_script_name"; then
+  formake_script_name=`basename "$0"`
+fi
+formake_orig_dir=`pwd`
+
+formake_config_srcroot() {
+  if test -z "$CONFIG_SRCROOT"; then
+    while test `pwd` != '/'; do
+      if test -d mk && test -x mk/$formake_script_name; then
+        CONFIG_SRCROOT=`pwd`
+        break
+      fi
+      cd $cd_param ..
+    done
+    cd $cd_param $formake_orig_dir
+  
+    if test -z "$CONFIG_SRCROOT"; then
+      CONFIG_SRCROOT=`pwd`
+      formake_mkmf_num=`ls *.mkmf 2>/dev/null | wc -l`
+      while test $formake_mkmf_num -ge 1; do
+        CONFIG_SRCROOT=`pwd`
+        test `pwd` = '/' && break
+        cd $cd_param ..
+        formake_mkmf_num=`ls *.mkmf 2>/dev/null | wc -l`
+      done
+      cd $cd_param $formake_orig_dir
+    fi
+    export CONFIG_SRCROOT
+  fi
+}
+
+formake_config_mk_path() {
+  if test -z "$CONFIG_MK_PATH"; then
+    formake_config_srcroot
+    cd $cd_param `dirname "$0"`
+    if test -x $formake_script_name; then
+      CONFIG_MK_PATH=`pwd`
+    elif test -d $CONFIG_SRCROOT/mk && test -x $CONFIG_SRCROOT/mk/$formake_script_name; then
+      cd $cd_param $CONFIG_SRCROOT/mk
+      CONFIG_MK_PATH=`pwd`
+    else
+      formake_IFS_save=$IFS
+      IFS=:
+      for formake_dir in $PATH; do
+        if test -f "$formake_dir/$formake_script_name" && test -x "$formake_dir/$formake_script_name" ; then
+          cd $cd_param $formake_dir
+          CONFIG_MK_PATH=`pwd`
+          break
+        fi
+      done
+      IFS=$formake_IFS_save
+    fi
+    cd $cd_param $formake_orig_dir
+  
+    if test -n "$CONFIG_MK_PATH"; then
+      export CONFIG_MK_PATH
+      PATH="$CONFIG_MK_PATH:$PATH"
+      export PATH
+    fi
+  fi
+}
+
+formake_cprobe() {
+  if test x$FORMAKE_CPROBE_RUN = x1; then
+    return
+  fi
+  FORMAKE_CPROBE_RUN=1
+  export FORMAKE_CPROBE_RUN
+  
+  formake_config_mk_path
+
+  if cmdok -f cprobe; then
+    formake_out_buf=/tmp/formake_out_buf_$$
+    cprobe -1 > $formake_out_buf
+    . $formake_out_buf
+    rm -f $formake_out_buf
+    
+    
+    CONFIG_CC=$CC_CMD
+    CONFIG_CC_TYPE=$CC_TYPE
+    CONFIG_CC_VERSION=$CC_VERSION
+    CONFIG_CC_STD=$CC_STD
+    CONFIG_CC_CXX_STD=$CC_CXX_STD
+    CONFIG_CC_OS=$CC_OS
+    CONFIG_CC_OS_VERSION=$CC_OS_VERSION
+    CONFIG_CC_ARCH=$CC_ARCH
+    CONFIG_CC_BITNESS=$CC_BITNESS
+    CONFIG_CC_ENDIANNESS=$CC_ENDIANNESS
+    CONFIG_CC_DATA_MODEL=$CC_DATA_MODEL
+    CONFIG_CC_FLAG_CROSS=$CC_FLAG_CROSS
+    CONFIG_CC_FLAG_CXX=$CC_FLAG_CXX
+    CONFIG_CC_POSIX=$CC_POSIX
+    CONFIG_CC_SUS=$CC_SUS
+  
+    export CONFIG_CC
+    export CONFIG_CC_TYPE
+    export CONFIG_CC_VERSION
+    export CONFIG_CC_STD
+    export CONFIG_CC_CXX_STD
+    export CONFIG_CC_OS
+    export CONFIG_CC_OS_VERSION
+    export CONFIG_CC_ARCH
+    export CONFIG_CC_BITNESS
+    export CONFIG_CC_ENDIANNESS
+    export CONFIG_CC_DATA_MODEL
+    export CONFIG_CC_FLAG_CROSS
+    export CONFIG_CC_FLAG_CXX
+    export CONFIG_CC_POSIX
+    export CONFIG_CC_SUS
+  else
+    echo "$formake_script_name: subscript: cprobe not found" >&2
+    exit 1
+  fi
+}
+
+formake_cprobe_exifer() {
+  formake_cprobe
+  if test -z "$CONFIG_CC"; then
+    echo "$formake_script_name: compiler not found" >&2
+    exit 1
+  fi
+  if test -z "$CONFIG_CC_TYPE"; then
+    echo "$formake_script_name: unsupported compiler type: $CONFIG_CC" >&2
+    exit 1
+  fi
+}
+
+formake_cxxprobe() {
+  if test x$FORMAKE_CXXPROBE_RUN = x1; then
+    return
+  fi
+  FORMAKE_CXXPROBE_RUN=1
+  export FORMAKE_CXXPROBE_RUN
+  
+  formake_config_mk_path
+
+  if cmdok -f cprobe; then
+    formake_out_buf=/tmp/formake_out_buf_$$
+    CPROBE_LANG="c++" cprobe -1 > $formake_out_buf
+    . $formake_out_buf
+    rm -f $formake_out_buf
+    
+    
+    CONFIG_CXX=$CC_CMD
+    CONFIG_CXX_TYPE=$CC_TYPE
+    CONFIG_CXX_VERSION=$CC_VERSION
+    CONFIG_CXX_STD=$CC_CXX_STD
+    CONFIG_CXX_CC_STD=$CC_STD
+    CONFIG_CXX_OS=$CC_OS
+    CONFIG_CXX_OS_VERSION=$CC_OS_VERSION
+    CONFIG_CXX_ARCH=$CC_ARCH
+    CONFIG_CXX_BITNESS=$CC_BITNESS
+    CONFIG_CXX_ENDIANNESS=$CC_ENDIANNESS
+    CONFIG_CXX_DATA_MODEL=$CC_DATA_MODEL
+    CONFIG_CXX_FLAG_CROSS=$CC_FLAG_CROSS
+    CONFIG_CXX_FLAG_CXX=$CC_FLAG_CXX
+    CONFIG_CXX_POSIX=$CC_POSIX
+    CONFIG_CXX_SUS=$CC_SUS
+  
+    export CONFIG_CXX
+    export CONFIG_CXX_TYPE
+    export CONFIG_CXX_VERSION
+    export CONFIG_CXX_STD
+    export CONFIG_CXX_CC_STD
+    export CONFIG_CXX_OS
+    export CONFIG_CXX_OS_VERSION
+    export CONFIG_CXX_ARCH
+    export CONFIG_CXX_BITNESS
+    export CONFIG_CXX_ENDIANNESS
+    export CONFIG_CXX_DATA_MODEL
+    export CONFIG_CXX_FLAG_CROSS
+    export CONFIG_CXX_FLAG_CXX
+    export CONFIG_CXX_POSIX
+    export CONFIG_CXX_SUS
+  else
+    echo "$formake_script_name: subscript: cprobe not found" >&2
+    exit 1
+  fi
+}
+
+formake_cxxprobe_exifer() {
+  formake_cxxprobe
+  if test -z "$CONFIG_CXX"; then
+    echo "$formake_script_name: compiler not found" >&2
+    exit 1
+  fi
+  if test -z "$CONFIG_CXX_TYPE"; then
+    echo "$formake_script_name: unsupported compiler type: $CONFIG_CXX" >&2
+    exit 1
+  fi
+}
+
+formake_pofig() {
+  if test x$FORMAKE_POFIG_RUN = x1; then
+    return
+  fi
+  FORMAKE_POFIG_RUN=1
+  export FORMAKE_POFIG_RUN
+  
+  formake_config_mk_path
+
+  if cmdok -f pofig; then
+    CONFIG_OS=`pofig -o`
+    CONFIG_OS_VERSION=`pofig -s`
+    CONFIG_KERNEL_VERSION=`pofig -k`
+    CONFIG_DISTRO=`pofig -d`
+    CONFIG_DISTRO_VERSION=`pofig -r`
+    CONFIG_ARCH=`pofig -a`
+    CONFIG_SYSTEM_ID=`pofig -i`
+
+    export CONFIG_OS
+    export CONFIG_OS_VERSION
+    export CONFIG_KERNEL_VERSION
+    export CONFIG_DISTRO
+    export CONFIG_DISTRO_VERSION
+    export CONFIG_ARCH
+    export CONFIG_SYSTEM_ID
+  else
+    echo "$formake_script_name: subscript: pofig not found" >&2
+    exit 1
+  fi
+}
+

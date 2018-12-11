@@ -1,0 +1,7 @@
+
+SOURCES="hello.c"
+NAME=hello
+LANG=c
+TYPE=prog
+
+

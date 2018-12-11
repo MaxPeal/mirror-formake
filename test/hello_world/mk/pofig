@@ -1,0 +1,840 @@
+#!/bin/sh
+#
+# pofig
+#
+# Copyright (c) 2015-2018, Oleksii Cherniavskyi
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# --------------------------------------------------------------------------------
+#
+
+# TESTED ON:
+#   AIX 7.1 powerpc
+#   Cygwin 2.x x86-64
+#   DragonFly BSD 3.8 i386
+#   DragonFly BSD 4.8.0 x86-64
+#   FreeBSD 11.0 i386
+#   FreeBSD 11.0 x86-64
+#   GNU Hurd:
+#     Debian GNU/Hurd 9.0 "Stretch" i386
+#   GNU Linux:
+#     Arch Linux x86-64
+#     CentOS 5 i386
+#     CentOS 6.5 i686
+#     CentOS 7.2 i686
+#     Debian 3.0 r6 i386
+#     Debian 4.0 r9 x86-64
+#     Debian 5.0 x86-64
+#     Debian 6.0 x86-64
+#     Debian 7.11 x86-64
+#     Debian 8.7 PPC
+#     Debian 8.7 x86-64
+#     Debian 9.0 x86-64
+#     Devuan 1.0 x86-64
+#     Fedora 14 i386
+#     Fedora 20 x86-64
+#     Fedora 25 x86-64
+#     Gentoo Live 20160704 x86-64
+#     OpenSUSE 11.4 x86-64
+#     OpenSUSE 13.2 i586
+#     OpenSUSE 42.2 x86-64
+#     Raspbian GNU/Linux 7.10 arm
+#     Red Hat 7.1 i386
+#     Red Hat 8.0 i386
+#     RHEL 3 i386
+#     RHEL 4.6 x86-64
+#     RHEL 5.8 x86-64 server
+#     RHEL 6.8 x86-64
+#     RHEL 7.3 x86-64
+#     Slackware 12.0 i386
+#     Slackware 13.37 i386
+#     Slackware 14.02 x86-64
+#     Suse Linux Enterprise Desktop 10 i386
+#     Suse Linux Enterprise Server 10 i386
+#     Suse Linux Enterprise Server 10 x86-64
+#     Suse Linux Enterprise Desktop 11 x86-64
+#     Suse Linux Enterprise Desktop 12 x86-64
+#     Ubuntu 12.04 x86-64
+#     Ubuntu 14.04 x86-64
+#     Ubuntu 17.04 x86-64
+#  HP-UX 11.11 PA-RISC
+#  IRIX 6.5 MIPS64
+#  MacOS 10.7.5 Lion x86-64
+#  macOS 10.11 El Capitan x86-64
+#  macOS 10.12 Sierra x86-64
+#  Msys 1.x x86
+#  Msys 2.x x86-64
+#  Minix 3.3.0 x86
+#  MirOS 10semel i386
+#  NetBSD 6.0.4 i386
+#  NetBSD 7.1 x86-64
+#  OpenBSD 4.9 i386
+#  OpenBSD 6.1 x86-64
+#  Pidora 2014 Arm
+#  QNX 6.5.0 x86
+#  SCO OpenServer 6.0.0 i386
+#  SmartOS 2017xxxx x86-64
+#  Solaris 9 x86-64
+#  Solaris 10 sparc
+#  Solaris 10 x86-64
+#  Solaris 11.3 x86-64
+#  Tru64 UNIX 5.1 Alpha
+#  UnixWare 7.1 i386
+
+################################################################################
+# SWITCH TO MODERN SHELL IF POSSIBLE
+(test_exit_code_127_sdfjsdfksjdhfksjdhf  >/dev/null) 2>/dev/null
+if test $? -ne 127; then
+  if test -z "$FORMAKE_BASH_REDIRECTED"; then
+    FORMAKE_BASH_REDIRECTED=1
+    export FORMAKE_BASH_REDIRECTED
+    if test -x /bin/bash; then
+      exec /bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/bin/bash; then
+      exec /usr/bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/local/bin/bash; then
+      exec /usr/local/bin/bash "$0" ${1+"$@"}
+    elif test -x /usr/pkg/bin/bash; then
+      exec /usr/pkg/bin/bash "$0" ${1+"$@"}
+    else
+      (bash -c "pwd" >/dev/null) 2>/dev/null
+      if test $? -eq 0; then
+        exec bash "$0" ${1+"$@"}
+      fi
+    fi
+  fi
+fi
+FORMAKE_BASH_REDIRECTED=
+export FORMAKE_BASH_REDIRECTED
+################################################################################
+
+print_help() {
+cat <<EOF
+Portable figure out system properties
+
+$script_name [OPTIONS]
+
+ -o, -os        print OS
+ -s, -osver     print OS version
+ -k, -kernver   print kernel version
+ -d, -distro    print distro
+ -r, -distver   print distro version
+ -a, -arch      print architecture
+ -i, -id        print system id
+ -l             long listing format
+ -v             display version information and exit
+ -hprops        display a detailed list of properties
+EOF
+}
+
+print_help_props() {
+cat <<EOF
+OPERATING SYSTEMS
+--------------------------------------------------------------------------------
+aix               IBM AIX
+cygwin            Cygwin
+dragonfly         DragonFly BSD
+freebsd           FreeBSD
+gnuhurd           GNU/Hurd
+gnulinux          GNU/Linux
+hpux              HP-UX
+irix              IRIX
+macos             Apple macOS
+msys              Msys
+minix             MINIX
+miros             MirOS
+netbsd            NetBSD
+openbsd           OpenBSD
+qnx               QNX
+riscos            RISC OS
+sco               SCO UNIX
+solaris           Solaris
+unixware          UnixWare
+
+DISTRIBUTIONS
+--------------------------------------------------------------------------------
+arch              Arch
+debian            Debian
+devuan            Devuan
+fedora            Fedora
+gentoo            Gentoo
+opensuse          OpenSUSE
+pidora            Pidora
+redhat            Red Hat
+slackware         Slackware
+suse              Suse Linux Enterprise
+ubuntu            Ubuntu
+
+ARCHITECTURES
+--------------------------------------------------------------------------------
+alpha             Alpha
+arm               ARM (Advanced RISC Machine)
+arm64             ARM 64-bit (ARMv8, AArch64 or ARM64)
+hppa              PA-RISC
+hppa64            PA-RISC 64-bit
+ia64              IA-64
+mips              MIPS
+mips64            MIPS64
+powerpc           PowerPC
+sparc             SPARC
+sparc64           SPARC64
+x86               x86
+x86_64            x86-64 (AMD64)
+EOF
+}
+
+print_version() {
+  cat <<EOF
+pofig 1.5.1
+Copyright (C) 2015-2018 Oleksii Cherniavskyi
+EOF
+}
+
+gen_system_id() {
+  uname_n=`(uname -n) 2>/dev/null` || uname_n=unknown
+  uname_m=`(uname -m) 2>/dev/null` || uname_m=unknown
+  uname_r=`(uname -r) 2>/dev/null` || uname_r=unknown
+  uname_s=`(uname -s) 2>/dev/null` || uname_s=unknown
+  uname_v=`(uname -v) 2>/dev/null` || uname_v=unknown
+  uname_p=`(uname -p) 2>/dev/null` || uname_p=unknown
+  uname_i=`(uname -i) 2>/dev/null` || uname_i=unknown
+  uname_o=`(uname -o) 2>/dev/null` || uname_o=unknown
+  arch=`(arch) 2>/dev/null` || arch=unknown
+  host_name=`(hostname) 2>/dev/null` || host_name=unknown
+  host_id=`(hostid) 2>/dev/null` || host_id=unknown
+  lsb_release_a=`(lsb_release -a) 2>/dev/null` || lsb_release_a=unknown
+  
+  _system_id="${uname_n}${uname_m}${uname_r}${uname_s}${uname_v}${uname_p}${uname_i}${uname_o}${arch}${host_name}${host_id}${lsb_release_a}"
+  system_id=`echo "$_system_id" | tr -d '\n\t ' 2>/dev/null | sed 's/\///g'` || system_id=$_system_id
+}
+
+
+perform_probe() {
+  distro_version=
+  config_os=
+  config_os_version=
+  config_kernel_version=
+  config_distro=
+  config_distro_version=
+  config_arch=
+  config_system_id=
+
+  gen_system_id
+  config_system_id=$system_id
+
+  (uname >/dev/null) 2>/dev/null
+  if test $? -ge 126; then
+    return
+  fi
+
+  (lsb_release >/dev/null) 2>/dev/null
+  if test $? -eq 0; then
+    have_lsb_release=1
+  else
+    have_lsb_release=
+  fi
+
+  uname_m=`(uname -m) 2>/dev/null` || uname_m=
+  uname_r=`(uname -r) 2>/dev/null` || uname_r=
+  uname_s=`(uname -s) 2>/dev/null` || uname_s=
+  uname_v=`(uname -v) 2>/dev/null` || uname_v=
+  uname_p=`(uname -p) 2>/dev/null` || uname_p=
+  uname_o=`(uname -o) 2>/dev/null` || uname_o=
+
+  uname_s_lc=`echo "$uname_s" | tr [A-Z] [a-z]`
+
+  case "$uname_s_lc" in
+    netbsd)
+      config_os=netbsd
+      config_os_vmajor=`echo "$uname_r" | sed 's/\..*//'`
+      config_os_vminor=`echo "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      ;;
+    openbsd)
+      config_os=openbsd
+      config_os_vmajor=`echo "$uname_r" | sed 's/\..*//'`
+      config_os_vminor=`echo "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      ;;
+    mirbsd)
+      config_os=miros
+      config_os_vmajor=`echo "$uname_r" | sed 's/\..*//'`
+      config_os_vminor=`echo "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      ;;
+    riscos)
+      config_os=riscos
+      ;;
+    sco*)
+      config_os=sco
+      uname_v=`uname -v`
+      case x"$uname_v" in
+        x[0-9]*.[0-9]*)
+          config_os_vmajor=`echo "$uname_v" | sed 's/\..*//'`
+          config_os_vminor=`echo "$uname_v" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+          ;;
+      esac
+      ;;
+    sunos)
+      config_os=solaris
+      uname_v=`uname -v`
+      case x"$uname_v" in
+        x[0-9]*.[0-9]*)
+          config_os_vmajor=`echo "$uname_v" | sed 's/\..*//'`
+          config_os_vminor=`echo "$uname_v" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+          ;;
+        *)
+          case "$uname_r" in
+            5.*)
+              config_os_vmajor=`echo $uname_r | /usr/bin/sed 's/.*\.\([0-9]*\)/\1/g'`
+              ;;
+          esac
+          ;;
+      esac
+      ;;
+    irix*)
+      config_os=irix
+      config_arch=mips
+      case "$uname_s_lc" in
+        irix64)
+          config_arch=mips64
+          ;;
+      esac
+      config_os_vmajor=`echo "$uname_r" | sed 's/\..*//'`
+      config_os_vminor=`echo "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      ;;
+    aix)
+      config_os=aix
+      case "$uname_v" in
+        [0-9] | [0-9][0-9])
+          config_os_vmajor=$uname_v
+          ;;
+      esac
+      case "$uname_r" in
+        [0-9] | [0-9][0-9])
+          config_os_vminor=$uname_r
+          ;;
+      esac
+      ;;
+    hp-ux)
+      config_os=hpux
+      config_os_vmajor=`echo "$uname_r" | sed 's/^[^0-9]*//' | sed 's/\..*//'`
+      config_os_vminor=`echo "$uname_r" | sed 's/^[^0-9]*//' | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      case "$uname_m" in
+	9000/*)
+	  config_arch=hppa
+	  ;;
+      esac
+      ;;
+    freebsd)
+      config_os=freebsd
+      config_os_vmajor=`echo "$uname_r" | sed 's/\..*//'`
+      config_os_vminor=`echo "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      ;;
+    darwin)
+      sw_vers >/dev/null 2>&1
+      if test $? -eq 0; then
+        sw_vers_prod_name=`sw_vers -productName | sed 's/ //g' | tr '[A-Z]' '[a-z]'`
+        case "$sw_vers_prod_name" in
+          macos*)
+            config_os=macos
+            ;;
+        esac
+        config_os_vmajor=`sw_vers -productVersion | sed 's/\..*//'`
+        config_os_vminor=`sw_vers -productVersion | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      fi
+      if file /bin/cat | grep -i x86_64 > /dev/null; then
+        config_arch=x86_64
+      fi
+      ;;
+    cygwin*)
+      config_os=cygwin
+      config_os_vmajor=`echo "$uname_r" | sed 's/\..*//'`
+      config_os_vminor=`echo "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      ;;
+    minix)
+      config_os=minix
+      config_os_vmajor=`echo "$uname_r" | sed 's/\..*//'`
+      config_os_vminor=`echo "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      ;;
+    gnu)
+      config_os=gnuhurd
+      uname_r=`uname -r`
+      case x"$uname_r" in
+        x[0-9]*.[0-9]*)
+          config_kernel_vmajor=`echo "$uname_r" | sed 's/\..*//'`
+          config_kernel_vminor=`echo "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+          ;;
+      esac
+      ;;
+    linux)
+      config_os=gnulinux
+      kernel_version=`uname -r 2>/dev/null | sed 's/\([0-9]*\.[0-9]*\.[0-9]*\).*/\1/'`
+      config_kernel_vmajor=`echo $kernel_version | sed 's/\([0-9]*\)\..*/\1/'`
+      config_kernel_vminor=`echo $kernel_version | sed 's/^.*\.\([0-9]*\)\.[0-9]*.*/\1/'`
+      config_kernel_vrevision=`echo $kernel_version | sed 's/^.*\.[0-9]*\.\([0-9]*\).*/\1/'`
+      ;;
+    procnto* | qnx)
+      config_os=qnx
+      config_os_vmajor=`echo "$uname_r" | sed 's/\..*//'`
+      config_os_vminor=`echo "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      ;;
+    dragonfly)
+      config_os=dragonfly
+      config_os_vmajor=`echo "$uname_r" | sed 's/\..*//'`
+      config_os_vminor=`echo "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+      ;;
+    unixware)
+      config_os=unixware
+      uname_v=`uname -v`
+      case x"$uname_v" in
+        x[0-9]*.[0-9]*)
+          config_os_vmajor=`echo "$uname_v" | sed 's/\..*//'`
+          config_os_vminor=`echo "$uname_v" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+          ;;
+      esac
+      ;;
+  esac
+
+  if test x$config_os = x; then
+    uname_o_lc=`echo "$uname_o" | tr [A-Z] [a-z]`
+    case "$uname_o_lc" in
+      msys*)
+        config_os=msys
+        config_os_vmajor=`echo "$uname_r" | sed 's/\..*//'`
+        config_os_vminor=`echo "$uname_r" | sed 's/^[^.]*//' | sed 's/^\.//' | sed 's/\..*//' | sed 's/[^0-9].*//'`
+        ;;
+    esac
+  fi
+
+  if test x$config_arch = x; then
+    case "$uname_m:$uname_r" in
+      TSUNAMI:2.*)
+        config_arch=sparc
+        ;;
+      PowerPC:2.* | PowerPC:3.[01]* | PowerPC:4.[02]*)
+        config_arch=powerpc
+        ;;
+    esac
+  fi
+
+  if test x$config_arch = x; then
+    case "$uname_m" in
+      8664)
+        config_arch=x86_64
+        ;;
+      aarch64 | aarch64_be)
+        config_arch=arm64
+        ;;
+      alpha)
+        config_arch=alpha
+        ;;
+      amd64)
+        config_arch=x86_64
+        ;;
+      arm*)
+        config_arch=arm
+        ;;
+      authenticamd | genuineintel | EM64T)
+        config_arch=x86_64
+        ;;
+      i?86*)
+        config_arch=x86
+        ;;
+      i86pc)
+        config_arch=x86
+        ;;
+      ia64 | IA64)
+        config_arch=ia64
+        ;;
+      macppc)
+        config_arch=powerpc
+        ;;
+      mips)
+        config_arch=mips
+        ;;
+      mips64)
+        config_arch=mips64
+        ;;
+      padre)
+        config_arch=sparc
+        ;;
+      parisc64 | hppa64)
+        config_arch=hppa64
+        ;;
+      parisc | hppa)
+        config_arch=hppa
+        ;;
+      ppc64 | ppc64le)
+        config_arch=powerpc
+        ;;
+      ppc | ppcle)
+        config_arch=powerpc
+        ;;
+      sparc)
+        config_arch=sparc
+        ;;
+      sparc64)
+        config_arch=sparc64
+        ;;
+      x86 | x86pc)
+        config_arch=x86
+        ;;
+      x86_64)
+        config_arch=x86_64
+        ;;
+      i*)
+        case "$config_os" in
+          msys | cygwin)
+            config_arch=x86
+            ;;
+        esac
+        ;;
+      p*)
+        if test "$config_os" = cygwin; then
+          config_arch=powerpc
+        fi
+        ;;
+    esac
+  fi
+
+  if test x$config_arch = x; then
+    case "$uname_p" in
+      alpha)
+        config_arch=alpha
+        ;;
+      amd64)
+        config_arch=x86_64
+        ;;
+      arm)
+        config_arch=arm
+        ;;
+      hppa)
+        config_arch=hppa
+        ;;
+      i*86)
+        config_arch=x86
+        ;;
+      mipseb | mipsel)
+        config_arch=mips
+        ;;
+      powerpc)
+        config_arch=powerpc
+        ;;
+      sparc)
+        config_arch=sparc
+        ;;
+      sparc64)
+        config_arch=sparc64
+        ;;
+      x86_64)
+        config_arch=x86_64
+        ;;
+      x86)
+        config_arch=x86
+        ;;
+    esac
+  fi
+
+
+  if test x$have_lsb_release = x1; then
+    if lsb_release -id | grep -i fedora >/dev/null; then
+      config_distro=fedora
+    elif lsb_release -id | grep -i "red *hat" >/dev/null; then
+      config_distro=redhat
+    elif lsb_release -id | grep -i centos >/dev/null; then
+      config_distro=redhat
+    elif lsb_release -id | grep -i devuan >/dev/null; then
+      config_distro=devuan
+    elif lsb_release -id | grep -i opensuse >/dev/null; then
+      config_distro=opensuse
+    elif lsb_release -id | grep -i suse | grep -i "enterprise" >/dev/null; then
+      config_distro=suse
+    elif lsb_release -id | grep -i ubuntu >/dev/null; then
+      config_distro=ubuntu
+    elif lsb_release -id | grep -i debian >/dev/null; then
+      config_distro=debian
+    fi
+    distro_version=`lsb_release -r | sed 's/^Release[^0-9]*//' | sed 's/[^0-9]*$//'`
+  elif test -f /etc/os-release; then
+    if cat /etc/os-release | grep -i pidora >/dev/null; then
+      config_distro=pidora
+    elif cat /etc/os-release | grep -i fedora >/dev/null; then
+      config_distro=fedora
+    elif cat /etc/os-release | grep -i "red *hat" >/dev/null; then
+      config_distro=redhat
+    elif cat /etc/os-release | grep -i centos >/dev/null; then
+      config_distro=redhat
+    elif cat /etc/os-release | grep -i devuan >/dev/null; then
+      config_distro=devuan
+    elif cat /etc/os-release | grep -i gentoo >/dev/null; then
+      config_distro=gentoo
+    elif cat /etc/os-release | grep -i "arch linux" >/dev/null; then
+      config_distro=arch
+    elif cat /etc/os-release | grep -i opensuse >/dev/null; then
+      config_distro=opensuse
+    elif cat /etc/os-release | grep -i suse | grep -i "enterprise" >/dev/null; then
+      config_distro=suse
+    elif cat /etc/os-release | grep -i ubuntu >/dev/null; then
+      config_distro=ubuntu
+    elif cat /etc/os-release | grep -i slackware >/dev/null; then
+      config_distro=slackware
+    elif cat /etc/os-release | grep -i debian >/dev/null; then
+      config_distro=debian
+    fi
+    distro_version=`cat /etc/os-release | grep "^VERSION_ID" | sed 's/^VERSION_ID[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
+  elif test -f /etc/issue; then
+    if cat /etc/issue | grep -i "devuan" >/dev/null; then
+      config_distro=devuan
+      distro_version=`cat /etc/issue | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
+    elif cat /etc/issue | grep -i "arch linux" >/dev/null; then
+      config_distro=arch
+    elif cat /etc/issue | grep -i "pidora" >/dev/null; then
+      config_distro=pidora
+      distro_version=`cat /etc/issue | grep -i "pidora" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
+    elif cat /etc/issue | grep -i "fedora" >/dev/null; then
+      config_distro=fedora
+      distro_version=`cat /etc/issue | grep -i "fedora" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
+    elif cat /etc/issue | grep -i "red hat" >/dev/null; then
+      config_distro=redhat
+      distro_version=`cat /etc/issue | grep -i "red hat" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
+    elif cat /etc/issue | grep -i centos >/dev/null; then
+      config_distro=redhat
+      distro_version=`cat /etc/issue | grep -i centos | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
+    elif cat /etc/issue | grep -i "opensuse" >/dev/null; then
+      config_distro=opensuse
+      distro_version=`cat /etc/issue | sed 's/.*opensuse[^0-9]*//i' | sed 's/^\([0-9.]*\).*$/\1/' | sed '/^\s*$/d'`
+    elif cat /etc/issue | grep -i "suse linux enterprise" >/dev/null; then
+      config_distro=suse
+      distro_version=`cat /etc/issue | sed 's/.*suse linux[^0-9]*//i' | sed 's/^\([0-9].*\).*$/\1/' | sed '/^\s*$/d'`
+    elif cat /etc/issue | grep -i ubuntu >/dev/null; then
+      config_distro=ubuntu
+      distro_version=`cat /etc/issue | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
+    elif cat /etc/issue | grep -i debian >/dev/null; then
+      config_distro=debian
+      distro_version=`cat /etc/issue | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
+    fi
+  fi
+
+  if test x$config_distro = x || test x$config_distro = xdebian; then
+    if test -f /etc/debian_version; then
+      config_distro=debian
+      distro_version=`cat /etc/debian_version | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
+    fi
+  fi
+
+  if test x$config_distro = x; then
+    if test -f /etc/devuan_version; then
+      config_distro=devuan
+      if test x$have_lsb_release = x1; then
+        distro_version=`lsb_release -r | sed 's/^Release[^0-9]*//' | sed 's/[^0-9]*$//'`
+      else
+        codename=`cat /etc/devuan_version | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
+        if test -n "$codename"; then
+          case "$codename" in
+            jessie) distro_version=1 ;;
+          esac
+        fi
+      fi
+    elif test -f /etc/pidora-release; then
+      config_distro=pidora
+      distro_version=`cat /etc/pidora-release | grep -i "pidora" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
+    elif test -f /etc/fedora-release; then
+      config_distro=fedora
+      distro_version=`cat /etc/fedora-release | grep -i "fedora" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
+    elif test -f /etc/redhat-release; then
+      config_distro=redhat
+      if cat /etc/redhat-release | grep -i centos > /dev/null; then
+        distro_version=`cat /etc/redhat-release | grep -i centos | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
+      else
+        distro_version=`cat /etc/redhat-release | grep -i "red hat" | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed 's/[^0-9][^0-9]*/./' | sed '/^\s*$/d'`
+      fi
+    elif test -f /etc/slackware-version; then
+      config_distro=slackware
+      distro_version=`cat /etc/slackware-version | sed 's/^[^0-9]*//' | sed 's/[^0-9]*$//' | sed '/^\s*$/d'`
+    elif test -f /etc/gentoo-release; then
+      config_distro=gentoo
+    elif test -f /etc/arch-release; then
+      config_distro=arch
+    elif test -f /etc/SuSE-release; then
+      if cat /etc/SuSE-release | grep -i opensuse > /dev/null; then
+        config_distro=opensuse
+      else
+        config_distro=suse
+      fi
+      distro_major=`cat /etc/SuSE-release | grep VERSION | sed 's/^ *VERSION *= *//' | sed 's/ *$//'`
+      distro_minor=`cat /etc/SuSE-release | grep PATCHLEVEL | sed 's/^ *PATCHLEVEL*= *//' | sed 's/ *$//'`
+      distro_version="$distro_major.$distro_minor"
+    fi
+  fi
+
+  if test -n "$distro_version"; then
+    distro_version=`echo "$distro_version" | sed 's/[^0-9.]//g' | sed '/^\s*$/d'`
+    config_distro_vmajor=`echo "$distro_version" | sed 's/[^0-9].*//'`
+    config_distro_vminor=`echo "$distro_version" | sed 's/^[0-9]*//' | sed 's/^[^0-9]*//' | sed 's/[^0-9].*//'`
+  fi
+
+  if test -n "$config_os_vmajor"; then
+    config_os_version=$config_os_vmajor
+    if test -n "$config_os_vminor"; then
+      config_os_version=${config_os_version}.${config_os_vminor}
+      if test -n "$config_os_vrevision"; then
+        config_os_version="${config_os_version}.${config_os_vrevision}"
+      fi
+    fi
+  fi
+
+  if test -n "$config_kernel_vmajor"; then
+    config_kernel_version=$config_kernel_vmajor
+    if test -n "$config_kernel_vminor"; then
+      config_kernel_version=${config_kernel_version}.${config_kernel_vminor}
+      if test -n "$config_kernel_vrevision"; then
+        config_kernel_version="${config_kernel_version}.${config_kernel_vrevision}"
+      fi
+    fi
+  fi
+
+  if test -n "$config_distro_vmajor"; then
+    config_distro_version=$config_distro_vmajor
+    if test -n "$config_distro_vminor"; then
+      config_distro_version=${config_distro_version}.${config_distro_vminor}
+      if test -n "$config_distro_vrevision"; then
+        config_distro_version="${config_distro_version}.${config_distro_vrevision}"
+      fi
+    fi
+  fi
+
+}
+
+script_name=`basename "$0"`
+orig_dir=`pwd`
+
+perform_probe
+  
+op_verbose=
+for arg in "$@"; do
+  case "$arg" in
+    -h|-help|--help)
+      print_help
+      exit 0
+      ;;
+    -hprops)
+      print_help_props
+      exit 0
+      ;;
+    -v|--version)
+      print_version
+      exit 0
+      ;;
+    -l)
+      op_verbose=1
+      ;;
+  esac
+done
+
+if test x$op_verbose = x; then
+  test -n "$config_os"             || config_os=unknown
+  test -n "$config_os_version"     || config_os_version=unknown
+  test -n "$config_kernel_version" || config_kernel_version=unknown
+  test -n "$config_distro"         || config_distro=unknown
+  test -n "$config_distro_version" || config_distro_version=unknown
+  test -n "$config_arch"           || config_arch=unknown
+fi
+
+if test $# -eq 0; then
+  print_string="$config_os $config_os_version $config_kernel_version $config_distro $config_distro_version $config_arch"
+fi
+
+while test $# -gt 0; do
+  case "$1" in
+    -o|-os)
+      print_string="$print_string $config_os"
+      op_os=1
+      ;;
+    -s|-osver)
+      print_string="$print_string $config_os_version"
+      op_osver=1
+      ;;
+    -k|-kernver)
+      print_string="$print_string $config_kernel_version"
+      op_kernver=1
+      ;;
+    -d|-distro)
+      print_string="$print_string $config_distro"
+      op_distro=1
+      ;;
+    -r|-distver)
+      print_string="$print_string $config_distro_version"
+      op_distver=1
+      ;;
+    -a|-arch)
+      print_string="$print_string $config_arch"
+      op_arch=1
+      ;;
+    -i|-id)
+      print_string="$print_string $config_system_id"
+      op_id=1
+      ;;
+    -l) : ;;
+    *)
+      printf "%s\n" "$script_name: invalid parameter $1" >&2
+      exit 1
+      ;;
+  esac
+  shift
+done
+
+if test x$op_verbose = x1; then
+  if test -z "$op_os$op_osver$op_kernver$op_distro$op_distver$op_arch$op_id"; then
+    op_os=1
+    op_osver=1
+    op_kernver=1
+    op_distro=1
+    op_distver=1
+    op_arch=1
+  fi
+  if test x$op_os = x1; then
+    echo "OS                ${config_os:--}"
+  fi
+  if test x$op_osver = x1; then
+    echo "OS Version        ${config_os_version:--}"
+  fi
+  if test x$op_kernver = x1; then
+    echo "Kernel version    ${config_kernel_version:--}"
+  fi
+  if test x$op_distro = x1; then
+    echo "Distro            ${config_distro:--}"
+  fi
+  if test x$op_distver = x1; then
+    echo "Distro version    ${config_distro_version:--}"
+  fi
+  if test x$op_arch = x1; then
+    echo "Arch              ${config_arch:--}"
+  fi
+  if test x$op_id = x1; then
+    echo "System id         ${config_system_id:--}"
+  fi
+else
+  print_string=`echo "$print_string" | sed 's/^ *//' | sed 's/ *$//' | sed 's/  */ /g'`
+  printf "%s\n" "$print_string"
+fi
+
+exit 0
+
