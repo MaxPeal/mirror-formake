@@ -2,7 +2,7 @@
 #
 # pofig
 #
-# Copyright (c) 2015-2017, Oleksii Cherniavskyi
+# Copyright (c) 2015-2018, Oleksii Cherniavskyi
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -205,8 +205,8 @@ EOF
 
 print_version() {
   cat <<EOF
-pofig 1.5
-Copyright (C) 2015-2017 Oleksii Cherniavskyi
+pofig 1.5.1
+Copyright (C) 2015-2018 Oleksii Cherniavskyi
 EOF
 }
 
@@ -723,61 +723,8 @@ perform_probe() {
 
 }
 
-abs_path() {
-  _sub_orig_dir=`pwd`
-  if test $# = 0; then
-    abs_path_ret=
-    return
-  fi
-  if test $# = 2; then
-    _arg_orig_dir=$1
-    _arg=$2
-    if echo "$_arg" | grep "^/" > /dev/null; then
-      :
-    else
-      _arg=`echo "$_arg_orig_dir/$_arg" | sed 's!//*!/!g'`
-    fi
-  else
-    _arg=$1
-  fi
-  if test -e "$_arg"; then
-    if test -d $_arg; then
-      _file=
-    else
-      _file=`basename "$_arg"`
-      _arg=`dirname "$_arg"`
-    fi
-
-    cd $_cd_param $_arg
-    abs_path_ret=`pwd`
-    if test x"$_file" != "x"; then
-      abs_path_ret="$abs_path_ret/$_file"
-    fi
-
-    cd $_cd_param $_sub_orig_dir
-  else
-    if echo "$_arg" | grep "^/" > /dev/null; then
-      abs_path_ret="$_arg"
-    else
-      abs_path_ret="$_sub_orig_dir/$_arg"
-    fi
-    abs_path_ret=`echo "$abs_path_ret" | sed 's#//*#/#g'`
-    abs_path_ret=`echo "$abs_path_ret" | sed 's#/*$#/#'`
-    string_prev=
-    while test "x$abs_path_ret" != "x$string_prev" ; do
-      string_prev=$abs_path_ret
-      abs_path_ret=`echo "$abs_path_ret" | sed 's#/[^/][^/][^/][^/]*/\.\./#/#g' | sed 's#/[^/][^/.]/\.\./#/#g' | sed 's#/[^/.][^/]/\.\./#/#g' | sed 's#/[^/.]/\.\./#/#g'`
-      abs_path_ret=`echo "$abs_path_ret" | sed 's#^/\.\./#/#' | sed 's#^/\.\.$#/#'`
-      abs_path_ret=`echo "$abs_path_ret" | sed 's#/\./#/#g' | sed 's#/\.$#/#'`
-    done
-    abs_path_ret=`echo "$abs_path_ret" | sed 's#/$##' | sed 's#^$#/#'`
-  fi
-}
-
 script_name=`basename "$0"`
 orig_dir=`pwd`
-abs_path `dirname "$0"`
-script_dir=$abs_path_ret
 
 perform_probe
   
