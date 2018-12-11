@@ -174,7 +174,7 @@ $@"
 
 mkstatic() {
   if test x$op_print_only = x; then
-    cmdok -f $CONFIG_AR || exit 1
+    eval cmdok -f $CONFIG_AR || exit 1
   fi
 
   lib_static="lib${op_name}.a"
