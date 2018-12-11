@@ -52,19 +52,6 @@ FORMAKE_BASH_REDIRECTED=
 export FORMAKE_BASH_REDIRECTED
 ################################################################################
 
-
-script_dir=`dirname "$0"`
-
-################################################################################
-# LOAD CONFIG
-if test -f $script_dir/mk.conf; then
-  . $script_dir/mk.conf
-fi
-if test -f $script_dir/relpath.conf; then
-  . $script_dir/relpath.conf
-fi
-################################################################################
-
 abs_path() {
   _sub_orig_dir=`pwd`
   if test $# = 0; then
@@ -226,6 +213,10 @@ fi
 cd "$orig_dir"
 
 if test $# -eq 1; then
+  if test "$1" = "-v"; then
+    echo "Formake relpath 1.0"
+    exit 0
+  fi
   rel_path2 $1 ""
 elif test $# -eq 2; then
   rel_path2 $1 $2
