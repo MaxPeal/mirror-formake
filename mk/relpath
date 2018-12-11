@@ -175,6 +175,9 @@ rel_path() {
 rel_path2() {
   abs_path "$1"
   file_from=$abs_path_ret
+  if test -f $file_from; then
+    file_from=`dirname "$file_from"`
+  fi
   if test -n "$2"; then
     abs_path "$2"
     file_to=$abs_path_ret
@@ -214,7 +217,7 @@ cd "$orig_dir"
 
 if test $# -eq 1; then
   if test "$1" = "-v"; then
-    echo "Formake relpath 1.0"
+    echo "Formake relpath 1.1"
     exit 0
   fi
   rel_path2 $1 ""
