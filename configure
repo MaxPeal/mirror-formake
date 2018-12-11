@@ -26,12 +26,12 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ################################################################################
-# JUMP TO MODERN SHELL IF POSSIBLE
+# SWITCH TO MODERN SHELL IF POSSIBLE
 (test_exit_code_127_sdfjsdfksjdhfksjdhf  >/dev/null) 2>/dev/null
 if test $? -ne 127; then
-  if test -z "$CONFIGURE_BASH_REDIRECTED"; then
-    CONFIGURE_BASH_REDIRECTED=1
-    export CONFIGURE_BASH_REDIRECTED
+  if test -z "$FORMAKE_BASH_REDIRECTED"; then
+    FORMAKE_BASH_REDIRECTED=1
+    export FORMAKE_BASH_REDIRECTED
     if test -x /bin/bash; then
       exec /bin/bash "$0" ${1+"$@"}
     elif test -x /usr/bin/bash; then
@@ -48,20 +48,29 @@ if test $? -ne 127; then
     fi
   fi
 fi
-CONFIGURE_BASH_REDIRECTED=
-export CONFIGURE_BASH_REDIRECTED
+FORMAKE_BASH_REDIRECTED=
+export FORMAKE_BASH_REDIRECTED
 ################################################################################
 
 script_name=`basename "$0"`
 orig_dir=`pwd`
 cd `dirname "$0"`
-script_dir=`pwd`
-mk_path=$script_dir/mk
+CONFIG_SRCROOT=`pwd`
+CONFIG_MK_PATH=$CONFIG_SRCROOT/mk
+
+if test ! -d "$CONFIG_MK_PATH"; then
+  echo "$script_name: Formake modules dir not found: $CONFIG_MK_PATH" >&2
+  exit 1
+fi
+
 CONFIGURE_STAGE=0
+
+export CONFIG_SRCROOT
+export CONFIG_MK_PATH
 
 print_version() {
   cat <<EOF
-Formake configure 1.0
+Formake configure 1.1
 Copyright (C) 2018 Oleksii Cherniavskyi
 EOF
 }
@@ -171,55 +180,55 @@ while test $# -gt 0; do
       exit 0
       ;;
     --prefix=*)
-      PREFIX=`echo "$1" | sed 's/^[^=]*=//'`
+      CONFIG_PREFIX=`echo "$1" | sed 's/^[^=]*=//'`
       ;;
     --exec-prefix=*)
-      EXEC_PREFIX=`echo "$1" | sed 's/^[^=]*=//'`
+      CONFIG_EXEC_PREFIX=`echo "$1" | sed 's/^[^=]*=//'`
       ;;
     --bindir=*)
-      BINDIR=`echo "$1" | sed 's/^[^=]*=//'`
+      CONFIG_BINDIR=`echo "$1" | sed 's/^[^=]*=//'`
       ;;
     --sbindir=*)
-      SBINDIR=`echo "$1" | sed 's/^[^=]*=//'`
+      CONFIG_SBINDIR=`echo "$1" | sed 's/^[^=]*=//'`
       ;;
     --libexecdir=*)
-      LIBEXECDIR=`echo "$1" | sed 's/^[^=]*=//'`
+      CONFIG_LIBEXECDIR=`echo "$1" | sed 's/^[^=]*=//'`
       ;;
     --libdir=*)
-      LIBDIR=`echo "$1" | sed 's/^[^=]*=//'`
+      CONFIG_LIBDIR=`echo "$1" | sed 's/^[^=]*=//'`
       ;;
     --incdir=*)
-      INCDIR=`echo "$1" | sed 's/^[^=]*=//'`
+      CONFIG_INCDIR=`echo "$1" | sed 's/^[^=]*=//'`
       ;;
     --etcdir=*)
-      ETCDIR=`echo "$1" | sed 's/^[^=]*=//'`
+      CONFIG_ETCDIR=`echo "$1" | sed 's/^[^=]*=//'`
       ;;
     --vardir=*)
-      VARDIR=`echo "$1" | sed 's/^[^=]*=//'`
+      CONFIG_VARDIR=`echo "$1" | sed 's/^[^=]*=//'`
       ;;
     --sharedir=*)
-      SHAREDIR=`echo "$1" | sed 's/^[^=]*=//'`
+      CONFIG_SHAREDIR=`echo "$1" | sed 's/^[^=]*=//'`
       ;;
     --mandir=*)
-      MANDIR=`echo "$1" | sed 's/^[^=]*=//'`
+      CONFIG_MANDIR=`echo "$1" | sed 's/^[^=]*=//'`
       ;;
     --docdir=*)
-      DOCDIR=`echo "$1" | sed 's/^[^=]*=//'`
+      CONFIG_DOCDIR=`echo "$1" | sed 's/^[^=]*=//'`
       ;;
     *)
       op_found=
       if test -n "$PROBE_CC"; then
         case "$1" in
           CC=*)
-            CC=`echo "$1" | sed 's/^[^=]*=//'`
+            CONFIG_CC=`echo "$1" | sed 's/^[^=]*=//'`
             op_found=1
             ;;
           CFLAGS=*)
-            CFLAGS=`echo "$1" | sed 's/^[^=]*=//'`
+            CONFIG_CFLAGS=`echo "$1" | sed 's/^[^=]*=//'`
             op_found=1
             ;;
           LDFLAGS=*)
-            LDFLAGS=`echo "$1" | sed 's/^[^=]*=//'`
+            CONFIG_LDFLAGS=`echo "$1" | sed 's/^[^=]*=//'`
             op_found=1
             ;;
         esac
@@ -227,15 +236,15 @@ while test $# -gt 0; do
       if test x$op_found = x && test -n "$PROBE_CXX"; then
         case "$1" in
           CXX=*)
-            CXX=`echo "$1" | sed 's/^[^=]*=//'`
+            CONFIG_CXX=`echo "$1" | sed 's/^[^=]*=//'`
             op_found=1
             ;;
           CXXFLAGS=*)
-            CXXFLAGS=`echo "$1" | sed 's/^[^=]*=//'`
+            CONFIG_CXXFLAGS=`echo "$1" | sed 's/^[^=]*=//'`
             op_found=1
             ;;
           LDFLAGS=*)
-            LDFLAGS=`echo "$1" | sed 's/^[^=]*=//'`
+            CONFIG_LDFLAGS=`echo "$1" | sed 's/^[^=]*=//'`
             op_found=1
             ;;
         esac
@@ -249,7 +258,7 @@ while test $# -gt 0; do
           eval op_have_arg=\$${op_var}_have_arg
         fi
         if test -z "$outvar"; then
-          echo "$0: invalid option: $1"
+          echo "$0: invalid option: $1" >&2
           exit 1
         fi
 
@@ -259,7 +268,7 @@ while test $# -gt 0; do
               arg=`echo "$1" | sed 's/^[^=]*=//'`
               eval $outvar=\$arg
             else
-              echo "$0: invalid option: $1"
+              echo "$0: invalid option: $1" >&2
               exit 1
             fi
             ;;
@@ -267,7 +276,7 @@ while test $# -gt 0; do
             if test "$op_have_arg" -le 1; then
               eval $outvar=1
             else
-              echo "$0: invalid option: $1"
+              echo "$0: invalid option: $1" >&2
               exit 1
             fi
             ;;
@@ -278,24 +287,26 @@ while test $# -gt 0; do
   shift
 done
 
+if test -f $CONFIG_MK_PATH/subscript; then
+  . $CONFIG_MK_PATH/subscript
+else
+  echo "$script_name: module not found: subscript" >&2
+  exit 1
+fi
+
+
 ################################################################################
 # probe system parameters: OS, OS version, kernel version, distro, distro version, cpu
-if test -x $mk_path/pofig; then
-  OS=`$mk_path/pofig -o`
-  echo "OS                $OS"
-  OS_VERSION=`$mk_path/pofig -s`
-  echo "OS Version        $OS_VERSION"
-  KERNEL_VERSION=`$mk_path/pofig -k`
-  echo "Kernel version    $KERNEL_VERSION"
-  DISTRO=`$mk_path/pofig -d`
-  echo "Distro            $DISTRO"
-  DISTRO_VERSION=`$mk_path/pofig -r`
-  echo "Distro version    $DISTRO_VERSION"
-  ARCH=`$mk_path/pofig -a`
-  echo "Arch              $ARCH"
-  SYSID=`$mk_path/pofig -i`
-  echo "System id         ***"
-fi
+formake_pofig
+cat <<EOF
+OS                $CONFIG_OS
+OS Version        $CONFIG_OS_VERSION
+Kernel version    $CONFIG_KERNEL_VERSION
+Distro            $CONFIG_DISTRO
+Distro version    $CONFIG_DISTRO_VERSION
+Arch              $CONFIG_ARCH
+System id         ***
+EOF
 
 ################################################################################
 # Set base configuration variables
@@ -309,156 +320,111 @@ fi
 CONFIGURE_STAGE=2
 
 
-test -n "$PACKAGE_NAME" || PACKAGE_NAME=deadbeef
+test -n "$CONFIG_PACKAGE_NAME" || CONFIG_PACKAGE_NAME=deadbeef
 
-test -n "$PREFIX"      || PREFIX=/usr/local
-test -n "$EXEC_PREFIX" || EXEC_PREFIX=$PREFIX
-test -n "$BINDIR"      || BINDIR=$EXEC_PREFIX/bin
-test -n "$SBINDIR"     || SBINDIR=$EXEC_PREFIX/sbin
-test -n "$LIBEXECDIR"  || LIBEXECDIR=$EXEC_PREFIX/libexec
-test -n "$ETCDIR"      || ETCDIR=$PREFIX/etc
-test -n "$VARDIR"      || VARDIR=$PREFIX/etc
-test -n "$LIBDIR"      || LIBDIR=$EXEC_PREFIX/lib
-test -n "$INCDIR"      || INCDIR=$PREFIX/include
-test -n "$SHAREDIR"    || SHAREDIR=$PREFIX/share
-test -n "$MANDIR"      || MANDIR=$SHAREDIR/man
-test -n "$DOCDIR"      || DOCDIR=$SHAREDIR/doc
+test -n "$CONFIG_PREFIX"      || CONFIG_PREFIX=/usr/local
+test -n "$CONFIG_EXEC_PREFIX" || CONFIG_EXEC_PREFIX=$CONFIG_PREFIX
+test -n "$CONFIG_BINDIR"      || CONFIG_BINDIR=$CONFIG_EXEC_PREFIX/bin
+test -n "$CONFIG_SBINDIR"     || CONFIG_SBINDIR=$CONFIG_EXEC_PREFIX/sbin
+test -n "$CONFIG_LIBEXECDIR"  || CONFIG_LIBEXECDIR=$CONFIG_EXEC_PREFIX/libexec
+test -n "$CONFIG_ETCDIR"      || CONFIG_ETCDIR=$CONFIG_PREFIX/etc
+test -n "$CONFIG_VARDIR"      || CONFIG_VARDIR=$CONFIG_PREFIX/etc
+test -n "$CONFIG_LIBDIR"      || CONFIG_LIBDIR=$CONFIG_EXEC_PREFIX/lib
+test -n "$CONFIG_INCDIR"      || CONFIG_INCDIR=$CONFIG_PREFIX/include
+test -n "$CONFIG_SHAREDIR"    || CONFIG_SHAREDIR=$CONFIG_PREFIX/share
+test -n "$CONFIG_MANDIR"      || CONFIG_MANDIR=$CONFIG_SHAREDIR/man
+test -n "$CONFIG_DOCDIR"      || CONFIG_DOCDIR=$CONFIG_SHAREDIR/doc
 
-DOCDIR=$DOCDIR/$PACKAGE_NAME
-DATADIR=$SHAREDIR/$PACKAGE_NAME
+CONFIG_DOCDIR=$CONFIG_DOCDIR/$CONFIG_PACKAGE_NAME
+CONFIG_DATADIR=$CONFIG_SHAREDIR/$CONFIG_PACKAGE_NAME
 
 
 ################################################################################
 # Probe C compiler
 if test -n "$PROBE_CC"; then
-  if test ! -x $mk_path/cprobe; then
-    echo "error: mk/cprobe not found"
+  formake_cprobe
+
+  if test -z "$CONFIG_CC"; then
+    echo "error: C compiler not found" >&2
     exit 1
   fi
-
-  if test ! -x $mk_path/cltest; then
-    echo "error: mk/cltest not found"
-    exit 1
-  fi
-
-  if test -z "$CC"; then
-    if `$mk_path/cprobe -c >/dev/null`; then
-      CC=`$mk_path/cprobe -c`
-    else
-      echo "error: C compiler not found"
-      exit 1
-    fi
-  else
-    if `$mk_path/cprobe $CC -c >/dev/null`; then
-      :
-    else
-      echo "error: invalid C compiler: $CC"
-      exit 1
-    fi
-  fi
-  echo "C compiler command ...                      $CC"
-
-  $mk_path/cltest $CC || exit 1
-
-  if test -n "$CFLAGS$LDFLAGS"; then
-    $mk_path/cltest $CC - $CFLAGS $LDFLAGS || exit 1
-  fi
-
-  $mk_path/cprobe $CC -1 - $CFLAGS > _formake_tmp_buf.conf
-  . ./_formake_tmp_buf.conf
-  rm -f _formake_tmp_buf.conf
 
   cat <<EOF
-C compiler type ...                         $CC_TYPE
-C compiler version ...                      $CC_VERSION
-C compiler language standard ...            $CC_STD
-C compiler target OS ...                    $CC_OS
-C compiler target OS version ...            $CC_OS_VERSION
-C compiler target architecture ...          $CC_ARCH
-C compiler target bitness ...               $CC_BITNESS
-C compiler target endianess ...             $CC_ENDIANESS
-C compiler target data model ...            $CC_DATA_MODEL
-C compiler is cross-compiler ...            $CC_FLAG_CROSS
-C compiler POSIX support version ...        $CC_POSIX
-C compiler SUS support version ...          $CC_SUS
+C compiler command ...                  $CONFIG_CC
+C compiler type ...                     $CONFIG_CC_TYPE
+C compiler version ...                  $CONFIG_CC_VERSION
+C compiler language standard ...        $CONFIG_CC_STD
+C compiler C++ language standard ...    $CONFIG_CC_CXX_STD
+C compiler target OS ...                $CONFIG_CC_OS
+C compiler target OS version ...        $CONFIG_CC_OS_VERSION
+C compiler target arch ...              $CONFIG_CC_ARCH
+C compiler target bitness ...           $CONFIG_CC_BITNESS
+C compiler target endianess ...         $CONFIG_CC_ENDIANNESS
+C compiler target data model ...        $CONFIG_CC_DATA_MODEL
+C compiler is cross-compiler ...        $CONFIG_CC_FLAG_CROSS
+C compiler C++ support ...              $CONFIG_CC_FLAG_CXX
+C compiler target POSIX version ...     $CONFIG_CC_POSIX
+C compiler target SUS version ...       $CONFIG_CC_SUS
 EOF
+
+  if test ! -x $CONFIG_MK_PATH/cltest; then
+    echo "error: mk/cltest not found" >&2
+    exit 1
+  fi
+
+  $CONFIG_MK_PATH/cltest $CONFIG_CC || exit 1
+
+  if test -n "$CONFIG_CFLAGS$CONFIG_LDFLAGS"; then
+    $CONFIG_MK_PATH/cltest $CONFIG_CC - $CONFIG_CFLAGS $CONFIG_LDFLAGS || exit 1
+  fi
 fi
 
 ################################################################################
 # Probe C++ compiler
 if test -n "$PROBE_CXX"; then
-  if test ! -x $mk_path/cprobe; then
-    echo "error: mk/cprobe not found"
+  formake_cxxprobe
+
+  if test -z "$CONFIG_CXX"; then
+    echo "error: C++ compiler not found" >&2
     exit 1
   fi
-
-  if test ! -x $mk_path/cltest; then
-    echo "error: mk/cltest not found"
-    exit 1
-  fi
-
-  if test -z "$CXX"; then
-    if `$mk_path/cprobe -c >/dev/null`; then
-      CXX=`$mk_path/cprobe -c`
-    else
-      echo "error: C++ compiler not found"
-      exit 1
-    fi
-  else
-    if `$mk_path/cprobe $CXX -c >/dev/null`; then
-      :
-    else
-      echo "error: invalid C++ compiler: $CXX"
-      exit 1
-    fi
-  fi
-  echo "C++ compiler command ...                    $CXX"
-
-  $mk_path/cltest $CXX || exit 1
-
-  if test -n "$CXXFLAGS$LDFLAGS"; then
-    $mk_path/cltest $CXX - $CXXFLAGS $LDFLAGS || exit 1
-  fi
-
-  fmk_is_cxx=`$mk_path/cprobe $CXX -x - $CXXFLAGS`
-  if test x$fmk_is_cxx = xfalse; then
-    echo "error: not C++ compiler: $CXX"
-    exit 1
-  fi
-
-  $mk_path/cprobe $CXX -1 - $CXXFLAGS > _formake_tmp_buf.conf
-  . ./_formake_tmp_buf.conf
-  rm -f _formake_tmp_buf.conf
-
-  CXX_TYPE=$CC_TYPE
-  CXX_VERSION=$CC_VERSION
-  CXX_STD=$CC_CXX_STD
-  CXX_OS=$CC_OS
-  CXX_OS_VERSION=$CC_OS_VERSION
-  CXX_ARCH=$CC_ARCH
-  CXX_BITNESS=$CC_BITNESS
-  CXX_ENDIANNESS=$CC_ENDIANNESS
-  CXX_DATA_MODEL=$CC_DATA_MODEL
-  CXX_FLAG_CROSS=$CC_FLAG_CROSS
-  CXX_POSIX=$CC_POSIX
-  CXX_SUS=$CC_SUS
 
   cat <<EOF
-C++ compiler type ...                       $CXX_TYPE
-C++ compiler version ...                    $CXX_VERSION
-C++ compiler language standard ...          $CXX_STD
-C++ compiler target OS ...                  $CXX_OS
-C++ compiler target OS version ...          $CXX_OS_VERSION
-C++ compiler target architecture ...        $CXX_ARCH
-C++ compiler target bitness ...             $CXX_BITNESS
-C++ compiler target endianess ...           $CXX_ENDIANNESS
-C++ compiler target data model ...          $CXX_DATA_MODEL
-C++ compiler is cross-compiler ...          $CXX_FLAG_CROSS
-C++ compiler POSIX support version ...      $CXX_POSIX
-C++ compiler SUS support version ...        $CXX_SUS
+C++ compiler command ...                  $CONFIG_CXX
+C++ compiler type ...                     $CONFIG_CXX_TYPE
+C++ compiler version ...                  $CONFIG_CXX_VERSION
+C++ compiler language standard ...        $CONFIG_CXX_STD
+C++ compiler C language standard ...      $CONFIG_CXX_CC_STD
+C++ compiler target OS ...                $CONFIG_CXX_OS
+C++ compiler target OS version ...        $CONFIG_CXX_OS_VERSION
+C++ compiler target arch ...              $CONFIG_CXX_ARCH
+C++ compiler target bitness ...           $CONFIG_CXX_BITNESS
+C++ compiler target endianess ...         $CONFIG_CXX_ENDIANNESS
+C++ compiler target data model ...        $CONFIG_CXX_DATA_MODEL
+C++ compiler is cross-compiler ...        $CONFIG_CXX_FLAG_CROSS
+C++ compiler C++ support ...              $CONFIG_CXX_FLAG_CXX
+C++ compiler target POSIX version ...     $CONFIG_CXX_POSIX
+C++ compiler target SUS version ...       $CONFIG_CXX_SUS
 EOF
-fi
 
+  if test ! -x $CONFIG_MK_PATH/cltest; then
+    echo "error: mk/cltest not found" >&2
+    exit 1
+  fi
+
+  $CONFIG_MK_PATH/cltest $CONFIG_CXX || exit 1
+
+  if test -n "$CONFIG_CXXFLAGS$CONFIG_LDFLAGS"; then
+    $CONFIG_MK_PATH/cltest $CONFIG_CXX - $CONFIG_CXXFLAGS $CONFIG_LDFLAGS || exit 1
+  fi
+
+  fmk_is_cxx=`$CONFIG_MK_PATH/cprobe $CONFIG_CXX -x - $CONFIG_CXXFLAGS`
+  if test x$fmk_is_cxx = xfalse; then
+    echo "error: not C++ compiler: $CONFIG_CXX" >&2
+    exit 1
+  fi
+
+fi
 
 ################################################################################
 
@@ -467,7 +433,7 @@ if test -f ./configure.rc; then
 fi
 
 
-if test -x $mk_path/mkmf; then
-  $mk_path/mkmf `pwd`
+if test -x $CONFIG_MK_PATH/mkmf; then
+  $CONFIG_MK_PATH/mkmf `pwd`
 fi
 
