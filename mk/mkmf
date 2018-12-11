@@ -52,11 +52,10 @@ FORMAKE_BASH_REDIRECTED=
 export FORMAKE_BASH_REDIRECTED
 ################################################################################
 
-version_string="Formake mkmf 1.0"
+version_string="Formake mkmf 1.1"
 script_name=`basename "$0"`
 
 orig_dir=`pwd`
-op_srcdir=`pwd`
 op_out_mkfile=Makefile
 default_static_dir="_static"
 default_pic_dir="_pic"
@@ -74,7 +73,7 @@ cd_param=
 if test $? -eq 0; then
   cd_param="-P"
 fi
-cd $cd_param $op_srcdir
+cd $cd_param $orig_dir
 
 
 target_vars="
@@ -138,7 +137,6 @@ $script_name [options]
  -omk FILE            output Make script [$op_out_mkfile]
  -i ..                read specified configuration files
  -skip-mkmf           do not scan .mkmf files
- -C DIR               change to directory DIR before processing
  -srcroot PATH        source root dir relative path [./]
  -subdirs ..          subdirectories to run Make in
  -type TYPE           build type:
@@ -235,9 +233,6 @@ for param in "$@"; do
       echo "$version_string"
       exit 0
       ;;
-    -C)
-      current_opt=C
-      ;;
     -i)
       op_input_mkmf=
       current_opt=i
@@ -248,16 +243,6 @@ for param in "$@"; do
       ;;
     *)
       case "$current_opt" in
-        C)
-          if test -d "$param"; then
-            abs_path $param
-            op_srcdir=$abs_path_ret
-          else
-            echo "$script_name: error: invalid source directory: $param" >&2
-            exit 1
-          fi
-          current_opt=
-          ;;
         i)
           op_input_mkmf="$op_input_mkmf $param"
           ;;
@@ -265,8 +250,6 @@ for param in "$@"; do
       ;;
   esac
 done
-
-cd $cd_param $op_srcdir
 
 add_mkmf_common_data() {
   if test -n "$COMMON_SOURCES"; then
@@ -446,7 +429,7 @@ if test -z "$op_skip_mkmf" || test -n "$op_input_mkmf"; then
     for mkmf in $mkmf_list; do
       clean_vars
       . ./$mkmf
-      cd $cd_param $op_srcdir
+      cd $cd_param $orig_dir
       if test -z "$PREFIXES"; then
         for var in $target_vars; do
           eval MKMF_$var=\$$var
@@ -475,9 +458,6 @@ prefix_add=
 current_opt=
 while test $# -gt 0; do
   case "$1" in
-    -C)
-      current_opt=C
-      ;;
     -i)
       current_opt=i
       ;;
@@ -578,9 +558,6 @@ while test $# -gt 0; do
       ;;
     *)
       case "$current_opt" in
-        C)
-          current_opt=
-          ;;
         i)
           :
           ;;
@@ -752,7 +729,7 @@ if test -z "$CONFIG_MK_PATH"; then
   export CONFIG_MK_PATH
   PATH="$CONFIG_MK_PATH:$PATH"
   export PATH
-  cd $cd_param $op_srcdir
+  cd $cd_param $orig_dir
 fi
 ################################################################################
 
@@ -1057,7 +1034,7 @@ fi
 src_dist_files=`echo "$src_dist_files" | sed 's/^ *//' | tr ' ' '\n' | sort | uniq | tr '\n' ' ' | sed 's/ *$//'`
 dist_files="$dist_files $src_dist_files"
 
-if test -z "$op_append" && test "$CONFIG_SRCROOT" = "$op_srcdir"; then
+if test -z "$op_append" && test "$CONFIG_SRCROOT" = "$orig_dir"; then
   opt_fscripts="cmdok cppdef cprobe cstem libro mkdep mkmf mkrule pofig relpath src2obj"
   formake_dist=
   for script in $opt_fscripts; do
@@ -1081,7 +1058,7 @@ mkrule dist -buildroot $CONFIG_SRCROOT -f $dist_files >>$op_out_mkfile || exit 1
 if test -z "$op_append" && test -z "$op_skip_mkmf" && test -n "$SUBDIRS"; then
   mkrule subdir -all -install -clean -dist -distclean -d $SUBDIRS >>$op_out_mkfile
   for dir in $SUBDIRS; do
-    cd $cd_param $op_srcdir
+    cd $cd_param $orig_dir
     if test -d $dir; then
       cd $cd_param $dir
       mkmf_num=`ls *.mkmf 2>/dev/null | wc -l`
