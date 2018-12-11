@@ -78,7 +78,7 @@ EOF
 
 print_version() {
   cat <<EOF
-mkdep 1.1
+mkdep 1.2
 Copyright (C) 2015-2018 Oleksii Cherniavskyi
 EOF
 }
