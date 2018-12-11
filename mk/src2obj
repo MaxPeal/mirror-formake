@@ -52,22 +52,12 @@ FORMAKE_BASH_REDIRECTED=
 export FORMAKE_BASH_REDIRECTED
 ################################################################################
 
-version="1.1"
+version="1.2"
 script_name=`basename "$0"`
 script_dir=`dirname "$0"`
 nl='
 '
 op_ext='o'
-
-################################################################################
-# LOAD CONFIG
-if test -f $script_dir/mk.conf; then
-  . $script_dir/mk.conf
-fi
-if test -f $script_dir/src2obj.conf; then
-  . $script_dir/src2obj.conf
-fi
-################################################################################
 
 print_help() {
   cat <<EOF
@@ -88,7 +78,7 @@ EOF
 }
 
 if test $# -eq 0; then
-  echo "$script_name: error. No options specified" >&2
+  echo "$script_name: no options specified" >&2
   exit 1
 fi
 
@@ -102,7 +92,7 @@ while test $# -gt 0; do
       exit 0
       ;;
     -v)
-      printf "$script_name ${version}\n"
+      printf "Formake $script_name ${version}\n"
       exit 0
       ;;
     -o|-objdir)
