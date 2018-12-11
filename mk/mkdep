@@ -55,6 +55,10 @@ export FORMAKE_BASH_REDIRECTED
 script_name=`basename "$0"`
 orig_dir=`pwd`
 
+if test "x$CONFIG_CACHE_LOADED" = x && test -n "$CONFIG_CACHE" && test -f "$CONFIG_CACHE"; then
+  . $CONFIG_CACHE
+fi
+
 cd_param=
 (cd -P / >/dev/null) 2>/dev/null
 if test $? -eq 0; then
