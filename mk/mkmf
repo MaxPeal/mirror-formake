@@ -84,6 +84,7 @@ NAME
 CFLAGS
 CXXFLAGS
 LDFLAGS
+PREREQ
 NO_INSTALL
 VERSION
 OBJDIR
@@ -98,6 +99,7 @@ COMMON_DOBJECTS
 COMMON_CFLAGS
 COMMON_CXXFLAGS
 COMMON_LDFLAGS
+COMMON_PREREQ
 DEFAULT_TYPE
 DEFAULT_VERSION
 DEFAULT_NO_INSTALL
@@ -375,6 +377,11 @@ add_mkmf_data() {
   if test -n "$MKMF_LDFLAGS"; then
     prefix_add=$prefix
     eval target_${prefix}_ldflags=\$MKMF_LDFLAGS
+  fi
+
+  if test -n "$MKMF_PREREQ"; then
+    prefix_add=$prefix
+    eval target_${prefix}_prereq=\$MKMF_PREREQ
   fi
 
   if test -n "$MKMF_NO_INSTALL"; then
@@ -801,6 +808,7 @@ for prefix in $prefix_list; do
   eval target_lang=\$target_${prefix}_lang
   eval target_name=\$target_${prefix}_name
   eval target_ldflags=\$target_${prefix}_ldflags
+  eval target_prereq=\$target_${prefix}_prereq
   eval target_no_install=\$target_${prefix}_no_install
   eval target_version=\$target_${prefix}_ver
 
@@ -814,6 +822,8 @@ for prefix in $prefix_list; do
     fi
     eval target_${prefix}_type=\$target_type
   fi
+
+  add_params=
 
   case "$target_type" in
     prog|tlib|dlib|lib|tobj|dobj|obj)
@@ -858,6 +868,10 @@ for prefix in $prefix_list; do
       esac
 
       sources=`echo "$COMMON_SOURCES $target_src" | sed 's/^ *//' | sed 's/ *$//' | sed 's/  */ /g'`
+
+      if test -n "$target_prereq"; then
+        add_params="$add_params -p $target_prereq"
+      fi
       ;;
   esac
 
@@ -898,12 +912,9 @@ for prefix in $prefix_list; do
     if test x$target_no_install = x; then
       add_params="$add_params -install"
     fi
-    if test "x$target_lang" = "xc++"; then
-      add_params="$add_params -c++"
-    fi
 
     if test -n "$target_obj$COMMON_OBJECTS"; then
-      eval mkrule prog $add_params -ldflags="$CONFIG_LDFLAGS $COMMON_LDFLAGS $target_ldflags" -n $target_name -obj $target_obj $COMMON_OBJECTS >>$op_out_mkfile
+      eval mkrule prog $add_params -ldflags=\"$CONFIG_LDFLAGS $COMMON_LDFLAGS $target_ldflags\" -n $target_name -obj $target_obj $COMMON_OBJECTS >>$op_out_mkfile
     fi
   fi
 
@@ -928,19 +939,16 @@ for prefix in $prefix_list; do
     if test x$target_no_install = x; then
       add_params="$add_params -install"
     fi
-    if test "x$target_lang" = "xc++"; then
-      add_params="$add_params -c++"
-    fi
 
     if test -n "$target_obj$COMMON_OBJECTS"; then
       if test $target_type = tlib || test $target_type = lib; then
-        eval mkrule lib $add_params -static -ldflags="$CONFIG_LDFLAGS $COMMON_LDFLAGS $target_ldflags" -n $target_name -ver $target_version -obj $target_obj $COMMON_OBJECTS >>$op_out_mkfile
+        eval mkrule lib $add_params -static -ldflags=\"$CONFIG_LDFLAGS $COMMON_LDFLAGS $target_ldflags\" -n $target_name -ver $target_version -obj $target_obj $COMMON_OBJECTS >>$op_out_mkfile
       fi
     fi
 
     if test -n "$target_dobj$COMMON_DOBJECTS"; then
       if test $target_type = dlib || test $target_type = lib; then
-        eval mkrule lib $add_params -shared -ldflags="$CONFIG_LDFLAGS $COMMON_LDFLAGS $target_ldflags" -n $target_name -ver $target_version -obj $target_dobj $COMMON_DOBJECTS >>$op_out_mkfile
+        eval mkrule lib $add_params -shared -ldflags=\"$CONFIG_LDFLAGS $COMMON_LDFLAGS $target_ldflags\" -n $target_name -ver $target_version -obj $target_dobj $COMMON_DOBJECTS >>$op_out_mkfile
       fi
     fi
   fi
