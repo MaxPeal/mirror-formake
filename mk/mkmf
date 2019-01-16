@@ -823,7 +823,7 @@ for prefix in $prefix_list; do
     eval target_${prefix}_type=\$target_type
   fi
 
-  add_params=
+  common_params=
 
   case "$target_type" in
     prog|tlib|dlib|lib|tobj|dobj|obj)
@@ -857,26 +857,41 @@ for prefix in $prefix_list; do
       fi
 
       case $target_lang in
-        c)
-          cflags="$CONFIG_CFLAGS $COMMON_CFLAGS $target_cflags"
-          add_params="-cflags=\"$cflags\""
-          ;;
         c++)
-          cxxflags="$CONFIG_CXXFLAGS $COMMON_CXXFLAGS $target_cxxflags"
-          add_params="-c++ -cflags=\"$cxxflags\""
+          common_params="$common_params -c++"
           ;;
       esac
 
       sources=`echo "$COMMON_SOURCES $target_src" | sed 's/^ *//' | sed 's/ *$//' | sed 's/  */ /g'`
-
-      if test -n "$target_prereq"; then
-        add_params="$add_params -p $target_prereq"
-      fi
       ;;
   esac
 
 ########
 #objects
+  add_params=$common_params
+  case $target_type in
+    prog|dlib|tlib|lib|dobj|tobj|obj)
+      case $target_lang in
+        c)
+          cflags="$CONFIG_CFLAGS $COMMON_CFLAGS $target_cflags"
+          add_params="$add_params -cflags=\"$cflags\""
+          ;;
+        c++)
+          cxxflags="$CONFIG_CXXFLAGS $COMMON_CXXFLAGS $target_cxxflags"
+          add_params="$add_params -cflags=\"$cxxflags\""
+          ;;
+      esac
+    ;;
+  esac
+
+  case $target_type in
+    dobj|tobj|obj)
+      if test -n "$target_prereq"; then
+        add_params="$add_params -p $target_prereq"
+      fi
+    ;;
+  esac
+
   case $target_type in
     prog|tlib|lib|tobj|obj)
       if test -n "$sources"; then
@@ -902,15 +917,20 @@ for prefix in $prefix_list; do
 
 #########
 #programs
+  add_params=$common_params
+
   if test $target_type = prog; then
     if test -z "$target_name"; then
       target_name="prog$prefix"
       eval target_${prefix}_name=\$target_name
     fi
 
-    add_params="-all"
+    add_params="$add_params -all"
     if test x$target_no_install = x; then
       add_params="$add_params -install"
+    fi
+    if test -n "$target_prereq"; then
+      add_params="$add_params -p $target_prereq"
     fi
 
     if test -n "$target_obj$COMMON_OBJECTS"; then
@@ -920,6 +940,8 @@ for prefix in $prefix_list; do
 
 ##########
 #libraries
+  add_params=$common_params
+
   if test $target_type = tlib || test $target_type = dlib || test $target_type = lib; then
     if test -z "$target_name"; then
       target_name="foo$prefix"
@@ -935,9 +957,12 @@ for prefix in $prefix_list; do
       eval target_${prefix}_ver=\$target_version
     fi
 
-    add_params="-all"
+    add_params="$add_params -all"
     if test x$target_no_install = x; then
       add_params="$add_params -install"
+    fi
+    if test -n "$target_prereq"; then
+      add_params="$add_params -p $target_prereq"
     fi
 
     if test -n "$target_obj$COMMON_OBJECTS"; then
