@@ -228,7 +228,7 @@ mkshared() {
   	  run_command ln -s $lib_so_cra $out_dir$lib_so
       ;;
     *)
-      echo "$script_name: unsupported compiler: $LIBRO_CC_TYPE"
+      echo "$script_name: unsupported compiler: $LIBRO_CC_TYPE" >&2
       exit 1
       ;;
   esac
@@ -392,7 +392,7 @@ if test x$cxx_mode = x; then
     formake_cprobe
   fi
   LIBRO_CC=$CONFIG_CC
-  LIBRO_CC_TYPE=CONFIG_CC_TYPE
+  LIBRO_CC_TYPE=$CONFIG_CC_TYPE
   LIBRO_CC_OS=$CONFIG_CC_OS
 else
   if test -z "$CONFIG_CXX"; then
@@ -401,7 +401,7 @@ else
     formake_cxxprobe
   fi
   LIBRO_CC=$CONFIG_CXX
-  LIBRO_CC_TYPE=CONFIG_CXX_TYPE
+  LIBRO_CC_TYPE=$CONFIG_CXX_TYPE
   LIBRO_CC_OS=$CONFIG_CXX_OS
 fi
 
@@ -409,7 +409,7 @@ case "$LIBRO_CC_OS" in
   gnulinux|freebsd|macos|android|solaris|aix|dragonfly|gnuhurd|openbsd|netbsd|qnx|hpux|irix|minix|sco)
     : ;;
   *)
-    echo "$script_name: unsuported target OS: $LIBRO_CC_OS"
+    echo "$script_name: unsuported target OS: $LIBRO_CC_OS" >&2
     exit 1
     ;;
 esac
