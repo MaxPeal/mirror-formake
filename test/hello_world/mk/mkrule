@@ -428,7 +428,7 @@ EOF
     ../*|.|./) : ;;
     *)
       mkdir -p "$op_dir"
-      echo "	find "$op_dir" -depth -type d | xargs rmdir 2>/dev/null"
+      echo "	-if test -d '$op_dir'; then find '$op_dir' -depth -type d | xargs rmdir 2>/dev/null; fi"
       ;;
   esac
   echo ""
@@ -879,11 +879,11 @@ EOF
     done
   fi
   if test $op_type = doc || test $op_type = data; then
-    echo "	-find \$(DESTDIR)$dir -depth -type d | xargs rmdir 2>/dev/null"
+    echo "	-if test -d '\$(DESTDIR)$dir'; then find \$(DESTDIR)$dir -depth -type d | xargs rmdir 2>/dev/null; fi"
   elif test $op_type = inc; then
     dir_base=`basename "$dir"`
     if test "$dir_base" != include; then
-      echo "	-find \$(DESTDIR)$dir -depth -type d | xargs rmdir 2>/dev/null"
+      echo "	-if test -d '\$(DESTDIR)$dir'; then find \$(DESTDIR)$dir -depth -type d | xargs rmdir 2>/dev/null; fi"
     fi
   fi
   echo ""

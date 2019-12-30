@@ -75,7 +75,7 @@ export PATH
 
 print_version() {
   cat <<EOF
-Formake configure 1.1
+Formake configure 1.2
 Copyright (C) 2018 Oleksii Cherniavskyi
 EOF
 }

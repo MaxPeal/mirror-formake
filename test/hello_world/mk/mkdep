@@ -78,7 +78,7 @@ EOF
 
 print_version() {
   cat <<EOF
-mkdep 1.1
+mkdep 1.2
 Copyright (C) 2015-2018 Oleksii Cherniavskyi
 EOF
 }
@@ -277,26 +277,27 @@ esac
 work_dir=/tmp/mkdep$$
 (mkdir $work_dir) 2>/dev/null
 rm -f $work_dir/*
-tmp_file0=dep$$.t0
-tmp_file1=dep$$.t1
-tmp_file2=dep$$.t2
+tmp_file0="$work_dir/dep$$.t0"
+tmp_file1="$work_dir/dep$$.t1"
+tmp_file2="$work_dir/dep$$.t2"
 
+cd $orig_dir
 for file in $op_src; do
-  cd $orig_dir
   if test ! -f $file; then
     echo "$script_name: file not found $file"
     exit 1
   fi
-  cp $file $work_dir
-  cd $work_dir
 
   base_name=`basename "$file" | sed 's/\.[^.]*$//'`
   if test -n "$out_obj"; then
-    object=$out_obj
+    object="$work_dir/$out_obj"
+    orig_object=$out_obj
   elif test -n "$op_out_dir"; then
-    object="$op_out_dir/${base_name}.$obj_ext"
+    object="$work_dir/$op_out_dir/${base_name}.$obj_ext"
+    orig_object="$op_out_dir/${base_name}.$obj_ext"
   else
-    object="${base_name}.$obj_ext"
+    object="$work_dir/${base_name}.$obj_ext"
+    orig_object="${base_name}.$obj_ext"
   fi
 
   if test "$MKDEP_CC_TYPE" = ticc; then
@@ -312,7 +313,7 @@ for file in $op_src; do
   fi
   cat $tmp_file0 | sed -n 's!^# *[0-9][0-9]* *"\([^<][^"]*\)".*!\1!p' | sort | uniq >$tmp_file1
 
-  cat $tmp_file1 | sed "s/^/$object: /" >>$tmp_file2
+  cat $tmp_file1 | sed "s/^/$orig_object: /" >>$tmp_file2
   cat $tmp_file1 | sed 's/ *$/:/' >>$tmp_file2
 done
 
